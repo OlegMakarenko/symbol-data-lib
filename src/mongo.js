@@ -54,15 +54,12 @@ const binaryToBase32 = data => base32.encode(data.buffer)
 const format = {
   // TODO(ahuszagh) Implement formatters...
 //  "accountRestrictions",
-//  "accounts",
 //  "addressResolutionStatements",
-//  "blocks",
 //  "chainStatistic",
 //  "hashLocks",
 //  "metadata",
 //  "mosaicResolutionStatements",
 //  "mosaicRestrictions",
-//  "mosaics",
 //  "multisigs",
 //  "namespaces",
 //  "partialTransactions",
@@ -95,6 +92,35 @@ const format = {
         startHeight: idToHex(mosaic.id),
         amount: mosaic.amount.toString()
       }))
+    }
+  }),
+
+  blocks: item => ({
+    meta: {
+      hash: binaryToHex(item.meta.hash),
+      generationHash: binaryToHex(item.meta.generationHash),
+      totalFee: item.meta.totalFee.toString(),
+      stateHashSubCacheMerkleRoots: item.meta.stateHashSubCacheMerkleRoots.map(hash => binaryToHex(hash)),
+      numTransactions: item.meta.numTransactions,
+      transactionMerkleTree: item.meta.transactionMerkleTree.map(hash => binaryToHex(hash)),
+      numStatements: item.meta.numStatements,
+      statementMerkleTree: item.meta.statementMerkleTree.map(hash => binaryToHex(hash))
+    },
+    block: {
+      signature: binaryToHex(item.block.signature),
+      signerPublicKey: binaryToHex(item.block.signerPublicKey),
+      version: item.block.version,
+      network: item.block.network,
+      type: item.block.type,
+      height: item.block.height.toString(),
+      timestamp: item.block.timestamp.toString(),
+      difficulty: item.block.difficulty.toString(),
+      feeMultiplier: item.block.feeMultiplier,
+      previousBlockHash: binaryToHex(item.block.previousBlockHash),
+      transactionsHash: binaryToHex(item.block.transactionsHash),
+      receiptsHash: binaryToHex(item.block.receiptsHash),
+      stateHash: binaryToHex(item.block.stateHash),
+      beneficiaryPublicKey: binaryToHex(item.block.beneficiaryPublicKey)
     }
   }),
 
