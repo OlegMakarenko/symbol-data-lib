@@ -232,28 +232,95 @@ const format = {
         mosaics
       }
     }
-  }
+  },
 
-  // TODO(ahuszagh) Add more versions here...
-  // HashCache
-  // HashLockInfoCache
-  // MetadataCache
-  // MosaicCache
-  // MosaicRestrictionCache
-  // MultisigCache
-  // NamespaceCache
-  // SecretLockInfoCache
-}
+  HashCache: {
+    key: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    },
+    value: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    }
+  },
 
-/**
- *  Create new formatter, or default if not implemented.
- */
-const createFormatter = collection => {
-  const formatter = format[collection]
-  if (formatter === undefined) {
-    return x => x.toString('hex')
+  HashLockInfoCache: {
+    key: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    },
+    value: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    }
+  },
+
+  MetadataCache: {
+    key: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    },
+    value: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    }
+  },
+
+  MosaicCache: {
+    key: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    },
+    value: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    }
+  },
+
+  MosaicRestrictionCache: {
+    key: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    },
+    value: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    }
+  },
+
+  MultisigCache: {
+    key: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    },
+    value: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    }
+  },
+
+  NamespaceCache: {
+    key: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    },
+    value: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    }
+  },
+
+  SecretLockInfoCache: {
+    key: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    },
+    value: data => {
+      // TODO(ahuszagh) Implement...
+      throw new Error('not yet implemented')
+    }
   }
-  return formatter
 }
 
 // API
@@ -279,7 +346,7 @@ const dump = async options => {
   // Iterate up to limit values, and assign to result.
   let result = {}
   let limit = options.limit
-  let formatter = createFormatter(options.collection)
+  let formatter = format[options.collection]
   let iterator = level.iterator()
   do {
     // Fetch the next item from the map.

@@ -29,23 +29,11 @@ const binaryToBase32 = data => shared.binaryToBase32(data.buffer)
  *  Formatter for MongoDB collections.
  */
 const format = {
-  // TODO(ahuszagh) Implement formatters...
-//  "accountRestrictions",
-//  "addressResolutionStatements",
-//  "chainStatistic",
-//  "hashLocks",
-//  "metadata",
-//  "mosaicResolutionStatements",
-//  "mosaicRestrictions",
-//  "multisigs",
-//  "namespaces",
-//  "partialTransactions",
-//  "secretLocks",
-//  "system.profile",
-//  "transactionStatements",
-//  "transactionStatuses",
-//  "transactions",
-//  "unconfirmedTransactions"
+  accountRestrictions: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
 
   accounts: item => ({
     account: {
@@ -66,11 +54,17 @@ const format = {
         rawScore: bucket.rawScore.toString()
       })),
       mosaics: item.account.mosaics.map(mosaic => ({
-        startHeight: idToHex(mosaic.id),
+        mosaicId: idToHex(mosaic.id),
         amount: mosaic.amount.toString()
       }))
     }
   }),
+
+  addressResolutionStatements: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
 
   blocks: item => ({
     meta: {
@@ -101,6 +95,43 @@ const format = {
     }
   }),
 
+  chainStatistic: item => ({
+    current: {
+      height: item.current.height.toString(),
+      scoreLow: item.current.scoreLow.toString(),
+      scoreHigh: item.current.scoreHigh.toString()
+    }
+  }),
+
+  hashLocks: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
+  metadata: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
+  mosaicResolutionStatements: item => ({
+    statement: {
+      height: item.statement.height.toString(),
+      unresolved: idToHex(item.statement.unresolved),
+      resolutionEntries: item.statement.resolutionEntries.map(entry => ({
+        source: entry.source,
+        resolved: idToHex(entry.resolved)
+      }))
+    }
+  }),
+
+  mosaicRestrictions: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
   mosaics: item => ({
     mosaic: {
       id: idToHex(item.mosaic.id),
@@ -115,18 +146,99 @@ const format = {
       divisibility: item.mosaic.divisibility,
       duration: item.mosaic.duration.toString()
     }
-  })
-}
+  }),
 
-/**
- *  Create new formatter, or default if not implemented.
- */
-const createFormatter = collection => {
-  const formatter = format[collection]
-  if (formatter === undefined) {
-    return x => x
+  multisigs: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
+  namespaces: item => {
+    const aliasNone = 0
+    const aliasMosaic = 1
+    const aliasAddress = 2
+
+    let result = {
+      meta: item.meta,
+      namespace: {
+        registrationType: item.namespace.registrationType,
+        depth: item.namespace.depth,
+        levels: [],
+        alias: {
+          type: item.namespace.alias.type
+        },
+        parentId: idToHex(item.namespace.parentId),
+        owner: {
+          publicKey: binaryToHex(item.namespace.ownerPublicKey),
+          address: binaryToBase32(item.namespace.ownerAddress)
+        },
+        startHeight: item.namespace.startHeight.toString(),
+        endHeight: item.namespace.endHeight.toString(),
+      }
+    }
+
+    // Add the levels.
+    for (let index = 0; index < item.namespace.depth; index++) {
+      result.namespace.levels.push(idToHex(item.namespace['level' + index.toString()]))
+    }
+
+    // Add the alias.
+    let aliasType = item.namespace.alias.type
+    if (aliasType === aliasNone) {
+      // No-op
+    } else if (aliasType === aliasMosaic) {
+      result.namespace.alias.mosaicId = idToHex(item.namespace.alias.mosaicId)
+    } else if (aliasType === aliasAddress) {
+      result.namespace.alias.address = binaryToBase32(item.namespace.alias.address)
+    } else {
+      throw new Error(`invalid AliasType, got ${aliasType}`)
+    }
+
+    return result
+  },
+
+  partialTransactions: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
+  secretLocks: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
+  'system.profile': item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
+  transactionStatements: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
+  transactionStatuses: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
+  transactions: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
+  },
+
+  unconfirmedTransactions: item => {
+    // TODO(ahuszagh) Implement...
+    console.log(item)
+    throw new Error('not yet implemented')
   }
-  return formatter
 }
 
 // API
@@ -162,7 +274,7 @@ const connect = async options => {
 const dump = async options => {
   let client = await connect(options)
   let db = client.db()
-  let formatter = createFormatter(options.collection)
+  let formatter = format[options.collection]
   let data = await db.collection(options.collection)
     .find()
     .limit(options.limit)
