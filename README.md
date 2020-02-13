@@ -15,7 +15,8 @@ npm link
 Next, you can run them globally:
 
 ```bash
-catapult-mongo-dump --collection mosaics --limit 1 --verbose
+# Dump the mosaics collection from MongoDB.
+$ catapult-mongo-dump --collection mosaics --limit 1 --verbose
 Running catapult-mongo-dump with: 
     database     = mongodb://localhost:27017/catapult
     collection   = mosaics
@@ -39,7 +40,89 @@ Connected to mongo at mongodb://localhost:27017/catapult
     }
 ]
 
-# TODO(ahuszagh) Add catapult-rocks-dump
+# Dump the accounts collection from RocksDB.
+$ catapult-rocks-dump --collection AccountStateCache --limit 1 --verbose
+Running catapult-rocks-dump with: 
+    data-dir     = /data
+    node         = api-node-0
+    collection   = AccountStateCache
+    limit        = 1
+    output       = stdout
+Connected to rocks at /data/api-node-0/statedb/AccountStateCache
+{
+    "TD6BXOCQ3TQOKEWKGO4EAV6DO4B7TSSDM7M6B76C": {
+        "address": "TD6BXOCQ3TQOKEWKGO4EAV6DO4B7TSSDM7M6B76C",
+        "addressHeight": "1",
+        "publicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+        "publicKeyHeight": "0",
+        "accountType": 0,
+        "linkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+        "importances": [
+            {
+                "value": "0",
+                "height": "0"
+            },
+            {
+                "value": "0",
+                "height": "0"
+            },
+            {
+                "value": "0",
+                "height": "0"
+            }
+        ],
+        "activityBuckets": [
+            {
+                "startHeight": "0",
+                "totalFeesPaid": "0",
+                "beneficiaryCount": 0,
+                "rawScore": "0"
+            },
+            {
+                "startHeight": "0",
+                "totalFeesPaid": "0",
+                "beneficiaryCount": 0,
+                "rawScore": "0"
+            },
+            {
+                "startHeight": "0",
+                "totalFeesPaid": "0",
+                "beneficiaryCount": 0,
+                "rawScore": "0"
+            },
+            {
+                "startHeight": "0",
+                "totalFeesPaid": "0",
+                "beneficiaryCount": 0,
+                "rawScore": "0"
+            },
+            {
+                "startHeight": "0",
+                "totalFeesPaid": "0",
+                "beneficiaryCount": 0,
+                "rawScore": "0"
+            },
+            {
+                "startHeight": "0",
+                "totalFeesPaid": "0",
+                "beneficiaryCount": 0,
+                "rawScore": "0"
+            },
+            {
+                "startHeight": "0",
+                "totalFeesPaid": "0",
+                "beneficiaryCount": 0,
+                "rawScore": "0"
+            }
+        ],
+        "mosaics": [
+            {
+                "mosaicId": "61F6EFB8D6BF2705",
+                "amount": "449949999900000"
+            }
+        ]
+    }
+}
 ```
 
 # License
