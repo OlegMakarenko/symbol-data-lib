@@ -140,6 +140,9 @@ export default class Level {
    */
   async size() {
     let value = await this.get(Level.size_key)
+    if (value === undefined) {
+      return [0, 0]
+    }
     return shared.binaryToUint64(value)
   }
 

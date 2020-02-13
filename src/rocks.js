@@ -24,11 +24,9 @@ import shared from './shared'
 const ROLLBACK_BUFFER_SIZE = 2
 const IMPORTANCE_HISTORY_SIZE = 1 + ROLLBACK_BUFFER_SIZE
 const ACTIVITY_BUCKET_HISTORY_SIZE = 5 + ROLLBACK_BUFFER_SIZE
-
-// AccountRestrictionCache
-//   using KeyType = Address;
-//   using ValueType = state::AccountRestrictions;
-// TODO(ahuszagh) Implement...
+const ACCOUNT_RESTRICTION_ADDRESS = 0x0001
+const ACCOUNT_RESTRICTION_MOSAIC_ID = 0x0002
+const ACCOUNT_RESTRICTION_TRANSACTION_TYPE = 0x0004
 
 // READERS
 
@@ -68,6 +66,28 @@ const readId = data => {
 const readKey = data => {
   let key = shared.binaryToHex(data.slice(0, 32))
   return [key, data.slice(32)]
+}
+
+const readEntityType = data => {
+  return readUint16(data)
+}
+
+const readAccountRestriction = data => {
+  var [flags, data] = readUint16(data)
+  var [valuesCount, data] = readUint64(data)
+  let values = []
+  if ((flags & ACCOUNT_RESTRICTION_ADDRESS) !== 0) {
+    data = readN(data, values, valuesCount, readAddress)
+  } else if ((flags & ACCOUNT_RESTRICTION_MOSAIC_ID) !== 0) {
+    data = readN(data, values, valuesCount, readId)
+  } else if ((flags & ACCOUNT_RESTRICTION_TRANSACTION_TYPE) !== 0) {
+    data = readN(data, values, valuesCount, readEntityType)
+  } else {
+    throw new Error(`invalid account restriction flags, got ${flags}`)
+  }
+
+  let value = {flags, values}
+  return [value, data]
 }
 
 const readMosaic = data => {
@@ -114,9 +134,25 @@ const readN = (data, array, count, callback) => {
 const format = {
   AccountRestrictionCache: {
     key: key => readAddress(key)[0],
-    value: item => ({
-      // TODO(ahuszagh) Implement...
-    })
+    value: item => {
+      // Constants
+      const expectedStateVersion = 1
+
+      // Parse Information
+      var [stateVersion, data] = readUint16(data)
+      if (stateVersion != expectedStateVersion) {
+        throw new Error(`invalid StateVersion, got ${stateVersion}`)
+      }
+      var [address, data] = readAddress(data)
+      let restrictions = []
+      var [restrictionsCount, data] = readUint64(data)
+      data = readN(data, restrictions, restrictionsCount, readAccountRestriction)
+
+      return {
+        address,
+        restrictions
+      }
+    }
   },
 
   AccountStateCache: {
@@ -125,6 +161,7 @@ const format = {
       // Constants
       const regular = 0
       const highValue = 1
+      const expectedStateVersion = 1
       const importanceSize = IMPORTANCE_HISTORY_SIZE - ROLLBACK_BUFFER_SIZE
       const activityBucketsSize = ACTIVITY_BUCKET_HISTORY_SIZE - ROLLBACK_BUFFER_SIZE
 
@@ -141,9 +178,9 @@ const format = {
       //    AccountBalances balances;
       //  }
 
-      // Non-Historical Information
+      // Parse Non-Historical Information
       var [stateVersion, data] = readUint16(data)
-      if (stateVersion != 1) {
+      if (stateVersion != expectedStateVersion) {
         throw new Error(`invalid StateVersion, got ${stateVersion}`)
       }
       var [address, data] = readAddress(data)
@@ -170,7 +207,7 @@ const format = {
       var [mosaicsCount, data] = readUint16(data)
       data = readN(data, mosaics, mosaicsCount, readMosaic)
 
-      // Historical Information
+      // Parse Historical Information
       if (format == regular) {
         data = readN(data, importances, IMPORTANCE_HISTORY_SIZE, readImportance)
         data = readN(data, activityBuckets, ACTIVITY_BUCKET_HISTORY_SIZE, readActivityBucket)
@@ -196,6 +233,16 @@ const format = {
       }
     }
   }
+
+  // TODO(ahuszagh) Add more versions here...
+  // HashCache
+  // HashLockInfoCache
+  // MetadataCache
+  // MosaicCache
+  // MosaicRestrictionCache
+  // MultisigCache
+  // NamespaceCache
+  // SecretLockInfoCache
 }
 
 /**
@@ -210,7 +257,6 @@ const createFormatter = collection => {
 }
 
 // API
-
 
 /**
  *  Dump RocksDB data to JSON.
@@ -239,7 +285,7 @@ const dump = async options => {
     // Fetch the next item from the map.
     // Break if we've got no more values, or we've reached the SIZE key.
     let item = await iterator.next()
-    if (item === undefined || item.encodedKey.equals(Level.size_key)) {
+    if (item === null || item.encodedKey.equals(Level.size_key)) {
       break
     }
 
