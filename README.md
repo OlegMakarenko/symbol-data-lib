@@ -155,6 +155,7 @@ $ catapult-rocks-dump --data-dir "$catapult-service-bootstrap/data/api-node-0"  
 ...
 ```
 
+Alternatively, you can either modify the Dockerfiles to install, build, and link the scripts inside the `db` and `api-node-0` commands. From there, you would find the proper container ID via `docker ps`, and run `docker exec -it $id /bin/bash` to enter an interactive session of the running container. From there, run the desired script.
 
 # License
 
