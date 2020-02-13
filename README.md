@@ -130,7 +130,7 @@ Connected to rocks at /data/statedb/AccountStateCache
 }
 ```
 
-# Details
+# Detailed Instructions
 
 The following scripts use paths by default within the Docker container, however, it may be easier to run them from outside the docker container (to avoid having to install NPM, cloning the repository, and installing the dependencies). To do so, we must expose port `27017` on the `db` image:
 
@@ -156,6 +156,10 @@ $ catapult-rocks-dump --data-dir "$catapult-service-bootstrap/data/api-node-0"  
 ```
 
 Alternatively, you can either modify the Dockerfiles to install, build, and link the scripts inside the `db` and `api-node-0` commands. From there, you would find the proper container ID via `docker ps`, and run `docker exec -it $id /bin/bash` to enter an interactive session of the running container. From there, run the desired script.
+
+# Compatibility Warning
+
+These tools are meant to debug issues with local nodes in catapult, by providing human-readable access to the underlying storage. This should not be used as an alternative to the REST API, as this code relies on internal databases that are not documented and may be change at any time for any reason.
 
 # License
 
