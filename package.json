@@ -5,7 +5,8 @@
   "description": "Scripts to help debug Catapult",
   "main": "dist/src/index.js",
   "bin": {
-    "catapult-mongo-dump": "dist/bin/catapult-mongo-dump.js"
+    "catapult-mongo-dump": "dist/bin/catapult-mongo-dump.js",
+    "catapult-rocks-dump": "dist/bin/catapult-rocks-dump.js"
   },
   "scripts": {
     "build": "babel src -d dist/src && babel bin -d dist/bin",
@@ -15,7 +16,10 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "encoding-down": "^6.3.0",
+    "levelup": "^4.3.2",
     "mongodb": "^3.5.3",
+    "rocksdb": "^4.1.0",
     "yargs": "^15.1.0"
   },
   "devDependencies": {

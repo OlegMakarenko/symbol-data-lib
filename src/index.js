@@ -17,7 +17,9 @@
  */
 
 import mongo from './mongo'
+import rocks from './rocks'
 
 export default {
-  mongo
+  mongo,
+  rocks
 }

@@ -17,36 +17,13 @@
  */
 
 import MongoDb from 'mongodb'
-import base32 from './base32'
+import shared from './shared'
 
-// NORMALIZE
+// FORMATTER
 
-/**
- *  Pad value with zeros until desired length.
- */
-const pad0 = (str, length) => str.length < length ? pad0(`0${str}`, length) : str
-
-/**
- *  Convert 64-bit long to an ID as an unsigned value.
- */
-const idToHex = id => {
-  let low = id.getLowBitsUnsigned()
-  let hi = id.getHighBits() >>> 0
-  let part1 = hi.toString(16)
-  let part2 = low.toString(16)
-
-  return (pad0(part1, 8) + pad0(part2, 8)).toUpperCase()
-}
-
-/**
- *  Convert binary data to hex.
- */
-const binaryToHex = data => data.toString('hex').toUpperCase()
-
-/**
- *  Convert binary data to base32.
- */
-const binaryToBase32 = data => base32.encode(data.buffer)
+const idToHex = id => shared.idToHex([id.getLowBitsUnsigned(), id.getHighBits() >>> 0])
+const binaryToHex = data => shared.binaryToHex(data)
+const binaryToBase32 = data => shared.binaryToBase32(data.buffer)
 
 /**
  *  Formatter for MongoDB collections.
@@ -164,7 +141,9 @@ const createFormatter = collection => {
 const connect = async options => {
   let opts = { promoteLongs: false, useNewUrlParser: true, useUnifiedTopology: true }
   let client = await MongoDb.MongoClient.connect(options.database, opts)
-  console.info(`Connected to mongo at ${options.database}`)
+  if (options.verbose) {
+    console.info(`Connected to mongo at ${options.database}`)
+  }
   return client
 }
 

@@ -24,21 +24,28 @@ import catapultScripts from '../src'
 // ARGUMENTS
 // ---------
 
+//dist/bin/catapult-rocks-dump.js --data-dir /home/ahuszagh/git/catapult-service-bootstrap/data --collection AccountRestrictionCache
+
 const options = yargs
   .command(
-    'catapult-mongo-dump [OPTION...]',
-    'Dump MongoDB data to JSON'
+    'catapult-rocks-dump [OPTION...]',
+    'Dump RocksDB data to JSON'
   )
   // Example
   .example(
-    'catapult-mongo-dump --collection mosaics --limit 50',
-    'Dump the latest 50 mosaics as JSON.'
+    'catapult-rocks-dump --collection AccountRestrictionCache --limit 50',
+    'Dump the latest 50 values from AccountRestrictionCache as JSON.'
   )
   // Parameters.
-  .option('database', {
+  .option('data-dir', {
     alias: 'd',
-    describe: 'Path to Mongo database connection.',
-    default: 'mongodb://localhost:27017/catapult'
+    describe: 'Data directory for the RocksDB store.',
+    default: '/data'
+  })
+  .option('node', {
+    alias: 'n',
+    describe: 'Name of node to fetch data from.',
+    default: 'api-node-0'
   })
   .option('collection', {
     alias: 'c',
@@ -66,15 +73,16 @@ const options = yargs
 
 // Display verbose information.
 if (options.verbose) {
-  console.info('Running catapult-mongo-dump with: ')
-  console.info(`    database     = ${options.database}`)
+  console.info('Running catapult-rocks-dump with: ')
+  console.info(`    data-dir     = ${options.dataDir}`)
+  console.info(`    node         = ${options.node}`)
   console.info(`    collection   = ${options.collection}`)
   console.info(`    limit        = ${options.limit}`)
   console.info(`    output       = ${options.output ? options.output : 'stdout'}`)
 }
 
-// Dump the MongoDB data to JSON.
-catapultScripts.mongo.dump(options).then(result => {
+// Dump the RocksDB data to JSON.
+catapultScripts.rocks.dump(options).then(result => {
   let json = JSON.stringify(result, null, 4) + '\n'
   if (options.output !== undefined) {
     fs.writeFileSync(options.output, json)
