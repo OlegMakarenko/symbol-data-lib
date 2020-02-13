@@ -270,7 +270,7 @@ const createFormatter = collection => {
  */
 const dump = async options => {
   // Create a new rocksdb, read-only handle.
-  let path = `${options.dataDir}/${options.node}/statedb/${options.collection}`
+  let path = `${options.dataDir}/statedb/${options.collection}`
   let level = new Level(path)
   if (options.verbose) {
     console.info(`Connected to rocks at ${path}`)

@@ -5,7 +5,13 @@ Command-line scripts to facilitate debugging and accessing NEM MongoDB and Rocks
 
 # Getting Started
 
-First, build and link the scripts to allow them to be run globally:
+First, install the dependent modules.
+
+```bash
+npm install
+```
+
+Then, build and link the scripts to allow them to be run globally:
 
 ```bash
 npm run build
@@ -18,10 +24,10 @@ Next, you can run them globally:
 # Dump the mosaics collection from MongoDB.
 $ catapult-mongo-dump --collection mosaics --limit 1 --verbose
 Running catapult-mongo-dump with: 
-    database     = mongodb://localhost:27017/catapult
+    database     = mongodb://db:27017/catapult
     collection   = mosaics
     limit        = 1
-Connected to mongo at mongodb://localhost:27017/catapult
+Connected to mongo at mongodb://db:27017/catapult
 [
     {
         "mosaic": {
@@ -44,11 +50,10 @@ Connected to mongo at mongodb://localhost:27017/catapult
 $ catapult-rocks-dump --collection AccountStateCache --limit 1 --verbose
 Running catapult-rocks-dump with: 
     data-dir     = /data
-    node         = api-node-0
     collection   = AccountStateCache
     limit        = 1
     output       = stdout
-Connected to rocks at /data/api-node-0/statedb/AccountStateCache
+Connected to rocks at /data/statedb/AccountStateCache
 {
     "TD6BXOCQ3TQOKEWKGO4EAV6DO4B7TSSDM7M6B76C": {
         "address": "TD6BXOCQ3TQOKEWKGO4EAV6DO4B7TSSDM7M6B76C",
@@ -124,6 +129,32 @@ Connected to rocks at /data/api-node-0/statedb/AccountStateCache
     }
 }
 ```
+
+# Details
+
+The following scripts use paths by default within the Docker container, however, it may be easier to run them from outside the docker container (to avoid having to install NPM, cloning the repository, and installing the dependencies). To do so, we must expose port `27017` on the `db` image:
+
+```yaml
+  db:
+    ports:
+    - "27017:27017"
+```
+
+After starting our node, we can use the scripts above but customize the database path and data-dir to allow their use outside the container:
+
+```bash
+# Dump the mosaics collection from MongoDB.
+$ catapult-mongo-dump --database mongodb://localhost:27017/catapult \
+    --collection mosaics --limit 1 --verbose
+...
+
+# Dump the accounts collection from RocksDB.
+$ catapult-service-bootstrap="~/catapult-service-bootstrap"
+$ catapult-rocks-dump --data-dir "$catapult-service-bootstrap/data/api-node-0"  \
+    --collection AccountStateCache --limit 1 --verbose
+...
+```
+
 
 # License
 

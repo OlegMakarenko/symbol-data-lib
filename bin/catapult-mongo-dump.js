@@ -38,7 +38,7 @@ const options = yargs
   .option('database', {
     alias: 'd',
     describe: 'Path to Mongo database connection.',
-    default: 'mongodb://localhost:27017/catapult'
+    default: 'mongodb://db:27017/catapult'
   })
   .option('collection', {
     alias: 'c',

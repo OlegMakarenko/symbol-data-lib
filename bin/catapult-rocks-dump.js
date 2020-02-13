@@ -42,11 +42,6 @@ const options = yargs
     describe: 'Data directory for the RocksDB store.',
     default: '/data'
   })
-  .option('node', {
-    alias: 'n',
-    describe: 'Name of node to fetch data from.',
-    default: 'api-node-0'
-  })
   .option('collection', {
     alias: 'c',
     describe: 'Name of collection to dump.'
@@ -75,7 +70,6 @@ const options = yargs
 if (options.verbose) {
   console.info('Running catapult-rocks-dump with: ')
   console.info(`    data-dir     = ${options.dataDir}`)
-  console.info(`    node         = ${options.node}`)
   console.info(`    collection   = ${options.collection}`)
   console.info(`    limit        = ${options.limit}`)
   console.info(`    output       = ${options.output ? options.output : 'stdout'}`)

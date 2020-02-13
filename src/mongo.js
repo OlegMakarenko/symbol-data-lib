@@ -139,8 +139,11 @@ const createFormatter = collection => {
  *    @field verbose {Boolean}    - Display debug information.
  */
 const connect = async options => {
-  let opts = { promoteLongs: false, useNewUrlParser: true, useUnifiedTopology: true }
-  let client = await MongoDb.MongoClient.connect(options.database, opts)
+  let client = await MongoDb.MongoClient.connect(options.database, {
+    promoteLongs: false,
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
   if (options.verbose) {
     console.info(`Connected to mongo at ${options.database}`)
   }
