@@ -26,7 +26,9 @@ const ROCKS_COLLECTIONS = [
   'AccountStateCache',
   'HashCache',
   'HashLockInfoCache',
+  'MetadataCache',
   'MosaicCache',
+  'MosaicRestrictionCache',
   'MultisigCache',
   'NamespaceCache',
   'SecretLockInfoCache'

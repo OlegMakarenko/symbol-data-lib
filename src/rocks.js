@@ -30,6 +30,8 @@ const ALIAS_ADDRESS = 2
 const ACCOUNT_RESTRICTION_ADDRESS = 0x0001
 const ACCOUNT_RESTRICTION_MOSAIC_ID = 0x0002
 const ACCOUNT_RESTRICTION_TRANSACTION_TYPE = 0x0004
+const MOSAIC_RESTRICTION_ADDRESS = 0
+const MOSAIC_RESTRICTION_GLOBAL = 1
 
 // READERS
 
@@ -68,10 +70,12 @@ const readUint64 = data => {
   return [value, data.slice(8)]
 }
 
-const readHash256 = data => {
-  let hash = shared.binaryToHex(data.slice(0, 32))
-  return [hash, data.slice(32)]
+const readHexN = (data, n) => {
+  let key = shared.binaryToHex(data.slice(0, n))
+  return [key, data.slice(n)]
 }
+
+const readHash256 = data => readHexN(data, 32)
 
 const readId = data => {
   let uint64 = shared.binaryToUint64(data.slice(0, 8))
@@ -79,10 +83,7 @@ const readId = data => {
   return [value, data.slice(8)]
 }
 
-const readKey = data => {
-  let key = shared.binaryToHex(data.slice(0, 32))
-  return [key, data.slice(32)]
-}
+const readKey = data => readHexN(data, 32)
 
 const readEntityType = data => {
   return readUint16(data)
@@ -184,6 +185,50 @@ const readRootNamespace = (data, rootId) => {
   return [value, data]
 }
 
+const readMosaicRestrictions = (data, valueCallback) => {
+  // Create the generic callback for all restriction types.
+  let callback = data => {
+    var [key, data] = readUint64(data)
+    var [value, data] = valueCallback(data)
+    return [{key, value}, data]
+  }
+
+  // Read the restrictions.
+  var [keyCount, data] = readUint8(data)
+  let restrictions = []
+  data = readN(data, restrictions, keyCount, callback)
+
+  return [restrictions, data]
+}
+
+const readMosaicAddressRestrictionValue = data => readUint64(data)
+
+const readMosaicAddressRestriction = data => {
+  const entryType = MOSAIC_RESTRICTION_ADDRESS
+  var [mosaicId, data] = readId(data)
+  var [targetAddress, data] = readAddress(data)
+  var [restrictions, data] = readMosaicRestrictions(data, readMosaicAddressRestrictionValue)
+  let value = {entryType, mosaicId, targetAddress, restrictions}
+
+  return [value, data]
+}
+
+const readMosaicGlobalRestrictionValue = data => {
+  var [mosaicId, data] = readId(data)
+  var [value, data] = readUint64(data)
+  var [type, data] = readUint8(data)
+  return [{mosaicId, value, type}, data]
+}
+
+const readMosaicGlobalRestriction = data => {
+  const entryType = MOSAIC_RESTRICTION_GLOBAL
+  var [mosaicId, data] = readId(data)
+  var [restrictions, data] = readMosaicRestrictions(data, readMosaicGlobalRestrictionValue)
+  let value = {entryType, mosaicId, restrictions}
+
+  return [value, data]
+}
+
 const readN = (data, array, count, callback) => {
   for (let index = 0; index < count; index++) {
     let result = callback(data)
@@ -210,12 +255,30 @@ const readSolitaryValue = (data, callback) => {
  *  Address = uint8_t[25];
  *  Key = uint8_t[32];
  *  Height = uint64_t;
+ *  MosaicId = uint64_t;
+ *  NamespaceId = uint64_t;
  *  AccountType = uint8_t;
+ *  Hash256 = uint8_t[32];
  */
 const format = {
   AccountRestrictionCache: {
     key: key => readRocksKey(key, readAddress),
     value: data => {
+      // Model:
+      //  Note: Restriction can be an address, mosaic ID, or entity type.
+      //
+      //  struct AccountRestriction {
+      //    uint16_t flags;
+      //    uint64_t count;
+      //    Restriction[count] values;
+      //  }
+      //
+      //  struct AccountRestrictions {
+      //    Address address;
+      //    uint64_t restrictionsSize;
+      //    AccountRestriction[restrictionsSize] restrictions;
+      //  }
+
       // Parse Information
       data = validateStateInformation(data, 1)
       var [address, data] = readAddress(data)
@@ -317,6 +380,16 @@ const format = {
   HashLockInfoCache: {
     key: key => readSolitaryValue(key, readHash256),
     value: data => {
+      // Model:
+      //  struct HashLockInfo {
+      //    Key senderPublicKey;
+      //    MosaicId mosaicId;
+      //    uint64_t amount;
+      //    Height endHeight;
+      //    uint8_t status;
+      //    Hash256 hash;
+      //  }
+
       // Parse Information
       data = validateStateInformation(data, 1)
       var [senderPublicKey, data] = readKey(data)
@@ -342,19 +415,58 @@ const format = {
   },
 
   MetadataCache: {
-    key: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
-    },
+    key: key => readSolitaryValue(key, readHash256),
     value: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
+      // Model:
+      //  Note: targetId can be either a MosaicId, a NamespaceId, or all 0s.
+      //
+      //  struct SecretLockInfo {
+      //    Key sourcePublicKey;
+      //    Key targetPublicKey;
+      //    uint64_t scopedMetadataKey;
+      //    uint64_t targetId;
+      //    uint8_t metadataType;
+      //    uint16_t valueSize;
+      //    uint8_t[valueSize] value;
+      //  }
+
+      // Parse Information
+      data = validateStateInformation(data, 1)
+      var [sourcePublicKey, data] = readKey(data)
+      var [targetPublicKey, data] = readKey(data)
+      var [scopedMetadataKey, data] = readUint64(data)
+      var [targetId, data] = readId(data)
+      var [metadataType, data] = readUint8(data)
+      var [valueSize, data] = readUint16(data)
+      var [value, data] = readHexN(data, valueSize)
+      let key = {sourcePublicKey, targetPublicKey, scopedMetadataKey, targetId, metadataType}
+
+      if (data.length !== 0) {
+        throw new Error('invalid trailing data')
+      }
+
+      return {
+        key,
+        value
+      }
     }
   },
 
   MosaicCache: {
     key: key => readSolitaryValue(key, readId),
     value: data => {
+      // Model:
+      //  struct Mosaic {
+      //    MosaicId mosaicId;
+      //    uint64_t supply;
+      //    Height height;
+      //    Key ownerPublicKey;
+      //    uint32_t revision;
+      //    uint8_t flags;
+      //    uint8_t divisibility;
+      //    uint64_t duration;
+      //  }
+
       // Parse Information
       data = validateStateInformation(data, 1)
       var [mosaicId, data] = readId(data)
@@ -384,19 +496,66 @@ const format = {
   },
 
   MosaicRestrictionCache: {
-    key: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
-    },
+    key: key => readSolitaryValue(key, readHash256),
     value: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
+      // Model:
+      //  struct MosaicRestrictionMixin {
+      //    uint8_t entryType;
+      //    MosaicId mosaicId;
+      //  }
+      //
+      //  struct MosaicAddressRestrictionPair {
+      //    uint64_t key;
+      //    uint64_t value;
+      //  }
+      //
+      //  struct MosaicAddressRestriction: MosaicRestrictionMixin {
+      //    Address targetAddress;
+      //    uint8_t restrictionsCount;
+      //    MosaicAddressRestrictionPair[restrictionsCount] restrictions;
+      //  }
+      //
+      //  struct MosaicGlobalRestrictionPair {
+      //    uint64_t key;
+      //    struct {
+      //      MosaicId mosaicId;
+      //      uint64_t value;
+      //      uint8_t value;
+      //    } value;
+      //  }
+      //
+      //  struct MosaicGlobalRestriction: MosaicRestrictionMixin {
+      //    uint8_t restrictionsCount;
+      //    MosaicGlobalRestrictionPair[restrictionsCount] restrictions;
+      //  }
+
+      // Parse Information
+      data = validateStateInformation(data, 1)
+      var [entryType, data] = readUint8(data)
+      if (entryType === MOSAIC_RESTRICTION_ADDRESS) {
+        return readSolitaryValue(data, readMosaicAddressRestriction)
+      } else if (entryType === MOSAIC_RESTRICTION_GLOBAL) {
+        return readSolitaryValue(data, readMosaicGlobalRestriction)
+      } else {
+        throw new Error(`invalid mosaic restriction type, got ${entryType}`)
+      }
     }
   },
 
   MultisigCache: {
     key: key => readSolitaryValue(key, readKey),
     value: data => {
+      // Model:
+      //  struct MultisigEntry {
+      //    uint32_t minApproval;
+      //    uint32_t minRemoval;
+      //    Key key;
+      //    uint64_t cosignatoryCount;
+      //    Key[cosignatoryCount] cosignatories;
+      //    uint64_t multisigCount;
+      //    Key[multisigCount] multisigs;
+      //  }
+
       // Parse Information
       data = validateStateInformation(data, 1)
       var [minApproval, data] = readUint32(data)
@@ -426,6 +585,44 @@ const format = {
   NamespaceCache: {
     key: key => readSolitaryValue(key, readId),
     value: data => {
+      // Model:
+      //  Note: Alias can be NoneAlias, AddressAlias, or MosaicAlias.
+      //
+      //  struct NoneAlias {
+      //    uint8_t type;
+      //  }
+      //
+      //  struct AddressAlias {
+      //    uint8_t type;
+      //    Address address;
+      //  }
+      //
+      //  struct MosaicAlias {
+      //    uint8_t type;
+      //    MosaicId mosaicId;
+      //  }
+      //
+      //  struct ChildNamespace {
+      //    uint8_t childDepth;
+      //    MosaicId[childDepth] path;
+      //    Alias alias;
+      //  }
+      //
+      //  struct RootNamespace {
+      //    Key owner;
+      //    Height lifetimeStart;
+      //    Height lifetimeEnd;
+      //    Alias alias;
+      //    uint64_t childrenCount;
+      //    ChildNamespace[childrenCount] children;
+      //  }
+      //
+      //  struct NamespaceRootHistory {
+      //    uint64_t historyDepth;
+      //    NamespaceId namespaceId;
+      //    RootNamespace[historyDepth] rootNamespace;
+      //  }
+
       // Parse Information
       data = validateStateInformation(data, 1)
       var [historyDepth, data] = readUint64(data)
@@ -448,6 +645,18 @@ const format = {
   SecretLockInfoCache: {
     key: key => readSolitaryValue(key, readHash256),
     value: data => {
+      // Model:
+      //  struct SecretLockInfo {
+      //    Key senderPublicKey;
+      //    MosaicId mosaicId;
+      //    uint64_t amount;
+      //    Height endHeight;
+      //    uint8_t status;
+      //    uint8_t hashAlgorithm;
+      //    Hash256 secret;
+      //    Address recipientAddress;
+      //  }
+
       // Parse Information
       data = validateStateInformation(data, 1)
       var [senderPublicKey, data] = readKey(data)
