@@ -24,6 +24,12 @@ import catapultScripts from '../src'
 const ROCKS_COLLECTIONS = [
   'AccountRestrictionCache',
   'AccountStateCache',
+  'HashCache',
+  'HashLockInfoCache',
+  'MosaicCache',
+  'MultisigCache',
+  'NamespaceCache',
+  'SecretLockInfoCache'
 ]
 
 // ARGUMENTS

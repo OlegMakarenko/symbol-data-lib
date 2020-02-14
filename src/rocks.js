@@ -24,11 +24,22 @@ import shared from './shared'
 const ROLLBACK_BUFFER_SIZE = 2
 const IMPORTANCE_HISTORY_SIZE = 1 + ROLLBACK_BUFFER_SIZE
 const ACTIVITY_BUCKET_HISTORY_SIZE = 5 + ROLLBACK_BUFFER_SIZE
+const ALIAS_NONE = 0
+const ALIAS_MOSAIC = 1
+const ALIAS_ADDRESS = 2
 const ACCOUNT_RESTRICTION_ADDRESS = 0x0001
 const ACCOUNT_RESTRICTION_MOSAIC_ID = 0x0002
 const ACCOUNT_RESTRICTION_TRANSACTION_TYPE = 0x0004
 
 // READERS
+
+const validateStateInformation = (data, expected) => {
+  var [stateVersion, data] = readUint16(data)
+  if (stateVersion != expected) {
+    throw new Error(`invalid StateVersion, got ${stateVersion}`)
+  }
+  return data
+}
 
 const readAddress = data => {
   let address = shared.binaryToBase32(data.slice(0, 25))
@@ -55,6 +66,11 @@ const readUint64 = data => {
   let long = new MongoDb.Long(uint64[0], uint64[1])
   let value = long.toString()
   return [value, data.slice(8)]
+}
+
+const readHash256 = data => {
+  let hash = shared.binaryToHex(data.slice(0, 32))
+  return [hash, data.slice(32)]
 }
 
 const readId = data => {
@@ -111,6 +127,63 @@ const readActivityBucket = data => {
   return [value, data]
 }
 
+const readTimestampedHash = data => {
+  var [time, data] = readUint64(data)
+  var [hash, data] = readHash256(data)
+  let value = `${time}@${hash}`
+  return [value, data]
+}
+
+const readEmpty = data => {
+  return [null, data]
+}
+
+const readAlias = data => {
+  var [type, data] = readUint8(data)
+  if (type === ALIAS_MOSAIC) {
+    var [mosaicId, data] = readId(data)
+    return [{type, mosaicId}, data]
+  } else if (type === ALIAS_ADDRESS) {
+    var [address, data] = readAddress(data)
+    return [{type, address}, data]
+  } else {
+    return [{type}, data]
+  }
+}
+
+const readChildrenNamespace = (data, rootId) => {
+  // Read the path
+  var [childDepth, data] = readUint8(data)
+  let path = [rootId]
+  data = readN(data, path, childDepth, readId)
+  let namespace = path.join('.')
+
+  // Read the alias.
+  var [alias, data] = readAlias(data)
+
+  return [{namespace, alias}, data]
+}
+
+const readRootNamespace = (data, rootId) => {
+  var [owner, data] = readKey(data)
+  var [lifetimeStart, data] = readUint64(data)
+  var [lifetimeEnd, data] = readUint64(data)
+  var [alias, data] = readAlias(data)
+  var [childrenCount, data] = readUint64(data)
+  let children = []
+  let callback = x => readChildrenNamespace(x, rootId)
+  data = readN(data, children, parseInt(childrenCount), callback)
+  let value = {
+    owner,
+    lifetimeStart,
+    lifetimeEnd,
+    alias,
+    children
+  }
+
+  return [value, data]
+}
+
 const readN = (data, array, count, callback) => {
   for (let index = 0; index < count; index++) {
     let result = callback(data)
@@ -118,6 +191,14 @@ const readN = (data, array, count, callback) => {
     data = result[1]
   }
   return data
+}
+
+const readSolitaryValue = (data, callback) => {
+  var [key, data] = callback(data)
+  if (data.length !== 0) {
+    throw new Error('invalid trailing data')
+  }
+  return key
 }
 
 // FORMATTERS
@@ -133,20 +214,18 @@ const readN = (data, array, count, callback) => {
  */
 const format = {
   AccountRestrictionCache: {
-    key: key => readAddress(key)[0],
-    value: item => {
-      // Constants
-      const expectedStateVersion = 1
-
+    key: key => readRocksKey(key, readAddress),
+    value: data => {
       // Parse Information
-      var [stateVersion, data] = readUint16(data)
-      if (stateVersion != expectedStateVersion) {
-        throw new Error(`invalid StateVersion, got ${stateVersion}`)
-      }
+      data = validateStateInformation(data, 1)
       var [address, data] = readAddress(data)
       let restrictions = []
       var [restrictionsCount, data] = readUint64(data)
       data = readN(data, restrictions, restrictionsCount, readAccountRestriction)
+
+      if (data.length !== 0) {
+        throw new Error('invalid trailing data')
+      }
 
       return {
         address,
@@ -156,12 +235,11 @@ const format = {
   },
 
   AccountStateCache: {
-    key: key => readAddress(key)[0],
+    key: key => readRocksKey(key, readAddress),
     value: data => {
       // Constants
       const regular = 0
       const highValue = 1
-      const expectedStateVersion = 1
       const importanceSize = IMPORTANCE_HISTORY_SIZE - ROLLBACK_BUFFER_SIZE
       const activityBucketsSize = ACTIVITY_BUCKET_HISTORY_SIZE - ROLLBACK_BUFFER_SIZE
 
@@ -179,10 +257,7 @@ const format = {
       //  }
 
       // Parse Non-Historical Information
-      var [stateVersion, data] = readUint16(data)
-      if (stateVersion != expectedStateVersion) {
-        throw new Error(`invalid StateVersion, got ${stateVersion}`)
-      }
+      data = validateStateInformation(data, 1)
       var [address, data] = readAddress(data)
       var [addressHeight, data] = readUint64(data)
       var [publicKey, data] = readKey(data)
@@ -235,24 +310,34 @@ const format = {
   },
 
   HashCache: {
-    key: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
-    },
-    value: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
-    }
+    key: key => readSolitaryValue(key, readTimestampedHash),
+    value: value => readSolitaryValue(value, readEmpty)
   },
 
   HashLockInfoCache: {
-    key: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
-    },
+    key: key => readSolitaryValue(key, readHash256),
     value: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
+      // Parse Information
+      data = validateStateInformation(data, 1)
+      var [senderPublicKey, data] = readKey(data)
+      var [mosaicId, data] = readId(data)
+      var [amount, data] = readUint64(data)
+      var [endHeight, data] = readUint64(data)
+      var [status, data] = readUint8(data)
+      var [hash, data] = readHash256(data)
+
+      if (data.length !== 0) {
+        throw new Error('invalid trailing data')
+      }
+
+      return {
+        senderPublicKey,
+        mosaicId,
+        amount,
+        endHeight,
+        status,
+        hash
+      }
     }
   },
 
@@ -268,13 +353,33 @@ const format = {
   },
 
   MosaicCache: {
-    key: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
-    },
+    key: key => readSolitaryValue(key, readId),
     value: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
+      // Parse Information
+      data = validateStateInformation(data, 1)
+      var [mosaicId, data] = readId(data)
+      var [supply, data] = readUint64(data)
+      var [height, data] = readUint64(data)
+      var [ownerPublicKey, data] = readKey(data)
+      var [revision, data] = readUint32(data)
+      var [flags, data] = readUint8(data)
+      var [divisibility, data] = readUint8(data)
+      var [duration, data] = readUint64(data)
+
+      if (data.length !== 0) {
+        throw new Error('invalid trailing data')
+      }
+
+      return {
+        mosaicId,
+        supply,
+        height,
+        ownerPublicKey,
+        revision,
+        flags,
+        divisibility,
+        duration
+      }
     }
   },
 
@@ -290,35 +395,84 @@ const format = {
   },
 
   MultisigCache: {
-    key: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
-    },
+    key: key => readSolitaryValue(key, readKey),
     value: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
+      // Parse Information
+      data = validateStateInformation(data, 1)
+      var [minApproval, data] = readUint32(data)
+      var [minRemoval, data] = readUint32(data)
+      var [key, data] = readKey(data)
+      let cosignatoryPublicKeys = []
+      var [cosignatoryPublicKeysCount, data] = readUint64(data)
+      data = readN(data, cosignatoryPublicKeys, parseInt(cosignatoryPublicKeysCount), readKey)
+      let multisigPublicKeys = []
+      var [multisigPublicKeysCount, data] = readUint64(data)
+      data = readN(data, multisigPublicKeys, parseInt(multisigPublicKeysCount), readKey)
+
+      if (data.length !== 0) {
+        throw new Error('invalid trailing data')
+      }
+
+      return {
+        minApproval,
+        minRemoval,
+        key,
+        cosignatoryPublicKeys,
+        multisigPublicKeys
+      }
     }
   },
 
   NamespaceCache: {
-    key: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
-    },
+    key: key => readSolitaryValue(key, readId),
     value: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
+      // Parse Information
+      data = validateStateInformation(data, 1)
+      var [historyDepth, data] = readUint64(data)
+      var [namespaceId, data] = readId(data)
+      let rootNamespace = []
+      let callback = x => readRootNamespace(x, namespaceId)
+      data = readN(data, rootNamespace, parseInt(historyDepth), callback)
+
+      if (data.length !== 0) {
+        throw new Error('invalid trailing data')
+      }
+
+      return {
+        namespaceId,
+        rootNamespace
+      }
     }
   },
 
   SecretLockInfoCache: {
-    key: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
-    },
+    key: key => readSolitaryValue(key, readHash256),
     value: data => {
-      // TODO(ahuszagh) Implement...
-      throw new Error('not yet implemented')
+      // Parse Information
+      data = validateStateInformation(data, 1)
+      var [senderPublicKey, data] = readKey(data)
+      var [mosaicId, data] = readId(data)
+      var [amount, data] = readUint64(data)
+      var [endHeight, data] = readUint64(data)
+      var [status, data] = readUint8(data)
+      var [hashAlgorithm, data] = readUint8(data)
+      var [secret, data] = readHash256(data)
+      var [recipientAddress, data] = readAddress(data)
+
+      if (data.length !== 0) {
+        throw new Error('invalid trailing data')
+      }
+
+      return {
+        senderPublicKey,
+        mosaicId,
+        amount,
+        endHeight,
+        status,
+        hashAlgorithm,
+        secret,
+        recipientAddress
+      }
     }
   }
 }
@@ -345,22 +499,27 @@ const dump = async options => {
 
   // Iterate up to limit values, and assign to result.
   let result = {}
-  let limit = options.limit
+  let limit = options.limit || Number.MAX_SAFE_INTEGER
   let formatter = format[options.collection]
   let iterator = level.iterator()
   do {
     // Fetch the next item from the map.
     // Break if we've got no more values, or we've reached the SIZE key.
     let item = await iterator.next()
-    if (item === null || item.encodedKey.equals(Level.size_key)) {
+    if (item === null) {
       break
+    } else if (item.encodedKey.equals(Level.size_key)) {
+      continue
     }
 
     // Decode key/value and assign to result.
     let key = formatter.key(item.encodedKey)
     let value = formatter.value(item.encodedValue)
     result[key] = value
-  } while (--limit !== 0)
+
+    // Decrement our limit on a successful iteration.
+    --limit
+  } while (limit !== 0)
 
   // Close the rocksdb handle.
   await level.close()

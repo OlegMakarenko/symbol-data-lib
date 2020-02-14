@@ -108,11 +108,16 @@ const format = {
     }
   }),
 
-  addressResolutionStatements: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  },
+  addressResolutionStatements: item => ({
+    statement: {
+      height: item.statement.height.toString(),
+      unresolved: binaryToBase32(item.statement.unresolved),
+      resolutionEntries: item.statement.resolutionEntries.map(entry => ({
+        source: entry.source,
+        resolved: binaryToBase32(entry.resolved)
+      }))
+    }
+  }),
 
   blocks: item => ({
     meta: {
@@ -153,8 +158,10 @@ const format = {
 
   hashLocks: item => ({
     lock: {
-      senderPublicKey: binaryToHex(item.lock.senderPublicKey),
-      senderAddress: binaryToBase32(item.lock.senderAddress),
+      sender: {
+        publicKey: binaryToHex(item.lock.senderPublicKey),
+        address: binaryToBase32(item.lock.senderAddress)
+      },
       mosaicId: idToHex(item.lock.mosaicId),
       amount: item.lock.amount.toString(),
       endHeight: item.lock.endHeight.toString(),
@@ -264,11 +271,20 @@ const format = {
     throw new Error('not yet implemented')
   },
 
-  secretLocks: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  },
+  secretLocks: item => ({
+    lock: {
+      sender: {
+        publicKey: binaryToHex(item.lock.senderPublicKey),
+        address: binaryToBase32(item.lock.senderAddress)
+      },
+      mosaicId: idToHex(item.lock.mosaicId),
+      amount: item.lock.amount.toString(),
+      endHeight: item.lock.endHeight.toString(),
+      hashAlgorithm: item.lock.hashAlgorithm,
+      secret: binaryToHex(item.lock.secret),
+      recipientAddress: binaryToBase32(item.lock.recipientAddress)
+    }
+  }),
 
   transactionStatements: item => ({
     statement: {
@@ -278,11 +294,13 @@ const format = {
     }
   }),
 
-  transactionStatuses: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  },
+  transactionStatuses: item => ({
+    status: {
+      hash: binaryToHex(item.status.hash),
+      code: item.status.code,
+      deadline: item.status.deadline.toString()
+    }
+  }),
 
   transactions: item => {
     // TODO(ahuszagh) Implement...

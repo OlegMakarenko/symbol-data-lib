@@ -23,6 +23,7 @@ import catapultScripts from '../src'
 
 const MONGO_COLLECTIONS = [
   'accounts',
+  'addressResolutionStatements',
   'blocks',
   'chainStatistic',
   'hashLocks',
@@ -30,7 +31,9 @@ const MONGO_COLLECTIONS = [
   'mosaics',
   'multisigs',
   'namespaces',
-  'transactionStatements'
+  'secretLocks',
+  'transactionStatements',
+  'transactionStatuses'
 ]
 
 // ARGUMENTS
