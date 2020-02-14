@@ -35,215 +35,285 @@ const MOSAIC_RESTRICTION_GLOBAL = 1
 
 // READERS
 
-const validateStateInformation = (data, expected) => {
-  var [stateVersion, data] = readUint16(data)
-  if (stateVersion != expected) {
-    throw new Error(`invalid StateVersion, got ${stateVersion}`)
-  }
-  return data
-}
-
-const readAddress = data => {
-  let address = shared.binaryToBase32(data.slice(0, 25))
-  return [address, data.slice(25)]
-}
-
-const readUint8 = data => {
-  let value = shared.binaryToUint8(data.slice(0, 1))
-  return [value, data.slice(1)]
-}
-
-const readUint16 = data => {
-  let value = shared.binaryToUint16(data.slice(0, 2))
-  return [value, data.slice(2)]
-}
-
-const readUint32 = data => {
-  let value = shared.binaryToUint32(data.slice(0, 4))
-  return [value, data.slice(4)]
-}
-
-const readUint64 = data => {
-  let uint64 = shared.binaryToUint64(data.slice(0, 8))
-  let long = new MongoDb.Long(uint64[0], uint64[1])
-  let value = long.toString()
-  return [value, data.slice(8)]
-}
-
-const readHexN = (data, n) => {
-  let key = shared.binaryToHex(data.slice(0, n))
-  return [key, data.slice(n)]
-}
-
-const readHash256 = data => readHexN(data, 32)
-
-const readId = data => {
-  let uint64 = shared.binaryToUint64(data.slice(0, 8))
-  let value = shared.idToHex(uint64)
-  return [value, data.slice(8)]
-}
-
-const readKey = data => readHexN(data, 32)
-
-const readEntityType = data => {
-  return readUint16(data)
-}
-
-const readAccountRestriction = data => {
-  var [flags, data] = readUint16(data)
-  var [valuesCount, data] = readUint64(data)
-  let values = []
-  if ((flags & ACCOUNT_RESTRICTION_ADDRESS) !== 0) {
-    data = readN(data, values, valuesCount, readAddress)
-  } else if ((flags & ACCOUNT_RESTRICTION_MOSAIC_ID) !== 0) {
-    data = readN(data, values, valuesCount, readId)
-  } else if ((flags & ACCOUNT_RESTRICTION_TRANSACTION_TYPE) !== 0) {
-    data = readN(data, values, valuesCount, readEntityType)
-  } else {
-    throw new Error(`invalid account restriction flags, got ${flags}`)
+class Reader {
+  constructor(data) {
+    this.data = data
   }
 
-  let value = {flags, values}
-  return [value, data]
-}
+  // STATE VERSION
 
-const readMosaic = data => {
-  var [mosaicId, data] = readId(data)
-  var [amount, data] = readUint64(data)
-  return [{mosaicId, amount}, data]
-}
-
-const readImportance = data => {
-  var [value, data] = readUint64(data)
-  var [height, data] = readUint64(data)
-  return [{value, height}, data]
-}
-
-const readActivityBucket = data => {
-  var [startHeight, data] = readUint64(data)
-  var [totalFeesPaid, data] = readUint64(data)
-  var [beneficiaryCount, data] = readUint32(data)
-  var [rawScore, data] = readUint64(data)
-  let value = {startHeight, totalFeesPaid, beneficiaryCount, rawScore}
-  return [value, data]
-}
-
-const readTimestampedHash = data => {
-  var [time, data] = readUint64(data)
-  var [hash, data] = readHash256(data)
-  let value = `${time}@${hash}`
-  return [value, data]
-}
-
-const readEmpty = data => {
-  return [null, data]
-}
-
-const readAlias = data => {
-  var [type, data] = readUint8(data)
-  if (type === ALIAS_MOSAIC) {
-    var [mosaicId, data] = readId(data)
-    return [{type, mosaicId}, data]
-  } else if (type === ALIAS_ADDRESS) {
-    var [address, data] = readAddress(data)
-    return [{type, address}, data]
-  } else {
-    return [{type}, data]
-  }
-}
-
-const readChildrenNamespace = (data, rootId) => {
-  // Read the path
-  var [childDepth, data] = readUint8(data)
-  let path = [rootId]
-  data = readN(data, path, childDepth, readId)
-  let namespace = path.join('.')
-
-  // Read the alias.
-  var [alias, data] = readAlias(data)
-
-  return [{namespace, alias}, data]
-}
-
-const readRootNamespace = (data, rootId) => {
-  var [owner, data] = readKey(data)
-  var [lifetimeStart, data] = readUint64(data)
-  var [lifetimeEnd, data] = readUint64(data)
-  var [alias, data] = readAlias(data)
-  var [childrenCount, data] = readUint64(data)
-  let children = []
-  let callback = x => readChildrenNamespace(x, rootId)
-  data = readN(data, children, parseInt(childrenCount), callback)
-  let value = {
-    owner,
-    lifetimeStart,
-    lifetimeEnd,
-    alias,
-    children
+  validateStateVersion(expected) {
+    let version = this.uint16()
+    if (version != expected) {
+      throw new Error(`invalid state version, got ${version}`)
+    }
   }
 
-  return [value, data]
-}
+  // EMPTY
 
-const readMosaicRestrictions = (data, valueCallback) => {
-  // Create the generic callback for all restriction types.
-  let callback = data => {
-    var [key, data] = readUint64(data)
-    var [value, data] = valueCallback(data)
-    return [{key, value}, data]
+  validateEmpty() {
+    if (this.data.length !== 0) {
+      throw new Error('invalid trailing data')
+    }
   }
 
-  // Read the restrictions.
-  var [keyCount, data] = readUint8(data)
-  let restrictions = []
-  data = readN(data, restrictions, keyCount, callback)
+  // READERS
 
-  return [restrictions, data]
-}
-
-const readMosaicAddressRestrictionValue = data => readUint64(data)
-
-const readMosaicAddressRestriction = data => {
-  const entryType = MOSAIC_RESTRICTION_ADDRESS
-  var [mosaicId, data] = readId(data)
-  var [targetAddress, data] = readAddress(data)
-  var [restrictions, data] = readMosaicRestrictions(data, readMosaicAddressRestrictionValue)
-  let value = {entryType, mosaicId, targetAddress, restrictions}
-
-  return [value, data]
-}
-
-const readMosaicGlobalRestrictionValue = data => {
-  var [mosaicId, data] = readId(data)
-  var [value, data] = readUint64(data)
-  var [type, data] = readUint8(data)
-  return [{mosaicId, value, type}, data]
-}
-
-const readMosaicGlobalRestriction = data => {
-  const entryType = MOSAIC_RESTRICTION_GLOBAL
-  var [mosaicId, data] = readId(data)
-  var [restrictions, data] = readMosaicRestrictions(data, readMosaicGlobalRestrictionValue)
-  let value = {entryType, mosaicId, restrictions}
-
-  return [value, data]
-}
-
-const readN = (data, array, count, callback) => {
-  for (let index = 0; index < count; index++) {
-    let result = callback(data)
-    array.push(result[0])
-    data = result[1]
+  callback(fn) {
+    if (typeof fn === 'string') {
+      return () => this[fn]()
+    } else {
+      return fn
+    }
   }
-  return data
-}
 
-const readSolitaryValue = (data, callback) => {
-  var [key, data] = callback(data)
-  if (data.length !== 0) {
-    throw new Error('invalid trailing data')
+  static solitary(data, fn) {
+    let reader = new Reader(data)
+    let callback = reader.callback(fn)
+    let value = callback()
+    reader.validateEmpty()
+    return value
   }
-  return key
+
+  n(array, count, fn) {
+    let callback = this.callback(fn)
+    for (let index = 0; index < count; index++) {
+      array.push(callback.call())
+    }
+  }
+
+  uint8() {
+    let value = shared.binaryToUint8(this.data.slice(0, 1))
+    this.data = this.data.slice(1)
+    return value
+  }
+
+  uint16() {
+    let value = shared.binaryToUint16(this.data.slice(0, 2))
+    this.data = this.data.slice(2)
+    return value
+  }
+
+  uint32() {
+    let value = shared.binaryToUint32(this.data.slice(0, 4))
+    this.data = this.data.slice(4)
+    return value
+  }
+
+  uint64() {
+    let uint64 = shared.binaryToUint64(this.data.slice(0, 8))
+    let long = new MongoDb.Long(uint64[0], uint64[1])
+    let value = long.toString()
+    this.data = this.data.slice(8)
+    return value
+  }
+
+  base32N(n) {
+    let value = shared.binaryToBase32(this.data.slice(0, n))
+    this.data = this.data.slice(n)
+    return value
+  }
+
+  hexN(n) {
+    let value = shared.binaryToHex(this.data.slice(0, n))
+    this.data = this.data.slice(n)
+    return value
+  }
+
+  address() {
+    return this.base32N(25)
+  }
+
+  hash256() {
+    return this.hexN(32)
+  }
+
+  key() {
+    return this.hexN(32)
+  }
+
+  id() {
+    let uint64 = shared.binaryToUint64(this.data.slice(0, 8))
+    let value = shared.idToHex(uint64)
+    this.data = this.data.slice(8)
+    return value
+  }
+
+  entityType() {
+    return this.uint16()
+  }
+
+  accountRestriction() {
+    let flags = this.uint16()
+    let valuesCount = this.uint64()
+    let values = []
+    if ((flags & ACCOUNT_RESTRICTION_ADDRESS) !== 0) {
+      this.n(values, parseInt(valuesCount), 'address')
+    } else if ((flags & ACCOUNT_RESTRICTION_MOSAIC_ID) !== 0) {
+      this.n(values, parseInt(valuesCount), 'id')
+    } else if ((flags & ACCOUNT_RESTRICTION_TRANSACTION_TYPE) !== 0) {
+      this.n(values, parseInt(valuesCount), 'entityType')
+    } else {
+      throw new Error(`invalid account restriction flags, got ${flags}`)
+    }
+
+    return {
+      flags,
+      values
+    }
+  }
+
+  mosaic() {
+    let mosaicId = this.id()
+    let amount = this.uint64()
+
+    return {
+      mosaicId,
+      amount
+    }
+  }
+
+  importance() {
+    let value = this.uint64()
+    let height = this.uint64()
+
+    return {
+      value,
+      height
+    }
+  }
+
+  activityBucket() {
+    let startHeight = this.uint64()
+    let totalFeesPaid = this.uint64()
+    let beneficiaryCount = this.uint32()
+    let rawScore = this.uint64()
+
+    return {
+      startHeight,
+      totalFeesPaid,
+      beneficiaryCount,
+      rawScore
+    }
+  }
+
+  timestampedHash() {
+    let time = this.uint64()
+    let hash = this.hash256()
+    return `${time}@${hash}`
+  }
+
+  empty() {
+    return null
+  }
+
+  mosaicRestrictions(valueFn) {
+    // Create the generic callback for all restriction types.
+    let valueCallback = this.callback(valueFn)
+    let callback = () => {
+      let key = this.uint64()
+      let value = valueCallback()
+      return {key, value}
+    }
+
+    // Read the restrictions.
+    let keyCount = this.uint8()
+    let restrictions = []
+    this.n(restrictions, keyCount, callback)
+    return restrictions
+  }
+
+  mosaicAddressRestrictionValue() {
+    return this.uint64()
+  }
+
+  mosaicAddressRestriction() {
+    const entryType = MOSAIC_RESTRICTION_ADDRESS
+    let mosaicId = this.id()
+    let targetAddress = this.address()
+    let restrictions = this.mosaicRestrictions('mosaicAddressRestrictionValue')
+
+    return {
+      entryType,
+      mosaicId,
+      targetAddress,
+      restrictions
+    }
+  }
+
+  mosaicGlobalRestrictionValue() {
+    let mosaicId = this.id()
+    let value = this.uint64()
+    let type = this.uint8()
+
+    return {
+      mosaicId,
+      value,
+      type
+    }
+  }
+
+  mosaicGlobalRestriction() {
+    const entryType = MOSAIC_RESTRICTION_GLOBAL
+    let mosaicId = this.id()
+    let restrictions = this.mosaicRestrictions('mosaicGlobalRestrictionValue')
+
+    return {
+      entryType,
+      mosaicId,
+      restrictions
+    }
+  }
+
+  alias() {
+    let type = this.uint8()
+    if (type === ALIAS_MOSAIC) {
+      let mosaicId = this.id()
+      return {type, mosaicId}
+    } else if (type === ALIAS_ADDRESS) {
+      let address = this.address()
+      return {type, address}
+    } else if (type === ALIAS_NONE) {
+      return {type}
+    } else {
+      throw new Error(`invalid alias type ${type}`)
+    }
+  }
+
+  childNamespace(rootId) {
+    // Read the fully qualified path.
+    let depth = this.uint8()
+    let path = [rootId]
+    this.n(path, depth, 'id')
+    let namespace = path.join('.')
+
+    // Read the alias
+    let alias = this.alias()
+
+    return {
+      namespace,
+      alias
+    }
+  }
+
+  rootNamespace(rootId) {
+    let owner = this.key()
+    let lifetimeStart = this.uint64()
+    let lifetimeEnd = this.uint64()
+    let alias = this.alias()
+    let childrenCount = this.uint64()
+    let children = []
+    let callback = () => this.childNamespace(rootId)
+    this.n(children, parseInt(childrenCount), callback)
+
+    return {
+      owner,
+      lifetimeStart,
+      lifetimeEnd,
+      alias,
+      children
+    }
+  }
 }
 
 // FORMATTERS
@@ -262,7 +332,7 @@ const readSolitaryValue = (data, callback) => {
  */
 const format = {
   AccountRestrictionCache: {
-    key: key => readRocksKey(key, readAddress),
+    key: key => Reader.solitary(key, 'address'),
     value: data => {
       // Model:
       //  Note: Restriction can be an address, mosaic ID, or entity type.
@@ -280,15 +350,13 @@ const format = {
       //  }
 
       // Parse Information
-      data = validateStateInformation(data, 1)
-      var [address, data] = readAddress(data)
+      let reader = new Reader(data)
+      reader.validateStateVersion(1)
+      let address = reader.address()
+      let restrictionsCount = reader.uint64()
       let restrictions = []
-      var [restrictionsCount, data] = readUint64(data)
-      data = readN(data, restrictions, restrictionsCount, readAccountRestriction)
-
-      if (data.length !== 0) {
-        throw new Error('invalid trailing data')
-      }
+      reader.n(restrictions, restrictionsCount, 'accountRestriction')
+      reader.validateEmpty()
 
       return {
         address,
@@ -298,7 +366,7 @@ const format = {
   },
 
   AccountStateCache: {
-    key: key => readRocksKey(key, readAddress),
+    key: key => Reader.solitary(key, 'address'),
     value: data => {
       // Constants
       const regular = 0
@@ -320,14 +388,16 @@ const format = {
       //  }
 
       // Parse Non-Historical Information
-      data = validateStateInformation(data, 1)
-      var [address, data] = readAddress(data)
-      var [addressHeight, data] = readUint64(data)
-      var [publicKey, data] = readKey(data)
-      var [publicKeyHeight, data] = readUint64(data)
-      var [accountType, data] = readUint8(data)
-      var [linkedAccountKey, data] = readKey(data)
-      var [format, data] = readUint8(data)
+      let reader = new Reader(data)
+      reader.validateStateVersion(1)
+      let address = reader.address()
+      let addressHeight = reader.uint64()
+      let publicKey = reader.key()
+      let publicKeyHeight = reader.uint64()
+      let accountType = reader.uint8()
+      let linkedAccountKey = reader.key()
+      let format = reader.uint8()
+
       let importances = []
       let activityBuckets = []
       let mosaics = []
@@ -335,28 +405,26 @@ const format = {
         // No-op, no non-historical data
       } else if (format === highValue) {
         // Read non-historical data.
-        data = readN(data, importances, importanceSize, readImportance)
-        data = readN(data, activityBuckets, activityBucketsSize, readActivityBucket)
+        reader.n(importances, importanceSize, 'importance')
+        reader.n(activityBuckets, activityBucketsSize, 'activityBucket')
       } else {
         throw new Error(`invalid AccountStateFormat ${format}`)
       }
       // Skip 8 bytes for the optimized mosaic ID.
-      var [optimizedId, data] = readId(data)
-      var [mosaicsCount, data] = readUint16(data)
-      data = readN(data, mosaics, mosaicsCount, readMosaic)
+      reader.id()
+      let mosaicsCount = reader.uint16()
+      reader.n(mosaics, mosaicsCount, 'mosaic')
 
       // Parse Historical Information
       if (format == regular) {
-        data = readN(data, importances, IMPORTANCE_HISTORY_SIZE, readImportance)
-        data = readN(data, activityBuckets, ACTIVITY_BUCKET_HISTORY_SIZE, readActivityBucket)
+        reader.n(importances, IMPORTANCE_HISTORY_SIZE, 'importance')
+        reader.n(activityBuckets, ACTIVITY_BUCKET_HISTORY_SIZE, 'activityBucket')
       } else {
-        data = readN(data, importances, ROLLBACK_BUFFER_SIZE, readImportance)
-        data = readN(data, activityBuckets, ROLLBACK_BUFFER_SIZE, readActivityBucket)
+        reader.n(importances, ROLLBACK_BUFFER_SIZE, 'importance')
+        reader.n(activityBuckets, ROLLBACK_BUFFER_SIZE, 'activityBucket')
       }
 
-      if (data.length !== 0) {
-        throw new Error('invalid trailing data')
-      }
+      reader.validateEmpty()
 
       return {
         address,
@@ -373,12 +441,12 @@ const format = {
   },
 
   HashCache: {
-    key: key => readSolitaryValue(key, readTimestampedHash),
-    value: value => readSolitaryValue(value, readEmpty)
+    key: key => Reader.solitary(key, 'timestampedHash'),
+    value: value => Reader.solitary(value, 'empty')
   },
 
   HashLockInfoCache: {
-    key: key => readSolitaryValue(key, readHash256),
+    key: key => Reader.solitary(key, 'hash256'),
     value: data => {
       // Model:
       //  struct HashLockInfo {
@@ -391,17 +459,15 @@ const format = {
       //  }
 
       // Parse Information
-      data = validateStateInformation(data, 1)
-      var [senderPublicKey, data] = readKey(data)
-      var [mosaicId, data] = readId(data)
-      var [amount, data] = readUint64(data)
-      var [endHeight, data] = readUint64(data)
-      var [status, data] = readUint8(data)
-      var [hash, data] = readHash256(data)
-
-      if (data.length !== 0) {
-        throw new Error('invalid trailing data')
-      }
+      let reader = new Reader(data)
+      reader.validateStateVersion(1)
+      let senderPublicKey = reader.key()
+      let mosaicId = reader.id()
+      let amount = reader.uint64()
+      let endHeight = reader.uint64()
+      let status = reader.uint8()
+      let hash = reader.hash256()
+      reader.validateEmpty()
 
       return {
         senderPublicKey,
@@ -415,7 +481,7 @@ const format = {
   },
 
   MetadataCache: {
-    key: key => readSolitaryValue(key, readHash256),
+    key: key => Reader.solitary(key, 'hash256'),
     value: data => {
       // Model:
       //  Note: targetId can be either a MosaicId, a NamespaceId, or all 0s.
@@ -431,18 +497,23 @@ const format = {
       //  }
 
       // Parse Information
-      data = validateStateInformation(data, 1)
-      var [sourcePublicKey, data] = readKey(data)
-      var [targetPublicKey, data] = readKey(data)
-      var [scopedMetadataKey, data] = readUint64(data)
-      var [targetId, data] = readId(data)
-      var [metadataType, data] = readUint8(data)
-      var [valueSize, data] = readUint16(data)
-      var [value, data] = readHexN(data, valueSize)
-      let key = {sourcePublicKey, targetPublicKey, scopedMetadataKey, targetId, metadataType}
+      let reader = new Reader(data)
+      reader.validateStateVersion(1)
+      let sourcePublicKey = reader.key()
+      let targetPublicKey = reader.key()
+      let scopedMetadataKey = reader.uint64()
+      let targetId = reader.id()
+      let metadataType = reader.uint8()
+      let valueSize = reader.uint16()
+      let value = reader.hexN(valueSize)
+      reader.validateEmpty()
 
-      if (data.length !== 0) {
-        throw new Error('invalid trailing data')
+      let key = {
+        sourcePublicKey,
+        targetPublicKey,
+        scopedMetadataKey,
+        targetId,
+        metadataType
       }
 
       return {
@@ -453,7 +524,7 @@ const format = {
   },
 
   MosaicCache: {
-    key: key => readSolitaryValue(key, readId),
+    key: key => Reader.solitary(key, 'id'),
     value: data => {
       // Model:
       //  struct Mosaic {
@@ -468,19 +539,17 @@ const format = {
       //  }
 
       // Parse Information
-      data = validateStateInformation(data, 1)
-      var [mosaicId, data] = readId(data)
-      var [supply, data] = readUint64(data)
-      var [height, data] = readUint64(data)
-      var [ownerPublicKey, data] = readKey(data)
-      var [revision, data] = readUint32(data)
-      var [flags, data] = readUint8(data)
-      var [divisibility, data] = readUint8(data)
-      var [duration, data] = readUint64(data)
-
-      if (data.length !== 0) {
-        throw new Error('invalid trailing data')
-      }
+      let reader = new Reader(data)
+      reader.validateStateVersion(1)
+      let mosaicId = reader.id()
+      let supply = reader.uint64()
+      let height = reader.uint64()
+      let ownerPublicKey = reader.key()
+      let revision = reader.uint32()
+      let flags = reader.uint8()
+      let divisibility = reader.uint8()
+      let duration = reader.uint64()
+      reader.validateEmpty()
 
       return {
         mosaicId,
@@ -496,7 +565,7 @@ const format = {
   },
 
   MosaicRestrictionCache: {
-    key: key => readSolitaryValue(key, readHash256),
+    key: key => Reader.solitary(key, 'hash256'),
     value: data => {
       // Model:
       //  struct MosaicRestrictionMixin {
@@ -530,20 +599,25 @@ const format = {
       //  }
 
       // Parse Information
-      data = validateStateInformation(data, 1)
-      var [entryType, data] = readUint8(data)
+      let reader = new Reader(data)
+      reader.validateStateVersion(1)
+      let entryType = reader.uint8()
+      let value
       if (entryType === MOSAIC_RESTRICTION_ADDRESS) {
-        return readSolitaryValue(data, readMosaicAddressRestriction)
+        value = reader.mosaicAddressRestriction()
       } else if (entryType === MOSAIC_RESTRICTION_GLOBAL) {
-        return readSolitaryValue(data, readMosaicGlobalRestriction)
+        value = reader.mosaicGlobalRestriction()
       } else {
         throw new Error(`invalid mosaic restriction type, got ${entryType}`)
       }
+      reader.validateEmpty()
+
+      return value
     }
   },
 
   MultisigCache: {
-    key: key => readSolitaryValue(key, readKey),
+    key: key => Reader.solitary(key, 'key'),
     value: data => {
       // Model:
       //  struct MultisigEntry {
@@ -557,20 +631,18 @@ const format = {
       //  }
 
       // Parse Information
-      data = validateStateInformation(data, 1)
-      var [minApproval, data] = readUint32(data)
-      var [minRemoval, data] = readUint32(data)
-      var [key, data] = readKey(data)
+      let reader = new Reader(data)
+      reader.validateStateVersion(1)
+      let minApproval = reader.uint32()
+      let minRemoval = reader.uint32()
+      let key = reader.key()
       let cosignatoryPublicKeys = []
-      var [cosignatoryPublicKeysCount, data] = readUint64(data)
-      data = readN(data, cosignatoryPublicKeys, parseInt(cosignatoryPublicKeysCount), readKey)
+      let cosignatoryCount = reader.uint64()
+      reader.n(cosignatoryPublicKeys, parseInt(cosignatoryCount), 'key')
       let multisigPublicKeys = []
-      var [multisigPublicKeysCount, data] = readUint64(data)
-      data = readN(data, multisigPublicKeys, parseInt(multisigPublicKeysCount), readKey)
-
-      if (data.length !== 0) {
-        throw new Error('invalid trailing data')
-      }
+      let multisigCount = reader.uint64()
+      reader.n(multisigPublicKeys, parseInt(multisigCount), 'key')
+      reader.validateEmpty()
 
       return {
         minApproval,
@@ -583,7 +655,7 @@ const format = {
   },
 
   NamespaceCache: {
-    key: key => readSolitaryValue(key, readId),
+    key: key => Reader.solitary(key, 'id'),
     value: data => {
       // Model:
       //  Note: Alias can be NoneAlias, AddressAlias, or MosaicAlias.
@@ -624,16 +696,14 @@ const format = {
       //  }
 
       // Parse Information
-      data = validateStateInformation(data, 1)
-      var [historyDepth, data] = readUint64(data)
-      var [namespaceId, data] = readId(data)
+      let reader = new Reader(data)
+      reader.validateStateVersion(1)
+      let historyDepth = reader.uint64()
+      let namespaceId = reader.id()
       let rootNamespace = []
-      let callback = x => readRootNamespace(x, namespaceId)
-      data = readN(data, rootNamespace, parseInt(historyDepth), callback)
-
-      if (data.length !== 0) {
-        throw new Error('invalid trailing data')
-      }
+      let callback = () => reader.rootNamespace(namespaceId)
+      reader.n(rootNamespace, parseInt(historyDepth), callback)
+      reader.validateEmpty()
 
       return {
         namespaceId,
@@ -643,7 +713,7 @@ const format = {
   },
 
   SecretLockInfoCache: {
-    key: key => readSolitaryValue(key, readHash256),
+    key: key => Reader.solitary(key, 'hash256'),
     value: data => {
       // Model:
       //  struct SecretLockInfo {
@@ -658,19 +728,17 @@ const format = {
       //  }
 
       // Parse Information
-      data = validateStateInformation(data, 1)
-      var [senderPublicKey, data] = readKey(data)
-      var [mosaicId, data] = readId(data)
-      var [amount, data] = readUint64(data)
-      var [endHeight, data] = readUint64(data)
-      var [status, data] = readUint8(data)
-      var [hashAlgorithm, data] = readUint8(data)
-      var [secret, data] = readHash256(data)
-      var [recipientAddress, data] = readAddress(data)
-
-      if (data.length !== 0) {
-        throw new Error('invalid trailing data')
-      }
+      let reader = new Reader(data)
+      reader.validateStateVersion(1)
+      let senderPublicKey = reader.key()
+      let mosaicId = reader.id()
+      let amount = reader.uint64()
+      let endHeight = reader.uint64()
+      let status = reader.uint8()
+      let hashAlgorithm = reader.uint8()
+      let secret = reader.hash256()
+      let recipientAddress = reader.address()
+      reader.validateEmpty()
 
       return {
         senderPublicKey,

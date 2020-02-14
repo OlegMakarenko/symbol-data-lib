@@ -43,7 +43,7 @@ const decodeChar = c => {
 }
 
 const decodeBlock = (input, inputOffset, output, outputOffset) => {
-  const bytes = new Uint8Array(Encoded_Block_Size)
+  const bytes = new Uint8Array(ENCODED_BLOCK_SIZE)
   for (let i = 0; i < ENCODED_BLOCK_SIZE; ++i)
     bytes[i] = decodeChar(input[inputOffset + i])
 

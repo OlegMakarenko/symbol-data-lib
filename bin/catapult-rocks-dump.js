@@ -97,6 +97,11 @@ if (ROCKS_COLLECTIONS.indexOf(options.collection) === -1) {
 
 // Dump the RocksDB data to JSON.
 catapultScripts.rocks.dump(options).then(result => {
+  // Hash cache only hash keys, no values.
+  if (options.collection === 'HashCache') {
+    result = Object.keys(result)
+  }
+
   let json = JSON.stringify(result, null, 4) + '\n'
   if (options.output !== undefined) {
     fs.writeFileSync(options.output, json)
