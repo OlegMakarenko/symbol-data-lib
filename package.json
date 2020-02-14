@@ -12,7 +12,7 @@
     "build": "babel src -d dist/src && babel bin -d dist/bin",
     "clean": "rm -rf dist",
     "lint": "eslint src",
-    "lint.test": "eslint test",
+    "lint.test": "eslint test --global it,describe",
     "test": "mocha --no-warnings \"test/index.js\" --require @babel/register --require @babel/core --require @babel/polyfill",
     "test.base32": "mocha --no-warnings \"test/base32.js\" --require @babel/register --require @babel/core --require @babel/polyfill",
     "test.mongo": "mocha --no-warnings \"test/mongo.js\" --require @babel/register --require @babel/core --require @babel/polyfill",

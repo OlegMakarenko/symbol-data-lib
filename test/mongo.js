@@ -17,4 +17,4 @@
  */
 
 import expect from 'expect.js'
-import mongo from '../src/mongo'
+import mongoCodec from '../src/mongoCodec'

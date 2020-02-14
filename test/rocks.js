@@ -17,4 +17,24 @@
  */
 
 import expect from 'expect.js'
-import rocks from '../src/rocks'
+import rocksCodec from '../src/rocksCodec'
+
+describe('rocks', () => {
+  // TODO(ahuszagh) Need to implement.
+  describe('AccountRestrictionCache', () => {})
+  describe('AccountStateCache', () => {})
+
+  describe('HashCache', () => {
+    it('should parse a valid key', () => {
+      let key = Buffer.from('938EBAEC010000009D403172F37D47B9099345D8034742493AD10FCB4350CF9904AA4B63D3CC7C79', 'hex')
+      let actual = rocksCodec.HashCache.key(key)
+      expect(actual).to.equal('8266616467@9D403172F37D47B9099345D8034742493AD10FCB4350CF9904AA4B63D3CC7C79')
+    })
+
+    it('should parse a valid value', () => {
+      let value = Buffer.from('', 'hex')
+      let actual = rocksCodec.HashCache.value(value)
+      expect(actual).to.equal(null)
+    })
+  })
+})

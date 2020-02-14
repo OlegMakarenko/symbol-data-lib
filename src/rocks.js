@@ -16,10 +16,12 @@
  *
  */
 
+/**
+ *  Utilities to process data from catapult's RocksDB store.
+ */
+
 import Level from './level'
 import rocksCodec from './rocksCodec'
-
-// API
 
 /**
  *  Dump RocksDB data to JSON.

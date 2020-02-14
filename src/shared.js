@@ -16,9 +16,11 @@
  *
  */
 
-import base32 from './base32'
+/**
+ *  Shared utilities between codecs.
+ */
 
-// TODO(ahuszagh) Likely should consider this here...
+import base32 from './base32'
 
 /**
  *  Pad value with zeros until desired length.
