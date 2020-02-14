@@ -21,6 +21,18 @@ import '@babel/polyfill'
 import yargs from 'yargs'
 import catapultScripts from '../src'
 
+const MONGO_COLLECTIONS = [
+  'accounts',
+  'blocks',
+  'chainStatistic',
+  'hashLocks',
+  'mosaicResolutionStatements',
+  'mosaics',
+  'multisigs',
+  'namespaces',
+  'transactionStatements'
+]
+
 // ARGUMENTS
 // ---------
 
@@ -42,7 +54,11 @@ const options = yargs
   })
   .option('collection', {
     alias: 'c',
-    describe: 'Name of collection to dump.'
+    describe: (
+      'Name of collection to dump.\n'
+      + 'Valid collections names:\n- '
+      + MONGO_COLLECTIONS.join('\n- ')
+    )
   })
   .option('limit', {
     alias: 'l',
@@ -71,6 +87,11 @@ if (options.verbose) {
   console.info(`    collection   = ${options.collection}`)
   console.info(`    limit        = ${options.limit}`)
   console.info(`    output       = ${options.output ? options.output : 'stdout'}`)
+}
+
+// Validate the collection name is supported.
+if (MONGO_COLLECTIONS.indexOf(options.collection) === -1) {
+  throw new Error(`collection name ${options.collection} is not yet supported`)
 }
 
 // Dump the MongoDB data to JSON.

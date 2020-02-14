@@ -21,10 +21,13 @@ import '@babel/polyfill'
 import yargs from 'yargs'
 import catapultScripts from '../src'
 
+const ROCKS_COLLECTIONS = [
+  'AccountRestrictionCache',
+  'AccountStateCache',
+]
+
 // ARGUMENTS
 // ---------
-
-//dist/bin/catapult-rocks-dump.js --data-dir /home/ahuszagh/git/catapult-service-bootstrap/data --collection AccountRestrictionCache
 
 const options = yargs
   .command(
@@ -44,7 +47,11 @@ const options = yargs
   })
   .option('collection', {
     alias: 'c',
-    describe: 'Name of collection to dump.'
+    describe: (
+      'Name of collection to dump.\n'
+      + 'Valid collections names:\n- '
+      + ROCKS_COLLECTIONS.join('\n- ')
+    )
   })
   .option('limit', {
     alias: 'l',
@@ -73,6 +80,11 @@ if (options.verbose) {
   console.info(`    collection   = ${options.collection}`)
   console.info(`    limit        = ${options.limit}`)
   console.info(`    output       = ${options.output ? options.output : 'stdout'}`)
+}
+
+// Validate the collection name is supported.
+if (ROCKS_COLLECTIONS.indexOf(options.collection) === -1) {
+  throw new Error(`collection name ${options.collection} is not yet supported`)
 }
 
 // Dump the RocksDB data to JSON.

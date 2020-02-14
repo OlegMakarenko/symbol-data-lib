@@ -151,11 +151,16 @@ const format = {
     }
   }),
 
-  hashLocks: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  },
+  hashLocks: item => ({
+    lock: {
+      senderPublicKey: binaryToHex(item.lock.senderPublicKey),
+      senderAddress: binaryToBase32(item.lock.senderAddress),
+      mosaicId: idToHex(item.lock.mosaicId),
+      amount: item.lock.amount.toString(),
+      endHeight: item.lock.endHeight.toString(),
+      hash: binaryToHex(item.lock.hash),
+    }
+  }),
 
   metadata: item => {
     // TODO(ahuszagh) Implement...
@@ -196,11 +201,18 @@ const format = {
     }
   }),
 
-  multisigs: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  },
+  multisigs: item => ({
+    multisig: {
+      account: {
+        publicKey: binaryToHex(item.multisig.accountPublicKey),
+        address: binaryToBase32(item.multisig.accountAddress)
+      },
+      minApproval: item.multisig.minApproval,
+      minRemoval: item.multisig.minRemoval,
+      cosignatoryPublicKeys: item.multisig.cosignatoryPublicKeys.map(binaryToHex),
+      multisigPublicKeys: item.multisig.multisigPublicKeys.map(binaryToHex)
+    }
+  }),
 
   namespaces: item => {
     const aliasNone = 0
