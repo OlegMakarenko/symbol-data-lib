@@ -12,7 +12,11 @@
     "build": "babel src -d dist/src && babel bin -d dist/bin",
     "clean": "rm -rf dist",
     "lint": "eslint src",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint.test": "eslint test",
+    "test": "mocha --no-warnings \"test/index.js\" --require @babel/register --require @babel/core --require @babel/polyfill",
+    "test.base32": "mocha --no-warnings \"test/base32.js\" --require @babel/register --require @babel/core --require @babel/polyfill",
+    "test.mongo": "mocha --no-warnings \"test/mongo.js\" --require @babel/register --require @babel/core --require @babel/polyfill",
+    "test.rocks": "mocha --no-warnings \"test/rocks.js\" --require @babel/register --require @babel/core --require @babel/polyfill"
   },
   "license": "Apache-2.0",
   "dependencies": {
@@ -29,6 +33,8 @@
     "@babel/preset-env": "^7.8.4",
     "@babel/register": "^7.8.3",
     "babel-eslint": "^10.0.3",
-    "eslint": "^6.8.0"
+    "eslint": "^6.8.0",
+    "expect.js": "^0.3.1",
+    "mocha": "^7.0.1"
   }
 }

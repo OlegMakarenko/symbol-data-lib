@@ -16,11 +16,17 @@
  *
  */
 
+/**
+ *  Encode and decode base32 data without padding.
+ */
+
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 const DECODED_BLOCK_SIZE = 5
 const ENCODED_BLOCK_SIZE = 8
 const INVERSE_ALPHABET = {}
-Array.prototype.forEach.call(ALPHABET, (item, index) => INVERSE_ALPHABET[item] = index)
+for (let index = 0; index < ALPHABET.length; index++) {
+  INVERSE_ALPHABET[ALPHABET.charCodeAt(index)] = index
+}
 
 const encodeBlock = (input, inputOffset, output, outputOffset) => {
   output[outputOffset + 0] = ALPHABET[input[inputOffset + 0] >> 3]

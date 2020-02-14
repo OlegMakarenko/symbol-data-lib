@@ -16,6 +16,10 @@
  *
  */
 
+/**
+ *  Wrapper around a LevelDB-like database, using RocksDB as the backend.
+ */
+
 import encode from 'encoding-down'
 import levelup from 'levelup'
 import rocksdb from 'rocksdb'
