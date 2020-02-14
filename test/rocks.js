@@ -37,4 +37,13 @@ describe('rocks', () => {
       expect(actual).to.equal(null)
     })
   })
+
+  // TODO(ahuszagh) Here...
+  describe('HashLockInfoCache', () => {})
+  describe('MetadataCache', () => {})
+  describe('MosaicCache', () => {})
+  describe('MosaicRestrictionCache', () => {})
+  describe('MultisigCache', () => {})
+  describe('NamespaceCache', () => {})
+  describe('SecretLockInfoCache', () => {})
 })

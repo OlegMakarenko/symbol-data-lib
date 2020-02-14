@@ -17,4 +17,47 @@
  */
 
 import expect from 'expect.js'
+import MongoDb from 'mongodb'
 import mongoCodec from '../src/mongoCodec'
+
+describe('mongo', () => {
+  // TODO(ahuszagh) Implement...
+  describe('accountRestrictions', () => {})
+  describe('accounts', () => {})
+  describe('addressResolutionStatements', () => {})
+  describe('blocks', () => {})
+
+  describe('chainStatistic', () => {
+    it('should parse a valid chain statistic', () => {
+      let item = {
+        current: {
+          height: new MongoDb.Long(57549, 0),
+          scoreLow: new MongoDb.Long(3899910630, 134312366),
+          scoreHigh: new MongoDb.Long(0, 0)
+        }
+      }
+      expect(mongoCodec.chainStatistic(item)).to.eql({
+        current: {
+          height: '57549',
+          scoreLow: '576867223318292966',
+          scoreHigh: '0'
+        }
+      })
+    })
+  })
+
+  // TODO(ahuszagh) Implement...
+  describe('hashLocks', () => {})
+  describe('metadata', () => {})
+  describe('mosaicResolutionStatements', () => {})
+  describe('mosaicRestrictions', () => {})
+  describe('mosaics', () => {})
+  describe('multisigs', () => {})
+  describe('namespaces', () => {})
+  describe('partialTransactions', () => {})
+  describe('secretLocks', () => {})
+  describe('transactionStatements', () => {})
+  describe('transactionStatuses', () => {})
+  describe('transactions', () => {})
+  describe('unconfirmedTransactions', () => {})
+})
