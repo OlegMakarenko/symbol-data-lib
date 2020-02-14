@@ -25,6 +25,54 @@ const idToHex = id => shared.idToHex([id.getLowBitsUnsigned(), id.getHighBits() 
 const binaryToHex = data => shared.binaryToHex(data)
 const binaryToBase32 = data => shared.binaryToBase32(data.buffer)
 
+const balanceChangeReceipt = entry => ({
+  version: entry.version,
+  type: entry.type,
+  targetPublicKey : binaryToHex(entry.targetPublicKey),
+  mosaicId : idToHex(entry.mosaicId),
+  amount : entry.amount.toString()
+})
+
+const balanceTransferReceipt = entry => ({
+  version: entry.version,
+  type: entry.type,
+  senderPublicKey : binaryToHex(entry.senderPublicKey),
+  recipientAddress : binaryToBase32(entry.recipientAddress),
+  mosaicId : idToHex(entry.mosaicId),
+  amount : entry.amount.toString()
+})
+
+const artifactExpiryReceipt = entry => ({
+  version: entry.version,
+  type: entry.type,
+  artifactId : idToHex(entry.artifactId)
+})
+
+const inflationReceipt = entry => ({
+  version: entry.version,
+  type: entry.type,
+  mosaicId : idToHex(entry.mosaicId),
+  amount : entry.amount.toString()
+})
+
+const unknownReceipt = entry => ({
+  version: entry.version,
+  type: entry.type
+})
+
+const RECEIPT_TYPE = {
+  1: balanceTransferReceipt,
+  2: balanceChangeReceipt,
+  3: balanceChangeReceipt,
+  4: artifactExpiryReceipt,
+  5: inflationReceipt
+};
+
+const basicReceipt = entry => {
+  let callback = RECEIPT_TYPE[(entry.type & 0xF000) >> 12] || unknownReceipt
+  return callback(entry)
+}
+
 /**
  *  Formatter for MongoDB collections.
  */
@@ -210,17 +258,13 @@ const format = {
     throw new Error('not yet implemented')
   },
 
-  'system.profile': item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  },
-
-  transactionStatements: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  },
+  transactionStatements: item => ({
+    statement: {
+      height: item.statement.height.toString(),
+      source: item.statement.source,
+      receipts: item.statement.receipts.map(basicReceipt)
+    }
+  }),
 
   transactionStatuses: item => {
     // TODO(ahuszagh) Implement...
