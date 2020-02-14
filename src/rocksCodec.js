@@ -20,8 +20,7 @@
  *  Codec to transform RocksDB models to JSON.
  */
 
-import MongoDb from 'mongodb'
-import shared from './shared'
+import Reader from './reader'
 
 // CONSTANTS
 const ROLLBACK_BUFFER_SIZE = 2
@@ -38,11 +37,7 @@ const MOSAIC_RESTRICTION_GLOBAL = 1
 
 // READERS
 
-class Reader {
-  constructor(data) {
-    this.data = data
-  }
-
+class RocksReader extends Reader {
   // STATE VERSION
 
   validateStateVersion(expected) {
@@ -52,110 +47,18 @@ class Reader {
     }
   }
 
-  // EMPTY
-
-  validateEmpty() {
-    if (this.data.length !== 0) {
-      throw new Error('invalid trailing data')
-    }
-  }
-
   // READERS
-
-  callback(fn) {
-    if (typeof fn === 'string') {
-      return () => this[fn]()
-    } else {
-      return fn
-    }
-  }
-
-  static solitary(data, fn) {
-    let reader = new Reader(data)
-    let callback = reader.callback(fn)
-    let value = callback()
-    reader.validateEmpty()
-    return value
-  }
-
-  n(array, count, fn) {
-    let callback = this.callback(fn)
-    for (let index = 0; index < count; index++) {
-      array.push(callback.call())
-    }
-  }
-
-  uint8() {
-    let value = shared.binaryToUint8(this.data.slice(0, 1))
-    this.data = this.data.slice(1)
-    return value
-  }
-
-  uint16() {
-    let value = shared.binaryToUint16(this.data.slice(0, 2))
-    this.data = this.data.slice(2)
-    return value
-  }
-
-  uint32() {
-    let value = shared.binaryToUint32(this.data.slice(0, 4))
-    this.data = this.data.slice(4)
-    return value
-  }
-
-  uint64() {
-    let uint64 = shared.binaryToUint64(this.data.slice(0, 8))
-    let long = new MongoDb.Long(uint64[0], uint64[1])
-    let value = long.toString()
-    this.data = this.data.slice(8)
-    return value
-  }
-
-  base32N(n) {
-    let value = shared.binaryToBase32(this.data.slice(0, n))
-    this.data = this.data.slice(n)
-    return value
-  }
-
-  hexN(n) {
-    let value = shared.binaryToHex(this.data.slice(0, n))
-    this.data = this.data.slice(n)
-    return value
-  }
-
-  address() {
-    return this.base32N(25)
-  }
-
-  hash256() {
-    return this.hexN(32)
-  }
-
-  key() {
-    return this.hexN(32)
-  }
-
-  id() {
-    let uint64 = shared.binaryToUint64(this.data.slice(0, 8))
-    let value = shared.idToHex(uint64)
-    this.data = this.data.slice(8)
-    return value
-  }
-
-  entityType() {
-    return this.uint16()
-  }
 
   accountRestriction() {
     let flags = this.uint16()
-    let valuesCount = this.uint64()
+    let valuesCount = this.long()
     let values = []
     if ((flags & ACCOUNT_RESTRICTION_ADDRESS) !== 0) {
-      this.n(values, parseInt(valuesCount), 'address')
+      this.nLong(values, valuesCount, 'address')
     } else if ((flags & ACCOUNT_RESTRICTION_MOSAIC_ID) !== 0) {
-      this.n(values, parseInt(valuesCount), 'id')
+      this.nLong(values, valuesCount, 'id')
     } else if ((flags & ACCOUNT_RESTRICTION_TRANSACTION_TYPE) !== 0) {
-      this.n(values, parseInt(valuesCount), 'entityType')
+      this.nLong(values, valuesCount, 'entityType')
     } else {
       throw new Error(`invalid account restriction flags, got ${flags}`)
     }
@@ -304,10 +207,10 @@ class Reader {
     let lifetimeStart = this.uint64()
     let lifetimeEnd = this.uint64()
     let alias = this.alias()
-    let childrenCount = this.uint64()
+    let childrenCount = this.long()
     let children = []
     let callback = () => this.childNamespace(rootId)
-    this.n(children, parseInt(childrenCount), callback)
+    this.nLong(children, childrenCount, callback)
 
     return {
       owner,
@@ -335,7 +238,7 @@ class Reader {
  */
 export default {
   AccountRestrictionCache: {
-    key: key => Reader.solitary(key, 'address'),
+    key: key => RocksReader.solitary(key, 'address'),
     value: data => {
       // Model:
       //  Note: Restriction can be an address, mosaic ID, or entity type.
@@ -353,7 +256,7 @@ export default {
       //  }
 
       // Parse Information
-      let reader = new Reader(data)
+      let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let address = reader.address()
       let restrictionsCount = reader.uint64()
@@ -369,7 +272,7 @@ export default {
   },
 
   AccountStateCache: {
-    key: key => Reader.solitary(key, 'address'),
+    key: key => RocksReader.solitary(key, 'address'),
     value: data => {
       // Constants
       const regular = 0
@@ -391,7 +294,7 @@ export default {
       //  }
 
       // Parse Non-Historical Information
-      let reader = new Reader(data)
+      let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let address = reader.address()
       let addressHeight = reader.uint64()
@@ -444,12 +347,12 @@ export default {
   },
 
   HashCache: {
-    key: key => Reader.solitary(key, 'timestampedHash'),
-    value: value => Reader.solitary(value, 'empty')
+    key: key => RocksReader.solitary(key, 'timestampedHash'),
+    value: value => RocksReader.solitary(value, 'empty')
   },
 
   HashLockInfoCache: {
-    key: key => Reader.solitary(key, 'hash256'),
+    key: key => RocksReader.solitary(key, 'hash256'),
     value: data => {
       // Model:
       //  struct HashLockInfo {
@@ -462,7 +365,7 @@ export default {
       //  }
 
       // Parse Information
-      let reader = new Reader(data)
+      let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let senderPublicKey = reader.key()
       let mosaicId = reader.id()
@@ -484,7 +387,7 @@ export default {
   },
 
   MetadataCache: {
-    key: key => Reader.solitary(key, 'hash256'),
+    key: key => RocksReader.solitary(key, 'hash256'),
     value: data => {
       // Model:
       //  Note: targetId can be either a MosaicId, a NamespaceId, or all 0s.
@@ -500,7 +403,7 @@ export default {
       //  }
 
       // Parse Information
-      let reader = new Reader(data)
+      let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let sourcePublicKey = reader.key()
       let targetPublicKey = reader.key()
@@ -527,7 +430,7 @@ export default {
   },
 
   MosaicCache: {
-    key: key => Reader.solitary(key, 'id'),
+    key: key => RocksReader.solitary(key, 'id'),
     value: data => {
       // Model:
       //  struct Mosaic {
@@ -542,7 +445,7 @@ export default {
       //  }
 
       // Parse Information
-      let reader = new Reader(data)
+      let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let mosaicId = reader.id()
       let supply = reader.uint64()
@@ -568,7 +471,7 @@ export default {
   },
 
   MosaicRestrictionCache: {
-    key: key => Reader.solitary(key, 'hash256'),
+    key: key => RocksReader.solitary(key, 'hash256'),
     value: data => {
       // Model:
       //  struct MosaicRestrictionMixin {
@@ -602,7 +505,7 @@ export default {
       //  }
 
       // Parse Information
-      let reader = new Reader(data)
+      let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let entryType = reader.uint8()
       let value
@@ -620,7 +523,7 @@ export default {
   },
 
   MultisigCache: {
-    key: key => Reader.solitary(key, 'key'),
+    key: key => RocksReader.solitary(key, 'key'),
     value: data => {
       // Model:
       //  struct MultisigEntry {
@@ -634,17 +537,17 @@ export default {
       //  }
 
       // Parse Information
-      let reader = new Reader(data)
+      let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let minApproval = reader.uint32()
       let minRemoval = reader.uint32()
       let key = reader.key()
       let cosignatoryPublicKeys = []
-      let cosignatoryCount = reader.uint64()
-      reader.n(cosignatoryPublicKeys, parseInt(cosignatoryCount), 'key')
+      let cosignatoryCount = reader.long()
+      reader.nLong(cosignatoryPublicKeys, cosignatoryCount, 'key')
       let multisigPublicKeys = []
-      let multisigCount = reader.uint64()
-      reader.n(multisigPublicKeys, parseInt(multisigCount), 'key')
+      let multisigCount = reader.long()
+      reader.nLong(multisigPublicKeys, multisigCount, 'key')
       reader.validateEmpty()
 
       return {
@@ -658,7 +561,7 @@ export default {
   },
 
   NamespaceCache: {
-    key: key => Reader.solitary(key, 'id'),
+    key: key => RocksReader.solitary(key, 'id'),
     value: data => {
       // Model:
       //  Note: Alias can be NoneAlias, AddressAlias, or MosaicAlias.
@@ -699,13 +602,13 @@ export default {
       //  }
 
       // Parse Information
-      let reader = new Reader(data)
+      let reader = new RocksReader(data)
       reader.validateStateVersion(1)
-      let historyDepth = reader.uint64()
+      let historyDepth = reader.long()
       let namespaceId = reader.id()
       let rootNamespace = []
       let callback = () => reader.rootNamespace(namespaceId)
-      reader.n(rootNamespace, parseInt(historyDepth), callback)
+      reader.nLong(rootNamespace, historyDepth, callback)
       reader.validateEmpty()
 
       return {
@@ -716,7 +619,7 @@ export default {
   },
 
   SecretLockInfoCache: {
-    key: key => Reader.solitary(key, 'hash256'),
+    key: key => RocksReader.solitary(key, 'hash256'),
     value: data => {
       // Model:
       //  struct SecretLockInfo {
@@ -731,7 +634,7 @@ export default {
       //  }
 
       // Parse Information
-      let reader = new Reader(data)
+      let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let senderPublicKey = reader.key()
       let mosaicId = reader.id()
