@@ -46,11 +46,10 @@ export default class Reader {
     }
   }
 
-  static solitary(data, fn) {
-    let reader = new Reader(data)
-    let callback = reader.callback(fn)
+  solitary(fn) {
+    let callback = this.callback(fn)
     let value = callback()
-    reader.validateEmpty()
+    this.validateEmpty()
     return value
   }
 
@@ -100,16 +99,18 @@ export default class Reader {
     return this.long().toString()
   }
 
-  base32N(n) {
-    let value = shared.binaryToBase32(this.data.slice(0, n))
+  binaryN(n) {
+    let value = this.data.slice(0, n)
     this.data = this.data.slice(n)
     return value
   }
 
+  base32N(n) {
+    return shared.binaryToBase32(this.binaryN(n))
+  }
+
   hexN(n) {
-    let value = shared.binaryToHex(this.data.slice(0, n))
-    this.data = this.data.slice(n)
-    return value
+    return shared.binaryToHex(this.binaryN(n))
   }
 
   address() {

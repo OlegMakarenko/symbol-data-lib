@@ -38,6 +38,11 @@ const MOSAIC_RESTRICTION_GLOBAL = 1
 // READERS
 
 class RocksReader extends Reader {
+  static solitary(data, fn) {
+    let reader = new RocksReader(data)
+    return reader.solitary(fn)
+  }
+
   // STATE VERSION
 
   validateStateVersion(expected) {

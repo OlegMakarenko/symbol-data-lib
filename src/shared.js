@@ -20,7 +20,25 @@
  *  Shared utilities between codecs.
  */
 
+import os from 'os'
 import base32 from './base32'
+
+// Endian-dependent deserialization.
+let readUint8 = (data, offset) => data.readUInt8(offset)
+let readUint16
+let readUint32
+let readUint64
+if (os.endianness() == 'LE') {
+  // Little-endian
+  readUint16 = (data, offset) => data.readUInt16LE(offset)
+  readUint32 = (data, offset) => data.readUInt32LE(offset)
+  readUint64 = (data, offset) => [readUint32(data, offset), readUint32(data, offset+4)]
+} else {
+  // Big-endian
+  readUint16 = (data, offset) => data.readUInt16BE(offset)
+  readUint32 = (data, offset) => data.readUInt32BE(offset)
+  readUint64 = (data, offset) => [readUint32(data, offset+4), readUint32(data, offset)]
+}
 
 /**
  *  Pad value with zeros until desired length.
@@ -44,7 +62,7 @@ const binaryToUint8 = data => {
   if (data.length !== 1) {
     throw Error(`encoded size must be equal to 1`)
   }
-  return data.readUInt8(0)
+  return readUint8(data, 0)
 }
 
 /**
@@ -54,7 +72,7 @@ const binaryToUint16 = data => {
   if (data.length !== 2) {
     throw Error(`encoded size must be equal to 2`)
   }
-  return data.readUInt16LE(0)
+  return readUint16(data, 0)
 }
 
 /**
@@ -64,7 +82,7 @@ const binaryToUint32 = data => {
   if (data.length !== 4) {
     throw Error(`encoded size must be equal to 4`)
   }
-  return data.readUInt32LE(0)
+  return readUint32(data, 0)
 }
 
 /**
@@ -74,9 +92,7 @@ const binaryToUint64 = data => {
   if (data.length !== 8) {
     throw Error(`encoded size must be equal to 8`)
   }
-  let lo = data.readUInt32LE(0)
-  let hi = data.readUInt32LE(4)
-  return [lo, hi]
+  return readUint64(data, 0)
 }
 
 /**

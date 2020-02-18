@@ -161,6 +161,10 @@ Alternatively, you can either modify the Dockerfiles to install, build, and link
 
 These tools are meant to debug issues with local nodes in catapult, by providing human-readable access to the underlying storage. This should not be used as an alternative to the REST API, as this code relies on internal databases that are not documented and may be change at any time for any reason.
 
+# Testing
+
+The tests are only guaranteed to work on little-endian systems, and will likely fail on big-endian systems. The rest of the code should work regardless on other platforms. Ideally, we should test big-endian systems later.
+
 # License
 
 catapult-scripts is licensed under the Apache 2.0 license. See [LICENSE](/LICENSE) for more information.

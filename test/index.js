@@ -17,7 +17,9 @@
  */
 
 describe('catapult-scripts', () => {
+  require('./audit'),
   require('./base32'),
   require('./mongo'),
-  require('./rocks')
+  require('./rocks'),
+  require('./spool')
 })
