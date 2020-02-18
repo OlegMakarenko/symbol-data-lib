@@ -125,6 +125,10 @@ export default class Reader {
     return this.hexN(32)
   }
 
+  signature() {
+    return this.hexN(64)
+  }
+
   id() {
     let uint64 = shared.binaryToUint64(this.data.slice(0, 8))
     let value = shared.idToHex(uint64)

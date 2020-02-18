@@ -53,6 +53,39 @@ class SpoolReader extends Reader {
 
   // READERS
 
+  verifiableEntity() {
+    // Model:
+    //  struct VerifiableEntity {
+    //    uint32_t size;
+    //    uint32_t reserved;
+    //    Signature Signature;
+    //    Key key;
+    //    uint32_t reserved;
+    //    uint8_t version;
+    //    NetworkIdentifier network;
+    //    EntityType type;
+    //  }
+    let size = this.uint32()
+    // Skip reserved value.
+    this.uint32()
+    let signature = this.signature()
+    let key = this.key()
+    // Skip reserved value.
+    this.uint32()
+    let version = this.uint8()
+    let network = this.uint8()
+    let type = this.uint16()
+
+    return {
+      size,
+      signature,
+      key,
+      version,
+      network,
+      type
+    }
+  }
+
   block() {
     let height = this.uint64()
     let timestamp = this.uint64()
@@ -299,10 +332,6 @@ export default {
   index: data => SpoolReader.solitary(data, 'long'),
 
   block_change: data => {
-    // TODO:
-    //    112 bytes from the header are currently unknown. Please submit a
-    //    pull request or help us fill in this data void if you can.
-
     // Model:
     //  Note: blockStatement can either be a BlockStatement, or empty.
     //
@@ -312,6 +341,9 @@ export default {
     //  }
     //
     //  struct BlocksSaved {
+    //    // Verifiable Entity Data
+    //
+    //
     //    // Block Header
     //    uint8_t type;
     //    Height height;
@@ -351,9 +383,7 @@ export default {
     let value = {type}
 
     if (type === BLOCK_SAVED) {
-      // Read the 112 bytes we don't know.
-      reader.hexN(112)
-      // Read the known block data.
+      value.entity = reader.verifiableEntity()
       value.block = reader.block()
       value.entityHash = reader.hash256()
       value.generationHash = reader.hash256()
@@ -369,5 +399,10 @@ export default {
     reader.validateEmpty()
 
     return value
+  },
+
+  block_sync: data => {
+    console.log(data)
+    throw new Error('not yet implemented...')
   }
 }
