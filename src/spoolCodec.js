@@ -20,6 +20,9 @@
  *  Codec to transform spool models to JSON.
  */
 
+import MongoDb from 'mongodb'
+import fs from 'fs'
+import path from 'path'
 import Reader from './reader'
 
 // CONSTANTS
@@ -66,6 +69,9 @@ class SpoolReader extends Reader {
     //    EntityType type;
     //  }
     let size = this.uint32()
+    if (this.data.length < size) {
+      throw new Error('invalid sized-prefixed entity: data is too short')
+    }
     // Skip reserved value.
     this.uint32()
     let signature = this.signature()
@@ -77,7 +83,6 @@ class SpoolReader extends Reader {
     let type = this.uint16()
 
     return {
-      size,
       signature,
       key,
       version,
@@ -305,7 +310,121 @@ class SpoolReader extends Reader {
     }
   }
 
+  chainScore() {
+    let scoreHigh = this.uint64()
+    let scoreLow = this.uint64()
+
+    return {
+      scoreHigh,
+      scoreLow
+    }
+  }
+
+
+// TODO(ahuszagh) These are the 11 plugins.
+//  They are loaded in sorted order.
+// accountlink
+// aggregate
+// lockhash
+// locksecret
+// metadata
+// mosaic
+// multisig
+//  key = Key
+// namespace
+// restrictionaccount
+//  key = Address
+// restrictionmosaic
+//  key = Hash256
+// transfer
+//
+// Full Trace:
+//     FileStateChangeStorage::notifyStateChange
+//       pStorage->saveAll(stateChangeInfo.CacheChanges, *m_pOutputStream);
+//       virtual CacheChangesStorage::saveAll
+//         CacheChangesStorageAdapter::saveAll
+//         WriteCacheChanges<TStorageTraits>(changes.sub<TCache>(), output);
+//
+//  Data:
+//    type = 01
+//    chainScoreHigh = 0000000000000000
+//    chainScoreLow = 8836b1641b380000
+//    height = 510e000000000000
+//    index 0:
+//      CountBytes = 0000000000000000
+//      Count = 0
+//      Type = Unknown
+//    index 1:
+//      CountBytes = 0000000000000000
+//      Count = 0
+//      Type = Unknown
+//    index 2:
+//      CountBytes = 0100000000000000
+//      Count = 1
+//      Type = Address
+//      Data = 989d619a4c32ccdabe2b498ac1034b3fc8c30e56f183af2f72
+//    index 3:
+//      CountBytes = 0100000000000000
+//      Count = 1
+//      Type = Key/Hash256
+//      Data = b35833b6ddf147deee0f659335ee4331eeae80670f45d29ff4ec02c46303866b
+//    index 4:
+//      CountBytes = 0200000000000000
+//      Count = 2
+//    Trailing Data:
+//      00000000000000000000000000000000000000000000000000000000000000000001b4cd410000000000320b000000000000320b00000000000000000000000000001f030000b4cd4100000000009905000000000000000000000000000099050000b4cd4100000000000100000000000000000000000000000098050000703839000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000527bfd6b8eff66102000527bfd6b8eff6616025e9253a99010098177a9e2a9fe922703839000000000070383900000000009905000000000000703839000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000510e000000000000d87290e9010000009d36b1641b38000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+  cacheChanges() {
+    let cacheChanges = []
+    let zero = MongoDb.Long.fromInt(0)  // TODO(ahuszagh) Remove
+    while (this.data.length > 0) {
+      let count = this.long()
+      console.log(count)
+      if (count.notEquals(zero)) {
+        console.log(this.data.toString('hex'))
+        // TODO(ahuszagh) Need to consider here..
+        break
+      }
+    }
+
+    return cacheChanges
+  }
+
   // TODO(ahuszagh) Add more...
+}
+
+// DIRECTORY UTILITIES
+
+// Get the current index, or 0 if no index is provided.
+const getIndex = index => {
+  if (index['index.dat'] !== undefined) {
+    return index['index.dat']
+  }
+  return MongoDb.Long.fromInt(0)
+}
+
+// Get the default max filename, which is a 16-bit hex filename.
+const maxFileDefault = index => {
+  let id = index.toString(16)
+    .padStart(16, '0')
+    return `${id}.dat`
+}
+
+// Get the max filename for the maxFileBlockChange.
+const maxFileBlockChange = index => maxFileDefault(index)
+
+/**
+ *  Classify all paths in the directory as either index or non-index paths.
+ */
+const classifyPaths = directory => {
+  let files = fs.readdirSync(directory)
+  let index = files.filter(file => file.startsWith('index'))
+  let data = files.filter(file => !file.startsWith('index'))
+
+  return {
+    index: index.map(file => path.join(directory, file)),
+    data: data.map(file => path.join(directory, file))
+  }
 }
 
 // CODEC
@@ -320,80 +439,164 @@ class SpoolReader extends Reader {
 
 // TODO(ahuszagh) Need a way to list directory contents...
 
+// TODO(ahuszagh) These should likely read the the entire directories, etd.
+// Need to have a file and directory reader.
 /**
  *  Codec for the spool stores.
  */
-export default {
-  // Stores a uint64 value containing the index of the next value.
-  // This denotes the filenames stored, which may or may not be present.
-  // For example, if the value is 7270 (0x1c66), then we have data
-  // files for [0000000000000000.dat, 0000000000001C65.dat].
-  // These values may be pruned (often are), and therefore may not be present.
-  index: data => SpoolReader.solitary(data, 'long'),
+const codec = {
+  index: {
+    // Stores a uint64 value containing the index of the next value.
+    // This denotes the filenames stored, which may or may not be present.
+    // For example, if the value is 7270 (0x1c66), then we have data
+    // files for [0000000000000000.dat, 0000000000001C65.dat].
+    // These values may be pruned (often are), and therefore may not be present.
+    file: data => SpoolReader.solitary(data, 'long'),
 
-  block_change: data => {
-    // Model:
-    //  Note: blockStatement can either be a BlockStatement, or empty.
-    //
-    //  struct Transaction {
-    //    Hash256 entityHash;
-    //    Hash256 merkleComponentHash;
-    //  }
-    //
-    //  struct BlocksSaved {
-    //    // Verifiable Entity Data
-    //
-    //
-    //    // Block Header
-    //    uint8_t type;
-    //    Height height;
-    //    uint64_t timestamp;
-    //    uint64_t difficulty;
-    //    Hash256 previousBlockHash;
-    //    Hash256 transactionHash;
-    //    Hash256 receiptsHash;
-    //    Hash256 stateHash;
-    //    Key beneficiaryPublicKey;
-    //    uint32_t feeMultiplier;
-    //    uint32_t _reserved;
-    //
-    //    // Remaining Constant-Sized Data
-    //    Hash256 entityHash;
-    //    Hash256 generationHash;
-    //
-    //    // Variable-Length Data
-    //    uint32_t transactionsCount;
-    //    Transaction[transactionsCount] transactions;
-    //
-    //    uint32_t merkleCount;
-    //    Hash256[merkleCount] merkleRoots;
-    //
-    //    // Block Statement
-    //    uint8_t sentinel;
-    //    OptionalBlockStatement blockStatement;
-    //  }
-    //
-    //  struct BlocksDropped {
-    //    uint8_t type;
-    //    Height height;
-    //  }
+    // Read from a list of pre-classified files.
+    fromFiles: files => {
+      let result = {}
+      for (let file of files.index) {
+        let data = fs.readFileSync(file)
+        let key = path.basename(file)
+        let value = codec.index.file(data)
+        result[key] = value
+      }
 
+      return result
+    },
+
+    // Read the index values from the directory.
+    // Checks all:
+    //    index.dat
+    //    index_server.dat
+    //    index_broker_r.dat
+    directory: directory => {
+      return codec.index.fromFiles(classifyPaths(directory))
+    }
+  },
+
+  block_change: {
+    // Read generic file.
+    file: data => {
+      // Model:
+      //  Note: blockStatement can either be a BlockStatement, or empty.
+      //
+      //  struct Transaction {
+      //    Hash256 entityHash;
+      //    Hash256 merkleComponentHash;
+      //  }
+      //
+      //  struct BlocksSaved {
+      //    // Verifiable Entity Data
+      //
+      //
+      //    // Block Header
+      //    uint8_t type;
+      //    Height height;
+      //    uint64_t timestamp;
+      //    uint64_t difficulty;
+      //    Hash256 previousBlockHash;
+      //    Hash256 transactionHash;
+      //    Hash256 receiptsHash;
+      //    Hash256 stateHash;
+      //    Key beneficiaryPublicKey;
+      //    uint32_t feeMultiplier;
+      //    uint32_t _reserved;
+      //
+      //    // Remaining Constant-Sized Data
+      //    Hash256 entityHash;
+      //    Hash256 generationHash;
+      //
+      //    // Variable-Length Data
+      //    uint32_t transactionsCount;
+      //    Transaction[transactionsCount] transactions;
+      //
+      //    uint32_t merkleCount;
+      //    Hash256[merkleCount] merkleRoots;
+      //
+      //    // Block Statement
+      //    uint8_t sentinel;
+      //    OptionalBlockStatement blockStatement;
+      //  }
+      //
+      //  struct BlocksDropped {
+      //    uint8_t type;
+      //    Height height;
+      //  }
+
+      let reader = new SpoolReader(data)
+      let type = reader.uint8()
+      let value = {type}
+
+      if (type === BLOCK_SAVED) {
+        value.entity = reader.verifiableEntity()
+        value.block = reader.block()
+        value.entityHash = reader.hash256()
+        value.generationHash = reader.hash256()
+        value.transactions = reader.transactions()
+        value.merkleRoots = reader.merkleRoots()
+        value.blockStatement = reader.optionalBlockStatement()
+      } else if (type === BLOCKS_DROPPED) {
+        value.height = reader.uint64()
+      } else {
+        throw new Error(`invalid block change operation type, got ${type}`)
+      }
+
+      reader.validateEmpty()
+
+      return value
+    },
+
+    // Read all files in directory.
+    directory: directory => {
+      let files = classifyPaths(directory)
+      let index = getIndex(codec.index.fromFiles(files))
+      let maxFile = maxFileBlockChange(index)
+
+      let result = {}
+      for (let file of files.data) {
+        let basename = path.basename(file).toLowerCase()
+        if (basename < maxFile) {
+          let data = fs.readFileSync(file)
+          let value = codec.block_change.file(data)
+          result[basename] = value
+        }
+      }
+
+      return result
+    }
+  },
+
+  block_sync: data => {
+// loadBlock
+// loadBlockElement
+// loadBlockStatementData
+    console.log(data)
+    throw new Error('not yet implemented...')
+  },
+
+  partial_transactions_change: data => {
+//notifyAddPartials
+//notifyRemovePartials
+//notifyAddCosignature
+
+    console.log(data)
+    throw new Error('not yet implemented...')
+  },
+
+  state_change: data => {
     let reader = new SpoolReader(data)
     let type = reader.uint8()
     let value = {type}
-
-    if (type === BLOCK_SAVED) {
-      value.entity = reader.verifiableEntity()
-      value.block = reader.block()
-      value.entityHash = reader.hash256()
-      value.generationHash = reader.hash256()
-      value.transactions = reader.transactions()
-      value.merkleRoots = reader.merkleRoots()
-      value.blockStatement = reader.optionalBlockStatement()
-    } else if (type === BLOCKS_DROPPED) {
+    if (type === SCORE_CHANGE) {
+      value.chainScore = reader.chainScore()
+    } else if (type === STATE_CHANGE) {
+      value.chainScore = reader.chainScore()
       value.height = reader.uint64()
+      value.cacheChanges = reader.cacheChanges()
     } else {
-      throw new Error(`invalid block change operation type, got ${type}`)
+      throw new Error(`invalid state change operation type, got ${type}`)
     }
 
     reader.validateEmpty()
@@ -401,8 +604,15 @@ export default {
     return value
   },
 
-  block_sync: data => {
+  transaction_status: data => {
+    console.log(data)
+    throw new Error('not yet implemented...')
+  },
+
+  unconfirmed_transactions_change: data => {
     console.log(data)
     throw new Error('not yet implemented...')
   }
 }
+
+export default codec

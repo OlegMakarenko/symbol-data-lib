@@ -43,7 +43,7 @@ if (os.endianness() == 'LE') {
 /**
  *  Pad value with zeros until desired length.
  */
-const pad0 = (str, length) => str.length < length ? pad0(`0${str}`, length) : str
+const pad0 = (str, length) => str.padStart(length, '0')
 
 /**
  *  Convert 64-bit, unsigned integer to an ID.
