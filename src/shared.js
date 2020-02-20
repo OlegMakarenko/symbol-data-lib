@@ -24,17 +24,24 @@ import os from 'os'
 import base32 from './base32'
 
 // Endian-dependent deserialization.
+let readInt8 = (data, offset) => data.readInt8(offset)
 let readUint8 = (data, offset) => data.readUInt8(offset)
+let readInt16
+let readInt32
 let readUint16
 let readUint32
 let readUint64
 if (os.endianness() == 'LE') {
   // Little-endian
+  readInt16 = (data, offset) => data.readInt16LE(offset)
+  readInt32 = (data, offset) => data.readInt32LE(offset)
   readUint16 = (data, offset) => data.readUInt16LE(offset)
   readUint32 = (data, offset) => data.readUInt32LE(offset)
   readUint64 = (data, offset) => [readUint32(data, offset), readUint32(data, offset+4)]
 } else {
   // Big-endian
+  readInt16 = (data, offset) => data.readInt16BE(offset)
+  readInt32 = (data, offset) => data.readInt32BE(offset)
   readUint16 = (data, offset) => data.readUInt16BE(offset)
   readUint32 = (data, offset) => data.readUInt32BE(offset)
   readUint64 = (data, offset) => [readUint32(data, offset+4), readUint32(data, offset)]
@@ -53,6 +60,36 @@ const idToHex = id => {
   let part2 = id[0].toString(16)
 
   return (pad0(part1, 8) + pad0(part2, 8)).toUpperCase()
+}
+
+/**
+ *  Convert binary data to int8.
+ */
+const binaryToInt8 = data => {
+  if (data.length !== 1) {
+    throw Error(`encoded size must be equal to 1`)
+  }
+  return readInt8(data, 0)
+}
+
+/**
+ *  Convert binary data to int16.
+ */
+const binaryToInt16 = data => {
+  if (data.length !== 2) {
+    throw Error(`encoded size must be equal to 2`)
+  }
+  return readInt16(data, 0)
+}
+
+/**
+ *  Convert binary data to int32.
+ */
+const binaryToInt32 = data => {
+  if (data.length !== 4) {
+    throw Error(`encoded size must be equal to 4`)
+  }
+  return readInt32(data, 0)
 }
 
 /**

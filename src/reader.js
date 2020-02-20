@@ -70,6 +70,24 @@ export default class Reader {
     }
   }
 
+  int8() {
+    let value = shared.binaryToInt8(this.data.slice(0, 1))
+    this.data = this.data.slice(1)
+    return value
+  }
+
+  int16() {
+    let value = shared.binaryToInt16(this.data.slice(0, 2))
+    this.data = this.data.slice(2)
+    return value
+  }
+
+  int32() {
+    let value = shared.binaryToInt32(this.data.slice(0, 4))
+    this.data = this.data.slice(4)
+    return value
+  }
+
   uint8() {
     let value = shared.binaryToUint8(this.data.slice(0, 1))
     this.data = this.data.slice(1)
