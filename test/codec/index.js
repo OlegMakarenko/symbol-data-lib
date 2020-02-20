@@ -19,7 +19,9 @@
 describe('codec', () => {
   require('./audit'),
   require('./block'),
+  require('./catbuffer'),
   require('./mongo'),
+  require('./reader'),
   require('./rocks'),
   require('./spool')
 })

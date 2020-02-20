@@ -1102,11 +1102,77 @@ describe('spool', () => {
   })
 
   describe('partial_transactions_change', () => {
+    it('should parse add partial transactions from data', () => {
+      // TODO(ahuszagh) Implement...
+    })
+
+    it('should parse remove partial transactions from data', () => {
+      // TODO(ahuszagh) Implement...
+    })
+
+    it('should parse add cosignatures from data', () => {
+      // TODO(ahuszagh) Implement...
+      // This is the fucking annoying one. Welp.
+    })
+
+    // Aggregate Transaction Info
+    //  type = 00
+    //  transactionInfos:
+    //    count = 01000000 (1)
+    //    transactionInfo:
+    //      entityHash = 671653C94E2254F2A23EFEDB15D67C38332AED1FBD24B063C0A8E675582B6A96
+    //      merkleComponentHash = 81E5E7AE49998802DABC816EC10158D3A7879702FF29084C2C992CD1289877A7
+    //      addressCount = FFFFFFFFFFFFFFFF
+    //      extractedAddresses =
+    //      transaction:
+    //        entity:
+    //          size = TODO(ahuszagh) Need here...
+    //          reserved = 00000000
+    //          signature = 939673209A13FF82397578D22CC96EB8516A6760C894D9B7535E3A1E068007B9255CFA9A914C97142A7AE18533E381C846B69D2AE0D60D1DC8A55AD120E2B606
+    //          key = 7681ED5023141D9CDCF184E5A7B60B7D466739918ED5DA30F7E71EA7B86EFF2D
+    //          reserved = 00000000
+    //          version = 01
+    //          network = 90
+    //          type = 4141
+    //        transaction:
+    //          aggregateHash = 3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006
+    //          transactionSize = TODO(ahuszagh) Need here...
+    //          reserved = 00000000
+    //          maxFee = 0000000000000000
+    //          deadline = 0100000000000000
+    //          innerTransactions:
+    //            embeddedTransaction:
+    //              entity:
+    //                size = TODO(ahuszagh) Need here...
+    //                reserved = 00000000
+    //                key = B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF
+    //                reserved = 00000000
+    //                version = 01
+    //                network = 90
+    //                type = 4E41
+    //              transaction:
+    //                parentId = 99F2A8C5D2433FE4
+    //                namespaceId = 7ABC6C75E58517C4
+    //                namespaceType = 01
+    //                nameSize = 06
+    //                name = 30756E697573
+    //          cosignatures:
+
+    // TODO(ahuszagh) Here...
+    // Let's create an aggregate bonded transaction with 1 embedded transaction.
+
+    // TODO(ahuszagh)
+    //  What's the data we need:
+    //
+
+    // TODO(ahuszagh) Here...
+    // Need to implement this..
+    // Let's create an aggregate bonded transaction.
     // TODO(ahuszagh) Implement...
   })
 
   describe('state_change', () => {
-    describe('it should parse score changes from data', () => {
+    it('should parse score changes from data', () => {
       // TODO(ahuszagh) Need these as files too.
       let buffer = Buffer.from('000000000000000000253aecfdfbee4102', 'hex')
       let actual = spool.state_change.data(buffer)
@@ -1131,10 +1197,90 @@ describe('spool', () => {
   })
 
   describe('transaction_status', () => {
-    // TODO(ahuszagh) Implement...
+    it('should parse transaction status from data', () => {
+      let buffer = Buffer.from('00000000000000000000000000000000000000000000000000000000000000007856341298000000000000002879de1383ef60810e30b4f563b7cca420b195ff2d202097560f1acce6b70ce5be05037ce82d382bd3de51ff0586e40172eebd828412a26847cb367439495b099be93593c699867f1b4f624fd37bc7fb93499cdec9929088f2ff1031293960ff0000000001984e41000000000000000001000000000000000000000000000000169515968a1f5fa9000673796d626f6c', 'hex')
+      let actual = spool.transaction_status.data(buffer)
+      expect(actual).to.eql({
+        hash: '0000000000000000000000000000000000000000000000000000000000000000',
+        status: 0x12345678,
+        transaction: {
+          entity: {
+            signature: '2879DE1383EF60810E30B4F563B7CCA420B195FF2D202097560F1ACCE6B70CE5BE05037CE82D382BD3DE51FF0586E40172EEBD828412A26847CB367439495B09',
+            key: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+            version: 1,
+            network: 152,
+            type: 16718
+          },
+          transaction: {
+            maxFee: '0',
+            deadline: '1',
+            namespaceId: 'A95F1F8A96159516',
+            namespaceType: 0,
+            name: 'symbol',
+            duration: '0'
+          }
+        }
+      })
+    })
+
+    it('should parse a transaction status file', () => {
+      let file = path.join(DATA_DIR, 'spool', 'transaction_status', '000000000000012B.dat')
+      let actual = spool.transaction_status.file(file)
+      expect(actual.status).to.equal(0x12345678)
+    })
+
+    it('should parse a transaction status directory', () => {
+      let directory = path.join(DATA_DIR, 'spool', 'transaction_status')
+      let actual = spool.transaction_status.directory(directory)
+      expect(Object.keys(actual)).to.eql(['000000000000012b.dat'])
+      expect(actual['000000000000012b.dat'].status).to.equal(0x12345678)
+    })
   })
 
   describe('unconfirmed_transactions_change', () => {
-    // TODO(ahuszagh) Implement...
+    it('should parse unconfirmed transaction changes from data', () => {
+      let buffer = Buffer.from('0001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000989D619A4C32CCDABE2B498AC1034B3FC8C30E56F183AF2F7298000000000000002879de1383ef60810e30b4f563b7cca420b195ff2d202097560f1acce6b70ce5be05037ce82d382bd3de51ff0586e40172eebd828412a26847cb367439495b099be93593c699867f1b4f624fd37bc7fb93499cdec9929088f2ff1031293960ff0000000001984e41000000000000000001000000000000000000000000000000169515968a1f5fa9000673796d626f6c', 'hex')
+      let actual = spool.unconfirmed_transactions_change.data(buffer)
+      expect(actual).to.eql({
+        type: 0,
+        transactionInfos: [
+          {
+            entityHash: '0000000000000000000000000000000000000000000000000000000000000000',
+            merkleComponentHash: '0000000000000000000000000000000000000000000000000000000000000000',
+            extractedAddresses: [
+              'TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S'
+            ],
+            entity: {
+              signature: '2879DE1383EF60810E30B4F563B7CCA420B195FF2D202097560F1ACCE6B70CE5BE05037CE82D382BD3DE51FF0586E40172EEBD828412A26847CB367439495B09',
+              key: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+              version: 1,
+              network: 152,
+              type: 16718
+            },
+            transaction: {
+              maxFee: '0',
+              deadline: '1',
+              namespaceId: 'A95F1F8A96159516',
+              namespaceType: 0,
+              name: 'symbol',
+              duration: '0'
+            }
+          }
+        ]
+      })
+    })
+
+    it('should parse a unconfirmed transaction changes file', () => {
+      let file = path.join(DATA_DIR, 'spool', 'unconfirmed_transactions_change', '000000000000012B.dat')
+      let actual = spool.unconfirmed_transactions_change.file(file)
+      expect(actual.transactionInfos[0].extractedAddresses[0]).to.equal('TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S')
+    })
+
+    it('should parse a unconfirmed transaction changes directory', () => {
+      let directory = path.join(DATA_DIR, 'spool', 'unconfirmed_transactions_change')
+      let actual = spool.unconfirmed_transactions_change.directory(directory)
+      expect(Object.keys(actual)).to.eql(['000000000000012b.dat'])
+      expect(actual['000000000000012b.dat'].transactionInfos[0].extractedAddresses[0]).to.equal('TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S')
+    })
   })
 })

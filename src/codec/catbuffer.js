@@ -287,18 +287,20 @@ export default class CatbufferReader extends Reader {
     assert(!embedded, 'aggregate transaction cannot be embedded')
 
     let transaction = this.baseTransaction()
-    transaction.transactionsHash = this.hash256()
+    transaction.aggregateHash = this.hash256()
     let transactionSize = this.uint32()
     // Skip reserved value.
     this.uint32()
 
     // Read the transactions.
+    // May not be present, but `transactions` handles empty data.
     let transactionData = this.data.slice(0, transactionSize)
     this.data = this.data.slice(transactionSize)
     let transactionReader = new CatbufferReader(transactionData)
     transaction.innerTransactions = transactionReader.transactions(true)
 
     // Read the remaining data as cosignatures.
+    // May not be present, but `cosignatures` handles empty data.
     transaction.cosignatures = this.cosignatures()
 
     this.validateEmpty()

@@ -665,11 +665,13 @@ const codec = {
     // Read transaction status from data.
     data: data => {
       let reader = new SpoolReader(data)
+      let hash = reader.hash256()
       let status = reader.uint32()
       let transaction = reader.transaction()
       reader.validateEmpty()
 
       return {
+        hash,
         status,
         transaction
       }
@@ -679,7 +681,7 @@ const codec = {
     file: file => readFile(file, 'transaction_status'),
 
     // Read all files in directory
-    directory: directory => readIndexedDirectory(directory, 'state_change')
+    directory: directory => readIndexedDirectory(directory, 'transaction_status')
   },
 
   unconfirmed_transactions_change: {
