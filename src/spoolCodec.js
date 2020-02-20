@@ -24,6 +24,7 @@ import MongoDb from 'mongodb'
 import fs from 'fs'
 import path from 'path'
 import Reader from './reader'
+import shared from './shared'
 
 // CONSTANTS
 const BLOCK_SAVED = 0
@@ -69,7 +70,7 @@ class SpoolReader extends Reader {
     //    EntityType type;
     //  }
     let size = this.uint32()
-    if (this.data.length < size) {
+    if (this.data.length < size - 4) {
       throw new Error('invalid sized-prefixed entity: data is too short')
     }
     // Skip reserved value.
@@ -139,6 +140,35 @@ class SpoolReader extends Reader {
     let merkleRoots = []
     this.n(merkleRoots, merkleCount, 'hash256')
     return merkleRoots
+  }
+
+  blockElement() {
+    // First, get our entity data so we can parse the verifiable entity and block.
+    let size = shared.binaryToUint32(this.data.slice(0, 4))
+    let entityData = this.data.slice(0, size)
+    this.data = this.data.slice(size)
+
+    // Read the entity data.
+    let entityReader = new SpoolReader(entityData)
+    let entity = entityReader.verifiableEntity()
+    let block = entityReader.block()
+    // We may have trailing data here, particularly for the NEMesis block.
+    // Ignore this data.
+
+    // Read the remaining data.
+    let entityHash = this.hash256()
+    let generationHash = this.hash256()
+    let transactions = this.transactions()
+    let merkleRoots = this.merkleRoots()
+
+    return {
+      entity,
+      block,
+      entityHash,
+      generationHash,
+      transactions,
+      merkleRoots
+    }
   }
 
   mosaic() {
@@ -305,8 +335,10 @@ class SpoolReader extends Reader {
     let sentinel = this.uint8()
     if (sentinel === 0xFF) {
       return this.blockStatement()
-    } else {
+    } else if (sentinel === 0) {
       return null
+    } else {
+      throw new Error(`invalid sentinel for an optional block statement, got ${sentinel}`)
     }
   }
 
@@ -416,7 +448,7 @@ const maxFileBlockChange = index => maxFileDefault(index)
 /**
  *  Classify all paths in the directory as either index or non-index paths.
  */
-const classifyPaths = directory => {
+const classifyIndexedPaths = directory => {
   let files = fs.readdirSync(directory)
   let index = files.filter(file => file.startsWith('index'))
   let data = files.filter(file => !file.startsWith('index'))
@@ -427,20 +459,10 @@ const classifyPaths = directory => {
   }
 }
 
+// TODO(ahuszagh) Need to have a block thing here...
+
 // CODEC
 
-// TODO(ahuszagh) Implement this at a higher level.
-// readdirSync(directory, { withFileTypes: true })
-// Filter for only files and those containing hex data.
-//   Can ignore:
-//     index.dat
-//     index_server.dat
-//     index_broker_r.dat
-
-// TODO(ahuszagh) Need a way to list directory contents...
-
-// TODO(ahuszagh) These should likely read the the entire directories, etd.
-// Need to have a file and directory reader.
 /**
  *  Codec for the spool stores.
  */
@@ -472,7 +494,7 @@ const codec = {
     //    index_server.dat
     //    index_broker_r.dat
     directory: directory => {
-      return codec.index.fromFiles(classifyPaths(directory))
+      return codec.index.fromFiles(classifyIndexedPaths(directory))
     }
   },
 
@@ -530,12 +552,7 @@ const codec = {
       let value = {type}
 
       if (type === BLOCK_SAVED) {
-        value.entity = reader.verifiableEntity()
-        value.block = reader.block()
-        value.entityHash = reader.hash256()
-        value.generationHash = reader.hash256()
-        value.transactions = reader.transactions()
-        value.merkleRoots = reader.merkleRoots()
+        Object.assign(value, reader.blockElement())
         value.blockStatement = reader.optionalBlockStatement()
       } else if (type === BLOCKS_DROPPED) {
         value.height = reader.uint64()
@@ -550,7 +567,7 @@ const codec = {
 
     // Read all files in directory.
     directory: directory => {
-      let files = classifyPaths(directory)
+      let files = classifyIndexedPaths(directory)
       let index = getIndex(codec.index.fromFiles(files))
       let maxFile = maxFileBlockChange(index)
 
@@ -568,12 +585,43 @@ const codec = {
     }
   },
 
-  block_sync: data => {
-// loadBlock
-// loadBlockElement
-// loadBlockStatementData
-    console.log(data)
-    throw new Error('not yet implemented...')
+  block_sync: {
+    // Read a block or block element (both formats are the same).
+    block: data => SpoolReader.solitary(data, 'blockElement'),
+
+    // Read a block statement.
+    blockStatement: data => SpoolReader.solitary(data, 'blockStatement'),
+
+    // Read a hashes data file.
+    hashes: data => {
+      console.log(data)
+      throw new Error('not yet implemented...')
+      // TODO(ahuszagh) Implement...
+    },
+
+    // Read all files in directory.
+    directory: directory => {
+      let result = {}
+      let blockDirectories = fs.readdirSync(directory)
+      for (let blockDirectory of blockDirectories) {
+        let blockFiles = fs.readdirSync(path.join(directory, blockDirectory))
+        for (let blockFile of blockFiles) {
+          let fullPath = path.join(directory, blockDirectory, blockFile)
+          let data = fs.readFileSync(file)
+          if (blockFile === 'hashes.dat') {
+            data[blockFile] = codec.block_sync.hashes(data)
+          } else if (blockFile.endsWith('.dat')) {
+            data[blockFile] = codec.block_sync.block(data)
+          } else if (blockFile.endsWith('.stmt')) {
+            data[blockFile] = codec.block_sync.blockStatement(data)
+          } else {
+            throw new Error(`invalid block sync file, got ${blockFile}`)
+          }
+        }
+      }
+
+      return result
+    }
   },
 
   partial_transactions_change: data => {
