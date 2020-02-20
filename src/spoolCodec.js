@@ -594,9 +594,15 @@ const codec = {
 
     // Read a hashes data file.
     hashes: data => {
-      console.log(data)
-      throw new Error('not yet implemented...')
-      // TODO(ahuszagh) Implement...
+      if (data.length % 32 !== 0) {
+        throw new Error('Hashes file does not contain only hashes.')
+      }
+      let reader = new SpoolReader(data)
+      let hashes = []
+      while (reader.data.length !== 0) {
+        hashes.push(reader.hash256())
+      }
+      return hashes
     },
 
     // Read all files in directory.
@@ -604,16 +610,17 @@ const codec = {
       let result = {}
       let blockDirectories = fs.readdirSync(directory)
       for (let blockDirectory of blockDirectories) {
+        result[blockDirectory] = {}
         let blockFiles = fs.readdirSync(path.join(directory, blockDirectory))
         for (let blockFile of blockFiles) {
           let fullPath = path.join(directory, blockDirectory, blockFile)
-          let data = fs.readFileSync(file)
+          let data = fs.readFileSync(fullPath)
           if (blockFile === 'hashes.dat') {
-            data[blockFile] = codec.block_sync.hashes(data)
+            result[blockDirectory][blockFile] = codec.block_sync.hashes(data)
           } else if (blockFile.endsWith('.dat')) {
-            data[blockFile] = codec.block_sync.block(data)
+            result[blockDirectory][blockFile] = codec.block_sync.block(data)
           } else if (blockFile.endsWith('.stmt')) {
-            data[blockFile] = codec.block_sync.blockStatement(data)
+            result[blockDirectory][blockFile] = codec.block_sync.blockStatement(data)
           } else {
             throw new Error(`invalid block sync file, got ${blockFile}`)
           }
