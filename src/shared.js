@@ -149,6 +149,9 @@ const binaryToBase32 = data => base32.encode(data)
 
 export default {
   idToHex,
+  binaryToInt8,
+  binaryToInt16,
+  binaryToInt32,
   binaryToUint8,
   binaryToUint16,
   binaryToUint32,

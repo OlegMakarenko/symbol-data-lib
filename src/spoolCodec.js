@@ -24,7 +24,6 @@ import MongoDb from 'mongodb'
 import fs from 'fs'
 import path from 'path'
 import CatbufferReader from './catbuffer'
-import shared from './shared'
 
 // CONSTANTS
 const BLOCK_SAVED = 0
@@ -589,7 +588,6 @@ const codec = {
   partial_transactions_change: {
     // Read generic file.
     file: data => {
-
       let reader = new SpoolReader(data)
       let type = reader.uint8()
       let value = {type}
@@ -643,7 +641,15 @@ const codec = {
   transaction_status: {
     // Read generic file.
     file: data => {
-      // TODO(ahuszagh) Implement...
+      let reader = new SpoolReader(data)
+      let status = reader.uint32()
+      let transaction = reader.transaction()
+      reader.validateEmpty()
+
+      return {
+        status,
+        transaction
+      }
     },
 
     // Read all files in directory
@@ -653,7 +659,21 @@ const codec = {
   unconfirmed_transactions_change: {
     // Read generic file.
     file: data => {
-      // TODO(ahuszagh) Implement...
+      let reader = new SpoolReader(data)
+      let type = reader.uint8()
+      let value = {type}
+
+      if (type === ADD_UNCONFIRMED_TRANSACTIONS) {
+        value.transactionInfos = reader.transactionInfos()
+      } else if (type === REMOVE_UNCONFIRMED_TRANSACTIONS) {
+        value.transactionInfos = reader.transactionInfos()
+      } else {
+        throw new Error(`invalid block change operation type, got ${type}`)
+      }
+
+      reader.validateEmpty()
+
+      return value
     },
 
     // Read all files in directory
