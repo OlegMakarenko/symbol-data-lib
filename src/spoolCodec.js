@@ -348,9 +348,12 @@ class SpoolReader extends Reader {
 
     let addressCount = this.long()
     let minus1 = MongoDb.Long.fromInt(-1)
-    let extractedAddresses = []
+    let extractedAddresses
     if (addressCount.notEquals(minus1)) {
+      extractedAddresses = []
       this.nLong(extractedAddresses, addressCount, 'address')
+    } else {
+      extractedAddresses = null
     }
 
     // TODO(ahuszagh) Need to read a full transaction here...
