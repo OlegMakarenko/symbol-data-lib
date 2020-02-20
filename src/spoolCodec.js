@@ -342,6 +342,35 @@ class SpoolReader extends Reader {
     }
   }
 
+  transactionInfo() {
+    let entityHash = this.hash256()
+    let merkleComponentHash = this.hash256()
+
+    let addressCount = this.long()
+    let minus1 = MongoDb.Long.fromInt(-1)
+    let extractedAddresses = []
+    if (addressCount.notEquals(minus1)) {
+      this.nLong(extractedAddresses, addressCount, 'address')
+    }
+
+    // TODO(ahuszagh) Need to read a full transaction here...
+//transactionInfo.pEntity = ReadEntity<model::Transaction>(inputStream);
+
+    return {
+      entityHash,
+      merkleComponentHash,
+      extractedAddresses
+      // TODO(ahuszagh) need entity.
+    }
+  }
+
+  transactionInfos() {
+    let infoCount = this.uint32()
+    let infos = []
+    this.n(infos, infoCount, 'transactionInfo')
+    return infos
+  }
+
   chainScore() {
     let scoreHigh = this.uint64()
     let scoreLow = this.uint64()
@@ -458,8 +487,6 @@ const classifyIndexedPaths = directory => {
     data: data.map(file => path.join(directory, file))
   }
 }
-
-// TODO(ahuszagh) Need to have a block thing here...
 
 // CODEC
 
@@ -636,13 +663,39 @@ const codec = {
     }
   },
 
-  partial_transactions_change: data => {
+  partial_transactions_change: {
 //notifyAddPartials
 //notifyRemovePartials
 //notifyAddCosignature
 
-    console.log(data)
-    throw new Error('not yet implemented...')
+    // Read generic file.
+    file: data => {
+
+      let reader = new SpoolReader(data)
+      let type = reader.uint8()
+      let value = {type}
+
+      if (type === ADD_PARTIAL_TRANSACTIONS) {
+        value.transactionInfos = reader.transactionInfos()
+      } else if (type === REMOVE_PARTIAL_TRANSACTIONS) {
+        value.transactionInfos = reader.transactionInfos()
+      } else if (type === ADD_COSIGNATURE) {
+        value.signer = reader.key()
+        value.signature = reader.signature()
+        value.transactionInfo = reader.transactionInfo()
+      } else {
+        throw new Error(`invalid block change operation type, got ${type}`)
+      }
+
+      reader.validateEmpty()
+
+      return value
+    },
+
+    // Read all files in directory
+    directory: directory => {
+      // TODO(ahuszagh) Implement...
+    }
   },
 
   state_change: data => {
