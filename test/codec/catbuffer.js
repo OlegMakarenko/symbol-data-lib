@@ -206,11 +206,67 @@ describe('catbuffer', () => {
   })
 
   it('should parse an address alias transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let namespaceId = 'F24D0E1AF24D0E1A'
+    let address = '906415867F121D037AF447E711B0F5E4D52EBBF066D96860EB'
+    let aliasAction = '01'
+
+    // Embedded
+    let embeddedTransaction = namespaceId + address + aliasAction
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.addressAliasTransaction(true)).to.eql({
+      namespaceId: '1A0E4DF21A0E4DF2',
+      address: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
+      aliasAction: 1
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.addressAliasTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      namespaceId: '1A0E4DF21A0E4DF2',
+      address: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
+      aliasAction: 1
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x424E).namespaceId).to.equal('1A0E4DF21A0E4DF2')
   })
 
   it('should parse a mosaic alias transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let namespaceId = 'F24D0E1AF24D0E1A'
+    let mosaicId = '5DFB9AC1932C1F2C'
+    let aliasAction = '01'
+
+    // Embedded
+    let embeddedTransaction = namespaceId + mosaicId + aliasAction
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.mosaicAliasTransaction(true)).to.eql({
+      namespaceId: '1A0E4DF21A0E4DF2',
+      mosaicId: '2C1F2C93C19AFB5D',
+      aliasAction: 1
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.mosaicAliasTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      namespaceId: '1A0E4DF21A0E4DF2',
+      mosaicId: '2C1F2C93C19AFB5D',
+      aliasAction: 1
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x434E).namespaceId).to.equal('1A0E4DF21A0E4DF2')
   })
 
   it('should parse a mosaic definition transaction', () => {
@@ -288,7 +344,51 @@ describe('catbuffer', () => {
   })
 
   it('should parse a modify multisig transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let minRemovalDelta = '01'
+    let minApprovalDelta = '01'
+    let additionsCount = '00'
+    let deletionsCount = '01'
+    let reserved1 = '00000000'
+    let publicKeyAdditions = ''
+    let publicKeyDeletions = '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
+
+    // Embedded
+    let embeddedTransaction = minRemovalDelta +
+      minApprovalDelta +
+      additionsCount +
+      deletionsCount +
+      reserved1 +
+      publicKeyAdditions +
+      publicKeyDeletions
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.modifyMultisigTransaction(true)).to.eql({
+      minRemovalDelta: 1,
+      minApprovalDelta: 1,
+      publicKeyAdditions: [],
+      publicKeyDeletions: [
+        '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
+      ]
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.modifyMultisigTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      minRemovalDelta: 1,
+      minApprovalDelta: 1,
+      publicKeyAdditions: [],
+      publicKeyDeletions: [
+        '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
+      ]
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4155).minRemovalDelta).to.equal(1)
   })
 
   it('should parse an aggregate complete transaction', () => {
@@ -300,15 +400,129 @@ describe('catbuffer', () => {
   })
 
   it('should parse a hash lock transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let mosaic = 'F89E03B7BE7C3FA0E803000000000000'
+    let duration = 'A086010000000000'
+    let hash = 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630'
+
+    // Embedded
+    let embeddedTransaction = mosaic + duration + hash
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.lockTransaction(true)).to.eql({
+      mosaic: {
+        mosaicId: 'A03F7CBEB7039EF8',
+        amount: '1000'
+      },
+      duration: '100000',
+      hash: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630'
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.lockTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      mosaic: {
+        mosaicId: 'A03F7CBEB7039EF8',
+        amount: '1000'
+      },
+      duration: '100000',
+      hash: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630'
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4148).duration).to.equal('100000')
   })
 
   it('should parse a secret lock transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let secret = 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630'
+    let mosaic = 'F89E03B7BE7C3FA0E803000000000000'
+    let duration = 'A086010000000000'
+    let hashAlgorithm = '01'
+    let address = '906415867F121D037AF447E711B0F5E4D52EBBF066D96860EB'
+
+    // Embedded
+    let embeddedTransaction = secret +
+      mosaic +
+      duration +
+      hashAlgorithm +
+      address
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.secretLockTransaction(true)).to.eql({
+      secret: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630',
+      mosaic: {
+        mosaicId: 'A03F7CBEB7039EF8',
+        amount: '1000'
+      },
+      duration: '100000',
+      hashAlgorithm: 1,
+      recipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.secretLockTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      secret: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630',
+      mosaic: {
+        mosaicId: 'A03F7CBEB7039EF8',
+        amount: '1000'
+      },
+      duration: '100000',
+      hashAlgorithm: 1,
+      recipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4152).duration).to.equal('100000')
   })
 
   it('should parse a secret proof transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let secret = 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630'
+    let proofSize = '0A00'
+    let hashAlgorithm = '01'
+    let address = '906415867F121D037AF447E711B0F5E4D52EBBF066D96860EB'
+    let proof = 'AE311DAD16F95EBDE866'
+
+    // Embedded
+    let embeddedTransaction = secret +
+      proofSize +
+      hashAlgorithm +
+      address +
+      proof
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.secretProofTransaction(true)).to.eql({
+      secret: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630',
+      hashAlgorithm: 1,
+      recipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
+      proof: 'AE311DAD16F95EBDE866'
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.secretProofTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      secret: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630',
+      hashAlgorithm: 1,
+      recipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
+      proof: 'AE311DAD16F95EBDE866'
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4252).proof).to.equal('AE311DAD16F95EBDE866')
   })
 
   it('should parse an account restriction address transaction', () => {

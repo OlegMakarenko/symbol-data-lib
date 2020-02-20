@@ -231,7 +231,7 @@ export default class CatbufferReader extends Reader {
   mosaicAliasTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.namespaceId = this.id()
-    transaction.aliased = this.id()
+    transaction.mosaicId = this.id()
     transaction.aliasAction = this.uint8()
     this.validateEmpty()
 

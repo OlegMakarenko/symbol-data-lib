@@ -248,7 +248,7 @@ describe('spool', () => {
                 maxFee: '0',
                 deadline: '1',
                 namespaceId: '85BBEA6CC462B244',
-                aliased: '61F6EFB8D6BF2705',
+                mosaicId: '61F6EFB8D6BF2705',
                 aliasAction: 1
               }
             },
@@ -298,7 +298,7 @@ describe('spool', () => {
                 maxFee: '0',
                 deadline: '1',
                 namespaceId: '941299B2B7E1291C',
-                aliased: '22E99F2A9E7A1798',
+                mosaicId: '22E99F2A9E7A1798',
                 aliasAction: 1
               }
             },
