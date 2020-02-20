@@ -582,4 +582,16 @@ export default class CatbufferReader extends Reader {
       block
     }
   }
+
+  blocks() {
+    // Read transaction data while we still have remaining data.
+    // It will either completely parse or throw an error.
+    let blocks = []
+    while (this.data.length !== 0) {
+      console.log(`data.length=${this.data.length}`)
+      blocks.push(this.block())
+    }
+
+    return blocks
+  }
 }
