@@ -214,11 +214,77 @@ describe('catbuffer', () => {
   })
 
   it('should parse a mosaic definition transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let mosaicId = '5DFB9AC1932C1F2C'
+    let duration = 'E803000000000000'
+    let nonce = '01000000'
+    let flags = '07'
+    let divisibility = '06'
+
+    // Embedded
+    let embeddedTransaction = mosaicId +
+      duration +
+      nonce +
+      flags +
+      divisibility
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.mosaicDefinitionTransaction(true)).to.eql({
+      mosaicId: '2C1F2C93C19AFB5D',
+      duration: '1000',
+      nonce: 1,
+      flags: 7,
+      divisibility: 6
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.mosaicDefinitionTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      mosaicId: '2C1F2C93C19AFB5D',
+      duration: '1000',
+      nonce: 1,
+      flags: 7,
+      divisibility: 6
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x414D).duration).to.equal('1000')
   })
 
   it('should parse a mosaic supply change transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let mosaicId = 'F89E03B7BE7C3FA0'
+    let delta = 'A086010000000000'
+    let action = '01'
+
+    // Embedded
+    let embeddedTransaction = mosaicId + delta + action
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.mosaicSupplyChangeTransaction(true)).to.eql({
+      mosaicId: 'A03F7CBEB7039EF8',
+      delta: '100000',
+      action: 1
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.mosaicSupplyChangeTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      mosaicId: 'A03F7CBEB7039EF8',
+      delta: '100000',
+      action: 1
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x424D).delta).to.equal('100000')
   })
 
   it('should parse a modify multisig transaction', () => {
