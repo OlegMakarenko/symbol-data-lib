@@ -16,10 +16,16 @@
  *
  */
 
+import audit from './audit'
+import block from './block'
 import mongo from './mongo'
 import rocks from './rocks'
+import spool from './spool'
 
 export default {
+  audit,
+  block,
   mongo,
-  rocks
+  rocks,
+  spool
 }

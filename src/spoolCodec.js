@@ -605,29 +605,34 @@ const codec = {
       return hashes
     },
 
-    // Read all files in directory.
-    directory: directory => {
+    // Read from a list of pre-classified directories.
+    fromDirectories: directories => {
       let result = {}
-      let blockDirectories = fs.readdirSync(directory)
-      for (let blockDirectory of blockDirectories) {
-        result[blockDirectory] = {}
-        let blockFiles = fs.readdirSync(path.join(directory, blockDirectory))
-        for (let blockFile of blockFiles) {
-          let fullPath = path.join(directory, blockDirectory, blockFile)
-          let data = fs.readFileSync(fullPath)
-          if (blockFile === 'hashes.dat') {
-            result[blockDirectory][blockFile] = codec.block_sync.hashes(data)
-          } else if (blockFile.endsWith('.dat')) {
-            result[blockDirectory][blockFile] = codec.block_sync.block(data)
-          } else if (blockFile.endsWith('.stmt')) {
-            result[blockDirectory][blockFile] = codec.block_sync.blockStatement(data)
+      let subResult
+      for (let directory of directories) {
+        result[path.basename(directory)] = subResult = {}
+        let files = fs.readdirSync(directory)
+        for (let file of files) {
+          let data = fs.readFileSync(path.join(directory, file))
+          if (file === 'hashes.dat') {
+            subResult[file] = codec.block_sync.hashes(data)
+          } else if (file.endsWith('.dat')) {
+            subResult[file] = codec.block_sync.block(data)
+          } else if (file.endsWith('.stmt')) {
+            subResult[file] = codec.block_sync.blockStatement(data)
           } else {
-            throw new Error(`invalid block sync file, got ${blockFile}`)
+            throw new Error(`invalid block sync file, got ${file}`)
           }
         }
       }
 
       return result
+    },
+
+    // Read all files in directory.
+    directory: directory => {
+      let directories = fs.readdirSync(directory).map(file => path.join(directory, file))
+      return codec.block_sync.fromDirectories(directories)
     }
   },
 

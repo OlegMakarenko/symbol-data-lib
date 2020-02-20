@@ -28,22 +28,3 @@
 //  process.getuid() === 0
 
 
-// block_change
-//      void notifyBlock(const model::BlockElement& blockElement) override {
-//        io::Write8(*m_pOutputStream, utils::to_underlying_type(subscribers::BlockChangeOperationType::Block));
-//        io::WriteBlockElement(blockElement, *m_pOutputStream);
-//        if (blockElement.OptionalStatement) {
-//          io::Write8(*m_pOutputStream, 0xFF);
-//          io::WriteBlockStatement(*blockElement.OptionalStatement, *m_pOutputStream);
-//        } else {
-//          io::Write8(*m_pOutputStream, 0);
-//        }
-//
-//        m_pOutputStream->flush();
-//      }
-//
-//      void notifyDropBlocksAfter(Height height) override {
-//        io::Write8(*m_pOutputStream, utils::to_underlying_type(subscribers::BlockChangeOperationType::Drop_Blocks_After));
-//        io::Write(*m_pOutputStream, height);
-//        m_pOutputStream->flush();
-//      }
