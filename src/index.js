@@ -18,6 +18,7 @@
 
 import audit from './audit'
 import block from './block'
+import codec from './codec'
 import mongo from './mongo'
 import rocks from './rocks'
 import spool from './spool'
@@ -25,6 +26,7 @@ import spool from './spool'
 export default {
   audit,
   block,
+  codec,
   mongo,
   rocks,
   spool

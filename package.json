@@ -1,8 +1,8 @@
 {
-  "name": "catapult-scripts",
+  "name": "symbol-data-lib",
   "version": "0.1.0",
   "private": true,
-  "description": "Scripts to help debug Catapult",
+  "description": "Library and scripts to access Catapult data",
   "main": "dist/src/index.js",
   "bin": {
     "catapult-mongo-dump": "dist/bin/catapult-mongo-dump.js",
@@ -13,10 +13,7 @@
     "clean": "rm -rf dist",
     "lint": "eslint src",
     "lint.test": "eslint test --global it,describe",
-    "test": "mocha --no-warnings \"test/index.js\" --require @babel/register --require @babel/core --require @babel/polyfill",
-    "test.base32": "mocha --no-warnings \"test/base32.js\" --require @babel/register --require @babel/core --require @babel/polyfill",
-    "test.mongo": "mocha --no-warnings \"test/mongo.js\" --require @babel/register --require @babel/core --require @babel/polyfill",
-    "test.rocks": "mocha --no-warnings \"test/rocks.js\" --require @babel/register --require @babel/core --require @babel/polyfill"
+    "test": "mocha --no-warnings \"test/index.js\" --require @babel/register --require @babel/core --require @babel/polyfill"
   },
   "license": "Apache-2.0",
   "dependencies": {

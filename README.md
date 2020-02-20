@@ -1,7 +1,13 @@
-catapult-scripts
-================
+symbol-data-lib
+===============
 
-Command-line scripts to facilitate debugging and accessing NEM MongoDB and RocksDB data.
+Library and command-line scripts to facilitate debugging and accessing NEM Node data directly from stores. symbol-data-lib retreieves internal stores from:
+- MongoDB
+- RocksDB
+- Blocks
+- Spool
+- Audit
+- And more.
 
 # Getting Started
 
@@ -11,14 +17,14 @@ First, install the dependent modules.
 npm install
 ```
 
-Then, build and link the scripts to allow them to be run globally:
+Then, build the library and link the scripts to allow them to be run globally:
 
 ```bash
 npm run build
 npm link
 ```
 
-Next, you can run them globally:
+Next, you can run the data scripts globally:
 
 ```bash
 # Dump the mosaics collection from MongoDB.
@@ -130,6 +136,10 @@ Connected to rocks at /data/statedb/AccountStateCache
 }
 ```
 
+# Library Usage
+
+symbol-data-lib also exposes a library, simplifying data access from catapult data stores.
+
 # Detailed Instructions
 
 The following scripts use paths by default within the Docker container, however, it may be easier to run them from outside the docker container (to avoid having to install NPM, cloning the repository, and installing the dependencies). To do so, we must expose port `27017` on the `db` image:
@@ -167,8 +177,8 @@ The tests are only guaranteed to work on little-endian systems, and will likely 
 
 # License
 
-catapult-scripts is licensed under the Apache 2.0 license. See [LICENSE](/LICENSE) for more information.
+symbol-data-lib is licensed under the Apache 2.0 license. See [LICENSE](/LICENSE) for more information.
 
 # Contributing
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in catapult-scripts by you, as defined in the Apache-2.0 license, shall be licensed as above, without any additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in symbol-data-lib by you, as defined in the Apache-2.0 license, shall be licensed as above, without any additional terms or conditions.

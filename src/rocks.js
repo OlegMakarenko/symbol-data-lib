@@ -20,8 +20,8 @@
  *  Utilities to process data from catapult's RocksDB store.
  */
 
-import Level from './level'
-import rocksCodec from './rocksCodec'
+import rocksCodec from './codec/rocks'
+import Level from './util/level'
 
 /**
  *  Dump RocksDB data to JSON.

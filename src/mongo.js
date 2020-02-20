@@ -21,7 +21,7 @@
  */
 
 import MongoDb from 'mongodb'
-import mongoCodec from './mongoCodec'
+import mongoCodec from './codec/mongo'
 
 /**
  *  Get connection to MongoDB.
