@@ -88,11 +88,15 @@ export default class Reader {
     return value
   }
 
-  long() {
-    let uint64 = shared.binaryToUint64(this.data.slice(0, 8))
-    let long = new MongoDb.Long(uint64[0], uint64[1])
+  rawUint64() {
+    let value = shared.binaryToUint64(this.data.slice(0, 8))
     this.data = this.data.slice(8)
-    return long
+    return value
+  }
+
+  long() {
+    let uint64 = this.rawUint64()
+    return new MongoDb.Long(uint64[0], uint64[1])
   }
 
   uint64() {
@@ -103,6 +107,10 @@ export default class Reader {
     let value = this.data.slice(0, n)
     this.data = this.data.slice(n)
     return value
+  }
+
+  asciiN(n) {
+    return shared.binaryToAscii(this.binaryN(n))
   }
 
   base32N(n) {
@@ -130,10 +138,7 @@ export default class Reader {
   }
 
   id() {
-    let uint64 = shared.binaryToUint64(this.data.slice(0, 8))
-    let value = shared.idToHex(uint64)
-    this.data = this.data.slice(8)
-    return value
+    return shared.idToHex(this.rawUint64())
   }
 
   entityType() {

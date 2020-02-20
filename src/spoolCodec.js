@@ -46,6 +46,37 @@ const RECEIPT_AGGREGATE = 0xE
 const RECEIPT_ALIAS_RESOLUTION = 0xF
 const RECEIPT_ADDRESS_RESOLUTION = 1
 const RECEIPT_MOSAIC_RESOLUTION = 2
+const TRANSACTION_TRANSFER = 0x4154
+const TRANSACTION_REGISTER_NAMESPACE = 0x414E
+const TRANSACTION_ADDRESS_ALIAS = 0x424E
+const TRANSACTION_MOSAIC_ALIAS = 0x434E
+const TRANSACTION_MOSAIC_DEFINITION = 0x414D
+const TRANSACTION_MOSAIC_SUPPLY_CHANGE = 0x424D
+const TRANSACTION_MODIFY_MULTISIG_ACCOUNT = 0x4155
+const TRANSACTION_AGGREGATE_COMPLETE = 0x4141
+const TRANSACTION_AGGREGATE_BONDED = 0x4241
+const TRANSACTION_LOCK = 0x4148
+const TRANSACTION_SECRET_LOCK = 0x4152
+const TRANSACTION_SECRET_PROOF = 0x4252
+const TRANSACTION_ACCOUNT_RESTRICTION_ADDRESS = 0x4150
+const TRANSACTION_ACCOUNT_RESTRICTION_MOSAIC = 0x4250
+const TRANSACTION_ACCOUNT_RESTRICTION_OPERATION = 0x4350
+const TRANSACTION_LINK_ACCOUNT = 0x414C
+const TRANSACTION_MOSAIC_ADDRESS_RESTRICTION = 0x4251
+const TRANSACTION_MOSAIC_GLOBAL_RESTRICTION = 0x4151
+const TRANSACTION_ACCOUNT_METADATA_TRANSACTION = 0x4144
+const TRANSACTION_MOSAIC_METADATA_TRANSACTION = 0x4244
+const TRANSACTION_NAMESPACE_METADATA_TRANSACTION = 0x4344
+const NAMESPACE_ROOT = 0
+const NAMESPACE_CHILD = 1
+
+// HELPERS
+
+// Align size to boundary.
+const align = (size, alignment) => {
+  let mod = size % alignment
+  return mod === 0 ? size : size + (alignment - mod)
+}
 
 // READERS
 
@@ -92,7 +123,7 @@ class SpoolReader extends Reader {
     }
   }
 
-  block() {
+  blockHeader() {
     let height = this.uint64()
     let timestamp = this.uint64()
     let difficulty = this.uint64()
@@ -118,7 +149,253 @@ class SpoolReader extends Reader {
     }
   }
 
+  baseTransaction() {
+    let maxFee = this.uint64()
+    let deadline = this.uint64()
+
+    return {
+      maxFee,
+      deadline
+    }
+  }
+
+  transferTransaction() {
+    // Parse the fixed data.
+    let transaction = this.baseTransaction()
+    transaction.receipientAddress = this.address()
+    let mosaicsCount = this.uint8()
+    let messageSize = this.uint16()
+    // Skip reserved value.
+    this.uint32()
+
+    // Parse the mosaics.
+    transaction.mosaics = []
+    this.n(transaction.mosaics, mosaicsCount, 'mosaic')
+
+    // Parse the message
+    transaction.message = this.hexN(messageSize)
+
+    this.validateEmpty()
+
+    return transaction
+  }
+
+  registerNamespaceTransaction() {
+    // Parse the fixed data.
+    let transaction = this.baseTransaction()
+    let union = this.rawUint64()
+    transaction.namespaceId = this.id()
+    transaction.namespaceType = this.uint8()
+    let nameSize = this.uint8()
+    transaction.name = this.asciiN(nameSize)
+
+    // Parse the union data
+    if (transaction.namespaceType === NAMESPACE_ROOT) {
+      transaction.duration = (new MongoDb.Long(union[0], union[1])).toString()
+    } else if (transaction.namespaceType === NAMESPACE_CHILD) {
+      transaction.parentId = shared.idToHex(union)
+    } else {
+      throw new Error(`invalid namespace type, got ${transaction.namespaceType}`)
+    }
+    this.validateEmpty()
+
+    return transaction
+  }
+
+  addressAliasTransaction() {
+    console.log(`addressAliasTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  mosaicAliasTransaction() {
+    console.log(`mosaicAliasTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  mosaicDefinitionTransaction() {
+    console.log(`mosaicDefinitionTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  mosaicSupplyChangeTransaction() {
+    console.log(`mosaicSupplyChangeTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  modifyMultisigTransaction() {
+    console.log(`modifyMultisigTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  aggregateCompleteTransaction() {
+    console.log(`aggregateCompleteTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  aggregateBondedTransaction() {
+    console.log(`aggregateBondedTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  lockTransaction() {
+    console.log(`lockTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  secretLockTransaction() {
+    console.log(`secretLockTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  secretProofTransaction() {
+    console.log(`secretProofTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  accountRestrictionAddressTransaction() {
+    console.log(`accountRestrictionAddressTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  accountRestrictionMosaicTransaction() {
+    console.log(`accountRestrictionMosaicTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  accountRestrictionOperationTransaction() {
+    console.log(`accountRestrictionOperationTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  linkAccountTransaction() {
+    console.log(`linkAccountTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  mosaicAddressRestrictionTransaction() {
+    console.log(`mosaicAddressRestrictionTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  mosaicGlobalRestrictionTransaction() {
+    console.log(`mosaicGlobalRestrictionTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  accountMetadataTransaction() {
+    console.log(`accountMetadataTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  mosaicMetadataTransaction() {
+    console.log(`mosaicMetadataTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  namespaceMetadataTransaction() {
+    console.log(`namespaceMetadataTransaction data.length=${this.data.length}`)
+    // TODO(ahuszagh) Implement...
+  }
+
+  transactionHeader(type) {
+    if (type === TRANSACTION_TRANSFER) {
+      return this.transferTransaction()
+    } else if (type === TRANSACTION_REGISTER_NAMESPACE) {
+      return this.registerNamespaceTransaction()
+    } else if (type === TRANSACTION_ADDRESS_ALIAS) {
+      return this.addressAliasTransaction()
+    } else if (type === TRANSACTION_MOSAIC_ALIAS) {
+      return this.mosaicAliasTransaction()
+    } else if (type === TRANSACTION_MOSAIC_DEFINITION) {
+      return this.mosaicDefinitionTransaction()
+    } else if (type === TRANSACTION_MOSAIC_SUPPLY_CHANGE) {
+      return this.mosaicSupplyChangeTransaction()
+    } else if (type === TRANSACTION_MODIFY_MULTISIG_ACCOUNT) {
+      return this.modifyMultisigTransaction()
+    } else if (type === TRANSACTION_AGGREGATE_COMPLETE) {
+      return this.aggregateCompleteTransaction()
+    } else if (type === TRANSACTION_AGGREGATE_BONDED) {
+      return this.aggregateBondedTransaction()
+    } else if (type === TRANSACTION_LOCK) {
+      return this.lockTransaction()
+    } else if (type === TRANSACTION_SECRET_LOCK) {
+      return this.secretLockTransaction()
+    } else if (type === TRANSACTION_SECRET_PROOF) {
+      return this.secretProofTransaction()
+    } else if (type === TRANSACTION_ACCOUNT_RESTRICTION_ADDRESS) {
+      return this.accountRestrictionAddressTransaction()
+    } else if (type === TRANSACTION_ACCOUNT_RESTRICTION_MOSAIC) {
+      return this.accountRestrictionMosaicTransaction()
+    } else if (type === TRANSACTION_ACCOUNT_RESTRICTION_OPERATION) {
+      return this.accountRestrictionOperationTransaction()
+    } else if (type === TRANSACTION_LINK_ACCOUNT) {
+      return this.linkAccountTransaction()
+    } else if (type === TRANSACTION_MOSAIC_ADDRESS_RESTRICTION) {
+      return this.mosaicAddressRestrictionTransaction()
+    } else if (type === TRANSACTION_MOSAIC_GLOBAL_RESTRICTION) {
+      return this.mosaicGlobalRestrictionTransaction()
+    } else if (type === TRANSACTION_ACCOUNT_METADATA_TRANSACTION) {
+      return this.accountMetadataTransaction()
+    } else if (type === TRANSACTION_MOSAIC_METADATA_TRANSACTION) {
+      return this.mosaicMetadataTransaction()
+    } else if (type === TRANSACTION_NAMESPACE_METADATA_TRANSACTION) {
+      return this.namespaceMetadataTransaction()
+    } else {
+      throw new Error(`invalid transaction type, got ${type}`)
+    }
+  }
+
   transaction() {
+    // First, get our entity data so we can parse the verifiable entity and block.
+    let size = shared.binaryToUint32(this.data.slice(0, 4))
+    let alignedSize = align(size, 8)
+    let entityData = this.data.slice(0, size)
+    this.data = this.data.slice(alignedSize)
+
+    // Create a dependent reader.
+    let entityReader = new SpoolReader(entityData)
+    let entity = entityReader.verifiableEntity()
+    let transaction = entityReader.transactionHeader(entity.type)
+
+    return {
+      entity,
+      transaction
+    }
+  }
+
+  transactions() {
+    // Read transaction data while we still have remaining data.
+    // It will either completely parse or throw an error.
+    let transactions = []
+    while (this.data.length !== 0) {
+      transactions.push(this.transaction())
+    }
+
+    return transactions
+  }
+
+  block() {
+    // First, get our entity data so we can parse the verifiable entity and block.
+    let size = shared.binaryToUint32(this.data.slice(0, 4))
+    let entityData = this.data.slice(0, size)
+    this.data = this.data.slice(size)
+
+    // Create a dependent reader.
+    let entityReader = new SpoolReader(entityData)
+    let entity = entityReader.verifiableEntity()
+    let block = entityReader.blockHeader()
+    if (entityReader.data.length !== 0) {
+      // Add the embedded transactions.
+      block.transactions = entityReader.transactions()
+    }
+
+    return {
+      entity,
+      block
+    }
+  }
+
+  transactionHash() {
     let entityHash = this.hash256()
     let merkleComponentHash = this.hash256()
 
@@ -128,10 +405,10 @@ class SpoolReader extends Reader {
     }
   }
 
-  transactions() {
+  transactionsHashes() {
     let transactionsCount = this.uint32()
     let transactions = []
-    this.n(transactions, transactionsCount, 'transaction')
+    this.n(transactions, transactionsCount, 'transactionHash')
     return transactions
   }
 
@@ -143,22 +420,10 @@ class SpoolReader extends Reader {
   }
 
   blockElement() {
-    // First, get our entity data so we can parse the verifiable entity and block.
-    let size = shared.binaryToUint32(this.data.slice(0, 4))
-    let entityData = this.data.slice(0, size)
-    this.data = this.data.slice(size)
-
-    // Read the entity data.
-    let entityReader = new SpoolReader(entityData)
-    let entity = entityReader.verifiableEntity()
-    let block = entityReader.block()
-    // We may have trailing data here, particularly for the NEMesis block.
-    // Ignore this data.
-
-    // Read the remaining data.
+    let {entity, block} = this.block()
     let entityHash = this.hash256()
     let generationHash = this.hash256()
-    let transactions = this.transactions()
+    let transactions = this.transactionsHashes()
     let merkleRoots = this.merkleRoots()
 
     return {

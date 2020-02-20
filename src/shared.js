@@ -101,6 +101,11 @@ const binaryToUint64 = data => {
 const binaryToHex = data => data.toString('hex').toUpperCase()
 
 /**
+ *  Convert binary data to ASCII.
+ */
+const binaryToAscii = data => data.toString('ascii')
+
+/**
  *  Convert binary data to base32.
  */
 const binaryToBase32 = data => base32.encode(data)
@@ -112,5 +117,6 @@ export default {
   binaryToUint32,
   binaryToUint64,
   binaryToHex,
+  binaryToAscii,
   binaryToBase32
 }
