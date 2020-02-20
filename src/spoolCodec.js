@@ -620,15 +620,14 @@ class SpoolReader extends Reader {
     } else {
       extractedAddresses = null
     }
-
-    // TODO(ahuszagh) Need to read a full transaction here...
-//transactionInfo.pEntity = ReadEntity<model::Transaction>(inputStream);
+    let {entity, transaction} = this.transaction()
 
     return {
       entityHash,
       merkleComponentHash,
-      extractedAddresses
-      // TODO(ahuszagh) need entity.
+      extractedAddresses,
+      entity,
+      transaction
     }
   }
 
@@ -733,14 +732,11 @@ const getIndex = index => {
 }
 
 // Get the default max filename, which is a 16-bit hex filename.
-const maxFileDefault = index => {
+const maxFile = index => {
   let id = index.toString(16)
     .padStart(16, '0')
     return `${id}.dat`
 }
-
-// Get the max filename for the maxFileBlockChange.
-const maxFileBlockChange = index => maxFileDefault(index)
 
 /**
  *  Classify all paths in the directory as either index or non-index paths.
@@ -754,6 +750,29 @@ const classifyIndexedPaths = directory => {
     index: index.map(file => path.join(directory, file)),
     data: data.map(file => path.join(directory, file))
   }
+}
+
+/**
+ *  Read all files in an indexed directory.
+ *
+ *  Uses the codec to provide the callback.
+ */
+const readIndexedDirectory = (directory, codecName) => {
+  let files = classifyIndexedPaths(directory)
+  let index = getIndex(codec.index.fromFiles(files))
+  let max = maxFile(index)
+
+  let result = {}
+  for (let file of files.data) {
+    let basename = path.basename(file).toLowerCase()
+    if (basename < max) {
+      let data = fs.readFileSync(file)
+      let value = codec[codecName].file(data)
+      result[basename] = value
+    }
+  }
+
+  return result
 }
 
 // CODEC
@@ -861,23 +880,7 @@ const codec = {
     },
 
     // Read all files in directory.
-    directory: directory => {
-      let files = classifyIndexedPaths(directory)
-      let index = getIndex(codec.index.fromFiles(files))
-      let maxFile = maxFileBlockChange(index)
-
-      let result = {}
-      for (let file of files.data) {
-        let basename = path.basename(file).toLowerCase()
-        if (basename < maxFile) {
-          let data = fs.readFileSync(file)
-          let value = codec.block_change.file(data)
-          result[basename] = value
-        }
-      }
-
-      return result
-    }
+    directory: directory => readIndexedDirectory(directory, 'block_change')
   },
 
   block_sync: {
@@ -932,10 +935,6 @@ const codec = {
   },
 
   partial_transactions_change: {
-//notifyAddPartials
-//notifyRemovePartials
-//notifyAddCosignature
-
     // Read generic file.
     file: data => {
 
@@ -961,38 +960,52 @@ const codec = {
     },
 
     // Read all files in directory
-    directory: directory => {
+    directory: directory => readIndexedDirectory(directory, 'partial_transactions_change')
+  },
+
+  state_change: {
+    // Read generic file.
+    file: data => {
+      let reader = new SpoolReader(data)
+      let type = reader.uint8()
+      let value = {type}
+      if (type === SCORE_CHANGE) {
+        value.chainScore = reader.chainScore()
+      } else if (type === STATE_CHANGE) {
+        value.chainScore = reader.chainScore()
+        value.height = reader.uint64()
+        value.cacheChanges = reader.cacheChanges()
+      } else {
+        throw new Error(`invalid state change operation type, got ${type}`)
+      }
+
+      reader.validateEmpty()
+
+      return value
+    },
+
+    // Read all files in directory
+    directory: directory => readIndexedDirectory(directory, 'state_change')
+  },
+
+  transaction_status: {
+    // Read generic file.
+    file: data => {
       // TODO(ahuszagh) Implement...
-    }
+    },
+
+    // Read all files in directory
+    directory: directory => readIndexedDirectory(directory, 'state_change')
   },
 
-  state_change: data => {
-    let reader = new SpoolReader(data)
-    let type = reader.uint8()
-    let value = {type}
-    if (type === SCORE_CHANGE) {
-      value.chainScore = reader.chainScore()
-    } else if (type === STATE_CHANGE) {
-      value.chainScore = reader.chainScore()
-      value.height = reader.uint64()
-      value.cacheChanges = reader.cacheChanges()
-    } else {
-      throw new Error(`invalid state change operation type, got ${type}`)
-    }
+  unconfirmed_transactions_change: {
+    // Read generic file.
+    file: data => {
+      // TODO(ahuszagh) Implement...
+    },
 
-    reader.validateEmpty()
-
-    return value
-  },
-
-  transaction_status: data => {
-    console.log(data)
-    throw new Error('not yet implemented...')
-  },
-
-  unconfirmed_transactions_change: data => {
-    console.log(data)
-    throw new Error('not yet implemented...')
+    // Read all files in directory
+    directory: directory => readIndexedDirectory(directory, 'unconfirmed_transactions_change')
   }
 }
 
