@@ -1443,16 +1443,468 @@ describe('mongo', () => {
       })
     })
 
-    // TODO(ahuszagh) Implement...
-    it('should parse an account restriction address transaction', () => {})
-    it('should parse an account restriction mosaic transaction', () => {})
-    it('should parse an account restriction operation transaction', () => {})
-    it('should parse a link account transaction', () => {})
-    it('should parse a mosaic address restriction transaction', () => {})
-    it('should parse a mosaic global restriction transaction', () => {})
-    it('should parse an account metadata transaction', () => {})
-    it('should parse a mosaic metadata transaction', () => {})
-    it('should parse a namespace metadata transaction', () => {})
+    it('should parse an account restriction address transaction', () => {
+      let item = {
+        _id: object('5E4C31E226EC09222234CBC3'),
+        meta: {
+          height: long(70687, 0),
+          hash: binary('8B9804EC1E67AE3BCBE01FADDE618437394E1242C16516223487FCF54A92708F'),
+          merkleComponentHash: binary('8B9804EC1E67AE3BCBE01FADDE618437394E1242C16516223487FCF54A92708F'),
+          index: 0,
+          addresses: [
+            binary('98E0A3C020A97113893126969D78C7F5180B904C4A07DF478A')
+          ]
+        },
+        transaction: {
+          signature: binary('8FCC44333B2A2B694E1159A6E8872B4F6EB1921E0F2B332C606D7EB72263602A56665CE280B314E43D657A9A9C163F829AEEDD7D69B09ED5EDA9D330B7391E0B'),
+          signerPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          version: 1,
+          network: 0x98,
+          type: 0x4150,
+          maxFee: long(2000000, 0),
+          deadline: long(4216229874, 1),
+          restrictionFlags: 0x1,
+          restrictionAdditions: [
+            binary('986A92CB8823385A3FE3B11E4A903783485EF075ADBDE57F4E')
+          ],
+          restrictionDeletions: []
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '70687',
+          hash: '8B9804EC1E67AE3BCBE01FADDE618437394E1242C16516223487FCF54A92708F',
+          id: '5E4C31E226EC09222234CBC3',
+          merkleComponentHash: '8B9804EC1E67AE3BCBE01FADDE618437394E1242C16516223487FCF54A92708F',
+          index: 0,
+          addresses: [
+            'TDQKHQBAVFYRHCJRE2LJ26GH6UMAXECMJID56R4K'
+          ]
+        },
+        transaction: {
+          signature: '8FCC44333B2A2B694E1159A6E8872B4F6EB1921E0F2B332C606D7EB72263602A56665CE280B314E43D657A9A9C163F829AEEDD7D69B09ED5EDA9D330B7391E0B',
+          signerPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          version: 1,
+          network: 0x98,
+          type: 0x4150,
+          maxFee: '2000000',
+          deadline: '8511197170',
+          restrictionFlags: 0x1,
+          restrictionAdditions: [
+            'TBVJFS4IEM4FUP7DWEPEVEBXQNEF54DVVW66K72O'
+          ],
+          restrictionDeletions: []
+        }
+      })
+    })
+
+    it('should parse an account restriction mosaic transaction', () => {
+      let item = {
+        _id: object('5E4C31F826EC09222234D42B'),
+        meta: {
+          height: long(71737, 0),
+          hash: binary('9B93C273775E25352AE4A3FF62CC8DBDB2521D3BB575219C45BFDF3EDEA909C7'),
+          merkleComponentHash: binary('9B93C273775E25352AE4A3FF62CC8DBDB2521D3BB575219C45BFDF3EDEA909C7'),
+          index: 0,
+          addresses: [
+            binary('98E0A3C020A97113893126969D78C7F5180B904C4A07DF478A')
+          ]
+        },
+        transaction: {
+          signature: binary('63517D173AFCBEE611D2B0ABD3718F4EAAD3FD8E0636A64D40197500088412422EB8D9B67CA7E4B02D487A21703BC05A89D4225CCA74FC9E1F90FBB1ABF7BA09'),
+          signerPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          version: 1,
+          network: 0x98,
+          type: 0x4250,
+          maxFee: long(2000000, 0),
+          deadline: long(4234315112, 1),
+          restrictionFlags: 0x8002,
+          restrictionAdditions: [
+            binary('80781853CA114345')
+          ],
+          restrictionDeletions: []
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '71737',
+          hash: '9B93C273775E25352AE4A3FF62CC8DBDB2521D3BB575219C45BFDF3EDEA909C7',
+          id: '5E4C31F826EC09222234D42B',
+          merkleComponentHash: '9B93C273775E25352AE4A3FF62CC8DBDB2521D3BB575219C45BFDF3EDEA909C7',
+          index: 0,
+          addresses: [
+            'TDQKHQBAVFYRHCJRE2LJ26GH6UMAXECMJID56R4K'
+          ]
+        },
+        transaction: {
+          signature: '63517D173AFCBEE611D2B0ABD3718F4EAAD3FD8E0636A64D40197500088412422EB8D9B67CA7E4B02D487A21703BC05A89D4225CCA74FC9E1F90FBB1ABF7BA09',
+          signerPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          version: 1,
+          network: 0x98,
+          type: 0x4250,
+          maxFee: '2000000',
+          deadline: '8529282408',
+          restrictionFlags: 0x8002,
+          restrictionAdditions: [
+            '454311CA53187880'
+          ],
+          restrictionDeletions: []
+        }
+      })
+    })
+
+    it('should parse an account restriction operation transaction', () => {
+      let item = {
+        _id: object('5E4C322A26EC09222234F3CB'),
+        meta: {
+          height: long(75726, 0),
+          hash: binary('E396F0E83DEAC244ED32B757F3DCE5D35018C09E31B5C5848ADF1755C160C2F5'),
+          merkleComponentHash: binary('E396F0E83DEAC244ED32B757F3DCE5D35018C09E31B5C5848ADF1755C160C2F5'),
+          index: 0,
+          addresses: [
+            binary('98E0A3C020A97113893126969D78C7F5180B904C4A07DF478A')
+          ]
+        },
+        transaction: {
+          signature: binary('22442F3005595042B68E80FB8959333F96C2795E25BFDA25C76636FF585AB2DD846FB76719DCC305A14274A9E9574A082B730FDF41EDC95F3C6309B581370801'),
+          signerPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          version: 1,
+          network: 0x98,
+          type: 0x4350,
+          maxFee: long(1000000, 0),
+          deadline: long(8601304, 2),
+          restrictionFlags: 0xC004,
+          restrictionAdditions: [
+            binary('4E42')
+          ],
+          restrictionDeletions: []
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '75726',
+          hash: 'E396F0E83DEAC244ED32B757F3DCE5D35018C09E31B5C5848ADF1755C160C2F5',
+          id: '5E4C322A26EC09222234F3CB',
+          merkleComponentHash: 'E396F0E83DEAC244ED32B757F3DCE5D35018C09E31B5C5848ADF1755C160C2F5',
+          index: 0,
+          addresses: [
+            'TDQKHQBAVFYRHCJRE2LJ26GH6UMAXECMJID56R4K'
+          ]
+        },
+        transaction: {
+          signature: '22442F3005595042B68E80FB8959333F96C2795E25BFDA25C76636FF585AB2DD846FB76719DCC305A14274A9E9574A082B730FDF41EDC95F3C6309B581370801',
+          signerPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          version: 1,
+          network: 0x98,
+          type: 0x4350,
+          maxFee: '1000000',
+          deadline: '8598535896',
+          restrictionFlags: 0xC004,
+          restrictionAdditions: [
+            0x424E
+          ],
+          restrictionDeletions: []
+        }
+      })
+    })
+
+    it('should parse a link account transaction', () => {
+      let item = {
+        _id: object('5E4C2DC526EC0922222EE95C'),
+        meta: {
+          height: long(3340, 0),
+          hash: binary('6E2071C711D017C8FECAFB487737269E3BFDC088B64CDE40764B06138BCEBDA3'),
+          merkleComponentHash: binary('6E2071C711D017C8FECAFB487737269E3BFDC088B64CDE40764B06138BCEBDA3'),
+          index: 0,
+          addresses: [
+            binary('98CC4BC994F3E9106AF93750E4B6F5A2B51CFEF732B35D503E'),
+            binary('98DAD0DFE1E7049C9606A7EE037B528493075B1C7F540161E3')
+          ]
+        },
+        transaction: {
+          signature: binary('067E0D0B9C23C3563870EBA9F37995189F3ED187C40F720837222B5238FB35CEFE9F0D1BDE31AC60DD429B870859F9CE4F4586E41AC65DF1954FC676B0B5B503'),
+          signerPublicKey: binary('6BE37B726EEE24C4B0E3C943E09A44691553759A89E92C4A84BBC4AD9AF5D49C'),
+          version: 1,
+          network: 0x98,
+          type: 0x414C,
+          maxFee: long(1000000, 0),
+          deadline: long(3022906718, 1),
+          remotePublicKey: binary('B051388E229B910D70A60A6791107DA02500C9C701752DF59C45C1AB6EF8E540'),
+          linkAction: 1
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '3340',
+          hash: '6E2071C711D017C8FECAFB487737269E3BFDC088B64CDE40764B06138BCEBDA3',
+          id: '5E4C2DC526EC0922222EE95C',
+          merkleComponentHash: '6E2071C711D017C8FECAFB487737269E3BFDC088B64CDE40764B06138BCEBDA3',
+          index: 0,
+          addresses: [
+            'TDGEXSMU6PURA2XZG5IOJNXVUK2RZ7XXGKZV2UB6',
+            'TDNNBX7B44CJZFQGU7XAG62SQSJQOWY4P5KACYPD'
+          ]
+        },
+        transaction: {
+          signature: '067E0D0B9C23C3563870EBA9F37995189F3ED187C40F720837222B5238FB35CEFE9F0D1BDE31AC60DD429B870859F9CE4F4586E41AC65DF1954FC676B0B5B503',
+          signerPublicKey: '6BE37B726EEE24C4B0E3C943E09A44691553759A89E92C4A84BBC4AD9AF5D49C',
+          version: 1,
+          network: 0x98,
+          type: 0x414C,
+          maxFee: '1000000',
+          deadline: '7317874014',
+          remotePublicKey: 'B051388E229B910D70A60A6791107DA02500C9C701752DF59C45C1AB6EF8E540',
+          linkAction: 1
+        }
+      })
+    })
+
+    it('should parse a mosaic address restriction transaction', () => {
+      let item = {
+        _id: object('5E4F46CE365315375F32F633'),
+        meta: {
+          height: long(80497, 0),
+          hash: binary('48C5F194580258E8ED27CDE53D831225D70A9519940F41E8A12581EF21DFB09A'),
+          merkleComponentHash: binary('48C5F194580258E8ED27CDE53D831225D70A9519940F41E8A12581EF21DFB09A'),
+          index: 0,
+          addresses: [
+            binary('98E0A3C020A97113893126969D78C7F5180B904C4A07DF478A')
+          ]
+        },
+        transaction: {
+          signature: binary('E04C686B044EF2E0C15726E4793E6CF4A2E6EE763BCF5F7DED678536FB1E7AEBAA9EED0CA4552F1FE93415EEF2E803A5F28F637051BAA48D0EA040BFE27E3500'),
+          signerPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          version: 1,
+          network: 0x98,
+          type: 0x4251,
+          maxFee: long(1000000, 0),
+          deadline: long(91851155, 2),
+          mosaicId: long(3264161012, 1054803538),
+          restrictionKey: long(2807928890, 2988827215),
+          targetAddress: binary('98E0A3C020A97113893126969D78C7F5180B904C4A07DF478A'),
+          previousRestrictionValue: long(4294967295, 4294967295),
+          newRestrictionValue: long(2, 0)
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '80497',
+          hash: '48C5F194580258E8ED27CDE53D831225D70A9519940F41E8A12581EF21DFB09A',
+          id: '5E4F46CE365315375F32F633',
+          merkleComponentHash: '48C5F194580258E8ED27CDE53D831225D70A9519940F41E8A12581EF21DFB09A',
+          index: 0,
+          addresses: [
+            'TDQKHQBAVFYRHCJRE2LJ26GH6UMAXECMJID56R4K'
+          ]
+        },
+        transaction: {
+          signature: 'E04C686B044EF2E0C15726E4793E6CF4A2E6EE763BCF5F7DED678536FB1E7AEBAA9EED0CA4552F1FE93415EEF2E803A5F28F637051BAA48D0EA040BFE27E3500',
+          signerPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          version: 1,
+          network: 0x98,
+          type: 0x4251,
+          maxFee: '1000000',
+          deadline: '8681785747',
+          mosaicId: '3EDF0652C28F24F4',
+          restrictionKey: '12836915144627689530',
+          targetAddress: 'TDQKHQBAVFYRHCJRE2LJ26GH6UMAXECMJID56R4K',
+          previousRestrictionValue: '18446744073709551615',
+          newRestrictionValue: '2'
+        }
+      })
+    })
+
+    it('should parse a mosaic global restriction transaction', () => {
+      let item = {
+        _id: object('5E4C323426EC09222234FB3B'),
+        meta: {
+          height: long(76562, 0),
+          hash: binary('7EDEBB8CD05BB48FDD190CF312A069979D9C1BB7C06EC4F738D45B01A74ECA6F'),
+          merkleComponentHash: binary('7EDEBB8CD05BB48FDD190CF312A069979D9C1BB7C06EC4F738D45B01A74ECA6F'),
+          index: 0,
+          addresses: [
+            binary('98E0A3C020A97113893126969D78C7F5180B904C4A07DF478A')
+          ]
+        },
+        transaction: {
+          signature: binary('444455AA93A60650034A7841E4E098AECB00166ED1C78AD328772C9175941CB5BFDA84023257F6F13FA0AED7DBDFFFA59AC6587643B944A1C5411217E8F95D06'),
+          signerPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          version: 1,
+          network: 0x98,
+          type: 0x4151,
+          maxFee: long(1000000, 0),
+          deadline: long(23164681, 2),
+          mosaicId: long(3264161012, 1054803538),
+          referenceMosaicId: long(0, 0),
+          restrictionKey: long(1408183365, 4250713378),
+          previousRestrictionValue: long(0),
+          previousRestrictionType: 0,
+          newRestrictionValue: long(1, 0),
+          newRestrictionType: 1
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '76562',
+          hash: '7EDEBB8CD05BB48FDD190CF312A069979D9C1BB7C06EC4F738D45B01A74ECA6F',
+          id: '5E4C323426EC09222234FB3B',
+          merkleComponentHash: '7EDEBB8CD05BB48FDD190CF312A069979D9C1BB7C06EC4F738D45B01A74ECA6F',
+          index: 0,
+          addresses: [
+            'TDQKHQBAVFYRHCJRE2LJ26GH6UMAXECMJID56R4K'
+          ]
+        },
+        transaction: {
+          signature: '444455AA93A60650034A7841E4E098AECB00166ED1C78AD328772C9175941CB5BFDA84023257F6F13FA0AED7DBDFFFA59AC6587643B944A1C5411217E8F95D06',
+          signerPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          version: 1,
+          network: 0x98,
+          type: 0x4151,
+          maxFee: '1000000',
+          deadline: '8613099273',
+          mosaicId: '3EDF0652C28F24F4',
+          referenceMosaicId: '0000000000000000',
+          restrictionKey: '18256674944587869253',
+          previousRestrictionValue: '0',
+          previousRestrictionType: 0,
+          newRestrictionValue: '1',
+          newRestrictionType: 1
+        }
+      })
+    })
+
+    it('should parse an account metadata transaction', () => {
+      let item = {
+        _id: object('5E4C31F826EC09222234D46D'),
+        meta: {
+          height: long(71769, 0),
+          aggregateHash: binary('5BEA82BC6BF8B8B8DDE753146163A9B5EF60AF65F8C414DC12F44382069FBB78'),
+          aggregateId: object('5E4C31F826EC09222234D46C'),
+          index: 0
+        },
+        transaction: {
+          signerPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          version: 1,
+          network: 0x98,
+          type: 0x4144,
+          targetPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          scopedMetadataKey: long(3621910282, 3608761926),
+          valueSizeDelta: 23,
+          valueSize: 23,
+          value: binary('7B7465737465724163636F756E743A416E74686F6E797D')
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '71769',
+          aggregateHash: '5BEA82BC6BF8B8B8DDE753146163A9B5EF60AF65F8C414DC12F44382069FBB78',
+          id: '5E4C31F826EC09222234D46D',
+          aggregateId: '5E4C31F826EC09222234D46C',
+          index: 0
+        },
+        transaction: {
+          signerPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          version: 1,
+          network: 0x98,
+          type: 0x4144,
+          targetPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          scopedMetadataKey: '15499514454841882378',
+          valueSizeDelta: 23,
+          valueSize: 23,
+          value: '7B7465737465724163636F756E743A416E74686F6E797D'
+        }
+      })
+    })
+
+    it('should parse a mosaic metadata transaction', () => {
+      let item = {
+        _id: object('5E4C31F826EC09222234D46D'),
+        meta: {
+          height: long(71769, 0),
+          aggregateHash: binary('5BEA82BC6BF8B8B8DDE753146163A9B5EF60AF65F8C414DC12F44382069FBB78'),
+          aggregateId: object('5E4C31F826EC09222234D46C'),
+          index: 0
+        },
+        transaction: {
+          signerPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          version: 1,
+          network: 0x98,
+          type: 0x4244,
+          targetPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          scopedMetadataKey: long(3621910282, 3608761926),
+          targetMosaicId: long(4294967295, 4294967295),
+          valueSizeDelta: 23,
+          valueSize: 23,
+          value: binary('7B7465737465724163636F756E743A416E74686F6E797D')
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '71769',
+          aggregateHash: '5BEA82BC6BF8B8B8DDE753146163A9B5EF60AF65F8C414DC12F44382069FBB78',
+          id: '5E4C31F826EC09222234D46D',
+          aggregateId: '5E4C31F826EC09222234D46C',
+          index: 0
+        },
+        transaction: {
+          signerPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          version: 1,
+          network: 0x98,
+          type: 0x4244,
+          targetPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          scopedMetadataKey: '15499514454841882378',
+          targetMosaicId: 'FFFFFFFFFFFFFFFF',
+          valueSizeDelta: 23,
+          valueSize: 23,
+          value: '7B7465737465724163636F756E743A416E74686F6E797D'
+        }
+      })
+    })
+
+    it('should parse a namespace metadata transaction', () => {
+      let item = {
+        _id: object('5E4C31F826EC09222234D46D'),
+        meta: {
+          height: long(71769, 0),
+          aggregateHash: binary('5BEA82BC6BF8B8B8DDE753146163A9B5EF60AF65F8C414DC12F44382069FBB78'),
+          aggregateId: object('5E4C31F826EC09222234D46C'),
+          index: 0
+        },
+        transaction: {
+          signerPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          version: 1,
+          network: 0x98,
+          type: 0x4344,
+          targetPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          scopedMetadataKey: long(3621910282, 3608761926),
+          targetNamespaceId: long(4294967295, 4294967295),
+          valueSizeDelta: 23,
+          valueSize: 23,
+          value: binary('7B7465737465724163636F756E743A416E74686F6E797D')
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '71769',
+          aggregateHash: '5BEA82BC6BF8B8B8DDE753146163A9B5EF60AF65F8C414DC12F44382069FBB78',
+          id: '5E4C31F826EC09222234D46D',
+          aggregateId: '5E4C31F826EC09222234D46C',
+          index: 0
+        },
+        transaction: {
+          signerPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          version: 1,
+          network: 0x98,
+          type: 0x4344,
+          targetPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          scopedMetadataKey: '15499514454841882378',
+          targetNamespaceId: 'FFFFFFFFFFFFFFFF',
+          valueSizeDelta: 23,
+          valueSize: 23,
+          value: '7B7465737465724163636F756E743A416E74686F6E797D'
+        }
+      })
+    })
   })
 
   // TODO(ahuszagh) Implement...

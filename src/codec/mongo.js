@@ -268,39 +268,82 @@ const accountRestrictionAddressTransaction = transaction => ({
 
 const accountRestrictionMosaicTransaction = transaction => ({
   restrictionFlags: transaction.restrictionFlags,
-  restrictionAdditions: transaction.restrictionAdditions.map(binaryToId),
-  restrictionDeletions: transaction.restrictionDeletions.map(binaryToId)
+  restrictionAdditions: transaction.restrictionAdditions.map(data => binaryToId(data.buffer)),
+  restrictionDeletions: transaction.restrictionDeletions.map(data => binaryToId(data.buffer))
 })
 
 const accountRestrictionOperationTransaction = transaction => ({
   restrictionFlags: transaction.restrictionFlags,
-  restrictionAdditions: transaction.restrictionAdditions.map(shared.binaryToUint16),
-  restrictionDeletions: transaction.restrictionDeletions.map(shared.binaryToUint16)
+  restrictionAdditions: transaction.restrictionAdditions.map(data => shared.binaryToUint16(data.buffer)),
+  restrictionDeletions: transaction.restrictionDeletions.map(data => shared.binaryToUint16(data.buffer))
 })
 
 const linkAccountTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  remotePublicKey: binaryToHex(transaction.remotePublicKey),
+  linkAction: transaction.linkAction
 })
 
 const mosaicAddressRestrictionTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  mosaicId: idToHex(transaction.mosaicId),
+  restrictionKey: longToString(transaction.restrictionKey),
+  targetAddress: binaryToBase32(transaction.targetAddress),
+  previousRestrictionValue: longToString(transaction.previousRestrictionValue),
+  newRestrictionValue: longToString(transaction.newRestrictionValue)
 })
 
 const mosaicGlobalRestrictionTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  mosaicId: idToHex(transaction.mosaicId),
+  referenceMosaicId: idToHex(transaction.referenceMosaicId),
+  restrictionKey: longToString(transaction.restrictionKey),
+  previousRestrictionValue: longToString(transaction.previousRestrictionValue),
+  previousRestrictionType: transaction.previousRestrictionType,
+  newRestrictionValue: longToString(transaction.newRestrictionValue),
+  newRestrictionType: transaction.newRestrictionType
 })
 
-const accountMetadataTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
-})
+const accountMetadataTransaction = transaction => {
+  let result = {
+    targetPublicKey: binaryToHex(transaction.targetPublicKey),
+    scopedMetadataKey: longToString(transaction.scopedMetadataKey),
+    valueSizeDelta: transaction.valueSizeDelta,
+    valueSize: transaction.valueSize,
+  }
+  if (transaction.value !== undefined) {
+    result.value = binaryToHex(transaction.value)
+  }
 
-const mosaicMetadataTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
-})
+  return result
+}
 
-const namespaceMetadataTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
-})
+const mosaicMetadataTransaction = transaction => {
+  let result = {
+    targetPublicKey: binaryToHex(transaction.targetPublicKey),
+    scopedMetadataKey: longToString(transaction.scopedMetadataKey),
+    targetMosaicId: idToHex(transaction.targetMosaicId),
+    valueSizeDelta: transaction.valueSizeDelta,
+    valueSize: transaction.valueSize,
+  }
+  if (transaction.value !== undefined) {
+    result.value = binaryToHex(transaction.value)
+  }
+
+  return result
+}
+
+const namespaceMetadataTransaction = transaction => {
+  let result = {
+    targetPublicKey: binaryToHex(transaction.targetPublicKey),
+    scopedMetadataKey: longToString(transaction.scopedMetadataKey),
+    targetNamespaceId: idToHex(transaction.targetNamespaceId),
+    valueSizeDelta: transaction.valueSizeDelta,
+    valueSize: transaction.valueSize,
+  }
+  if (transaction.value !== undefined) {
+    result.value = binaryToHex(transaction.value)
+  }
+
+  return result
+}
 
 /**
  *  Codec for MongoDB collections.
