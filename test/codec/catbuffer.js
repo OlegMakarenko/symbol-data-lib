@@ -526,39 +526,384 @@ describe('catbuffer', () => {
   })
 
   it('should parse an account restriction address transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let restrictionFlags = '0100'
+    let additionsCount = '00'
+    let deletionsCount = '01'
+    let reserved1 = '00000000'
+    let restrictionAdditions = ''
+    let restrictionDeletions = '906415867F121D037AF447E711B0F5E4D52EBBF066D96860EB'
+
+    // Embedded
+    let embeddedTransaction = restrictionFlags +
+      additionsCount +
+      deletionsCount +
+      reserved1 +
+      restrictionAdditions +
+      restrictionDeletions
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.accountRestrictionAddressTransaction(true)).to.eql({
+      restrictionFlags: 1,
+      restrictionAdditions: [],
+      restrictionDeletions: [
+        'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
+      ]
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.accountRestrictionAddressTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      restrictionFlags: 1,
+      restrictionAdditions: [],
+      restrictionDeletions: [
+        'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
+      ]
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4150).restrictionFlags).to.equal(1)
   })
 
   it('should parse an account restriction mosaic transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let restrictionFlags = '0200'
+    let additionsCount = '00'
+    let deletionsCount = '01'
+    let reserved1 = '00000000'
+    let restrictionAdditions = ''
+    let restrictionDeletions = 'F89E03B7BE7C3FA0'
+
+    // Embedded
+    let embeddedTransaction = restrictionFlags +
+      additionsCount +
+      deletionsCount +
+      reserved1 +
+      restrictionAdditions +
+      restrictionDeletions
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.accountRestrictionMosaicTransaction(true)).to.eql({
+      restrictionFlags: 2,
+      restrictionAdditions: [],
+      restrictionDeletions: [
+        'A03F7CBEB7039EF8'
+      ]
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.accountRestrictionMosaicTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      restrictionFlags: 2,
+      restrictionAdditions: [],
+      restrictionDeletions: [
+        'A03F7CBEB7039EF8'
+      ]
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4250).restrictionFlags).to.equal(2)
   })
 
   it('should parse an account restriction operation transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let restrictionFlags = '0400'
+    let additionsCount = '00'
+    let deletionsCount = '01'
+    let reserved1 = '00000000'
+    let restrictionAdditions = ''
+    let restrictionDeletions = '5441'
+
+    // Embedded
+    let embeddedTransaction = restrictionFlags +
+      additionsCount +
+      deletionsCount +
+      reserved1 +
+      restrictionAdditions +
+      restrictionDeletions
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.accountRestrictionOperationTransaction(true)).to.eql({
+      restrictionFlags: 4,
+      restrictionAdditions: [],
+      restrictionDeletions: [
+        0x4154
+      ]
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.accountRestrictionOperationTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      restrictionFlags: 4,
+      restrictionAdditions: [],
+      restrictionDeletions: [
+        0x4154
+      ]
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4350).restrictionFlags).to.equal(4)
   })
 
   it('should parse a link account transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let remotePublicKey = '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
+    let linkAction = '00'
+
+    // Embedded
+    let embeddedTransaction = remotePublicKey + linkAction
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.linkAccountTransaction(true)).to.eql({
+      remotePublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
+      linkAction: 0
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.linkAccountTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      remotePublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
+      linkAction: 0
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x414C).linkAction).to.equal(0)
   })
 
   it('should parse a mosaic address restriction transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let mosaicId = '5DFB9AC1932C1F2C'
+    let restrictionKey = '0123456789ABCDEF'
+    let previousRestrictionValue = '02468ACE13579BDF'
+    let newRestrictionValue = 'FDB97531ECA86420'
+    let targetAddress = '906415867F121D037AF447E711B0F5E4D52EBBF066D96860EB'
+
+    // Embedded
+    let embeddedTransaction = mosaicId +
+      restrictionKey +
+      previousRestrictionValue +
+      newRestrictionValue +
+      targetAddress
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.mosaicAddressRestrictionTransaction(true)).to.eql({
+      mosaicId: '2C1F2C93C19AFB5D',
+      restrictionKey: 'EFCDAB8967452301',
+      previousRestrictionValue: 'DF9B5713CE8A4602',
+      newRestrictionValue: '2064A8EC3175B9FD',
+      targetAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.mosaicAddressRestrictionTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      mosaicId: '2C1F2C93C19AFB5D',
+      restrictionKey: 'EFCDAB8967452301',
+      previousRestrictionValue: 'DF9B5713CE8A4602',
+      newRestrictionValue: '2064A8EC3175B9FD',
+      targetAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4251).restrictionKey).to.equal('EFCDAB8967452301')
   })
 
   it('should parse a mosaic global restriction transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let mosaicId = '5DFB9AC1932C1F2C'
+    let referenceMosaicId = '0000000000000000'
+    let restrictionKey = '0123456789ABCDEF'
+    let previousRestrictionValue = '02468ACE13579BDF'
+    let newRestrictionValue = 'FDB97531ECA86420'
+    let previousRestrictionType = '01'
+    let newRestrictionType = '03'
+
+    // Embedded
+    let embeddedTransaction = mosaicId +
+      referenceMosaicId +
+      restrictionKey +
+      previousRestrictionValue +
+      newRestrictionValue +
+      previousRestrictionType +
+      newRestrictionType
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.mosaicGlobalRestrictionTransaction(true)).to.eql({
+      mosaicId: '2C1F2C93C19AFB5D',
+      referenceMosaicId: '0000000000000000',
+      restrictionKey: 'EFCDAB8967452301',
+      previousRestrictionValue: 'DF9B5713CE8A4602',
+      newRestrictionValue: '2064A8EC3175B9FD',
+      previousRestrictionType: 1,
+      newRestrictionType: 3
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.mosaicGlobalRestrictionTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      mosaicId: '2C1F2C93C19AFB5D',
+      referenceMosaicId: '0000000000000000',
+      restrictionKey: 'EFCDAB8967452301',
+      previousRestrictionValue: 'DF9B5713CE8A4602',
+      newRestrictionValue: '2064A8EC3175B9FD',
+      previousRestrictionType: 1,
+      newRestrictionType: 3
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4151).restrictionKey).to.equal('EFCDAB8967452301')
   })
 
   it('should parse an account metadata transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let targetPublicKey = '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
+    let scopedMetadataKey = '0123456789ABCDEF'
+    let valueSizeDelta = '2800'
+    let valueSize = '2800'
+    let value = '700B6F624F41EB1A423F735ADA96982D7F2B756F'
+
+    // Embedded
+    let embeddedTransaction = targetPublicKey +
+      scopedMetadataKey +
+      valueSizeDelta +
+      valueSize +
+      value
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.accountMetadataTransaction(true)).to.eql({
+      targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
+      scopedMetadataKey: 'EFCDAB8967452301',
+      valueSizeDelta: 40,
+      value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.accountMetadataTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
+      scopedMetadataKey: 'EFCDAB8967452301',
+      valueSizeDelta: 40,
+      value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4144).valueSizeDelta).to.equal(40)
   })
 
   it('should parse a mosaic metadata transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let targetPublicKey = '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
+    let scopedMetadataKey = '0123456789ABCDEF'
+    let targetMosaicId = '5DFB9AC1932C1F2C'
+    let valueSizeDelta = '2800'
+    let valueSize = '2800'
+    let value = '700B6F624F41EB1A423F735ADA96982D7F2B756F'
+
+    // Embedded
+    let embeddedTransaction = targetPublicKey +
+      scopedMetadataKey +
+      targetMosaicId +
+      valueSizeDelta +
+      valueSize +
+      value
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.mosaicMetadataTransaction(true)).to.eql({
+      targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
+      scopedMetadataKey: 'EFCDAB8967452301',
+      targetMosaicId: '2C1F2C93C19AFB5D',
+      valueSizeDelta: 40,
+      value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.mosaicMetadataTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
+      scopedMetadataKey: 'EFCDAB8967452301',
+      targetMosaicId: '2C1F2C93C19AFB5D',
+      valueSizeDelta: 40,
+      value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4244).valueSizeDelta).to.equal(40)
   })
 
   it('should parse a namespace metadata transaction', () => {
-    // TODO(ahuszagh) Implement...
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let targetPublicKey = '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
+    let scopedMetadataKey = '0123456789ABCDEF'
+    let targetNamespaceId = 'F24D0E1AF24D0E1A'
+    let valueSizeDelta = '2800'
+    let valueSize = '2800'
+    let value = '700B6F624F41EB1A423F735ADA96982D7F2B756F'
+
+    // Embedded
+    let embeddedTransaction = targetPublicKey +
+      scopedMetadataKey +
+      targetNamespaceId +
+      valueSizeDelta +
+      valueSize +
+      value
+    let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
+    expect(reader.namespaceMetadataTransaction(true)).to.eql({
+      targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
+      scopedMetadataKey: 'EFCDAB8967452301',
+      targetNamespaceId: '1A0E4DF21A0E4DF2',
+      valueSizeDelta: 40,
+      value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
+    })
+
+    // Non-embedded
+    let transaction = maxFee + deadline + embeddedTransaction
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.namespaceMetadataTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
+      scopedMetadataKey: 'EFCDAB8967452301',
+      targetNamespaceId: '1A0E4DF21A0E4DF2',
+      valueSizeDelta: 40,
+      value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4344).valueSizeDelta).to.equal(40)
   })
 
   // TODO(ahuszagh) Continue here...
