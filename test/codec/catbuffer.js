@@ -392,11 +392,131 @@ describe('catbuffer', () => {
   })
 
   it('should parse an aggregate complete transaction', () => {
-    // TODO(ahuszagh) Implement...
+    // Aggregate transaction
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let aggregateHash = '3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006'
+    let transactionsSize = '41000000'
+    let reserved1 = '00000000'
+
+    // Embedded transaction
+    let size = '41000000'
+    let reserved2 = '00000000'
+    let key = 'B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF'
+    let reserved3 = '00000000'
+    let version = '01'
+    let network = '90'
+    let type = '4D42'
+    let mosaicId = 'F89E03B7BE7C3FA0'
+    let delta = 'A086010000000000'
+    let action = '01'
+
+    // Transaction
+    let transaction = maxFee +
+      deadline +
+      aggregateHash +
+      transactionsSize +
+      reserved1 +
+      size +
+      reserved2 +
+      key +
+      reserved3 +
+      version +
+      network +
+      type +
+      mosaicId +
+      delta +
+      action
+    let reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.aggregateCompleteTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      aggregateHash: '3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006',
+      innerTransactions: [
+        {
+          entity: {
+            key: 'B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF',
+            version: 1,
+            network: 0x90,
+            type: 0x424D
+          },
+          transaction: {
+            mosaicId: 'A03F7CBEB7039EF8',
+            delta: '100000',
+            action: 1
+          }
+        }
+      ],
+      cosignatures: []
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4141).aggregateHash).to.equal('3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006')
   })
 
   it('should parse an aggregate bonded transaction', () => {
-    // TODO(ahuszagh) Implement...
+    // Aggregate transaction
+    let maxFee = '0000000000000000'
+    let deadline = '0100000000000000'
+    let aggregateHash = '3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006'
+    let transactionsSize = '41000000'
+    let reserved1 = '00000000'
+
+    // Embedded transaction
+    let size = '41000000'
+    let reserved2 = '00000000'
+    let key = 'B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF'
+    let reserved3 = '00000000'
+    let version = '01'
+    let network = '90'
+    let type = '4D42'
+    let mosaicId = 'F89E03B7BE7C3FA0'
+    let delta = 'A086010000000000'
+    let action = '01'
+
+    // Transaction
+    let transaction = maxFee +
+      deadline +
+      aggregateHash +
+      transactionsSize +
+      reserved1 +
+      size +
+      reserved2 +
+      key +
+      reserved3 +
+      version +
+      network +
+      type +
+      mosaicId +
+      delta +
+      action
+    let reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.aggregateBondedTransaction()).to.eql({
+      maxFee: '0',
+      deadline: '1',
+      aggregateHash: '3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006',
+      innerTransactions: [
+        {
+          entity: {
+            key: 'B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF',
+            version: 1,
+            network: 0x90,
+            type: 0x424D
+          },
+          transaction: {
+            mosaicId: 'A03F7CBEB7039EF8',
+            delta: '100000',
+            action: 1
+          }
+        }
+      ],
+      cosignatures: []
+    })
+
+    // Check transaction header
+    reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
+    expect(reader.transactionHeader(0x4241).aggregateHash).to.equal('3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006')
   })
 
   it('should parse a hash lock transaction', () => {
@@ -905,6 +1025,13 @@ describe('catbuffer', () => {
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
     expect(reader.transactionHeader(0x4344).valueSizeDelta).to.equal(40)
   })
+
+  // Need:
+  //  transaction
+  //  transactions
+  //  blockHeader
+  //  block
+  //  blocks
 
   // TODO(ahuszagh) Continue here...
 })

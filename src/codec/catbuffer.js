@@ -288,14 +288,15 @@ export default class CatbufferReader extends Reader {
 
     let transaction = this.baseTransaction()
     transaction.aggregateHash = this.hash256()
-    let transactionSize = this.uint32()
+    let transactionsSize = this.uint32()
     // Skip reserved value.
     this.uint32()
 
     // Read the transactions.
     // May not be present, but `transactions` handles empty data.
-    let transactionData = this.data.slice(0, transactionSize)
-    this.data = this.data.slice(transactionSize)
+    // TODO(ahuszagh) Are the embedded transactions aligned? Are they?
+    let transactionData = this.data.slice(0, transactionsSize)
+    this.data = this.data.slice(transactionsSize)
     let transactionReader = new CatbufferReader(transactionData)
     transaction.innerTransactions = transactionReader.transactions(true)
 
