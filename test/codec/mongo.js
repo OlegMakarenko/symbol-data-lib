@@ -23,7 +23,72 @@ import mongo from '../../src/codec/mongo'
 describe('mongo', () => {
   // TODO(ahuszagh) Implement...
   describe('accountRestrictions', () => {})
-  describe('accounts', () => {})
+
+  describe('accounts', () => {
+    it('should parse a valid account', () => {
+      let item = {
+        account: {
+          address: new MongoDb.Binary(Buffer.from('98AE5B94F7911CB302FE78E9CFDE21EF5A47174628055AC3AA', 'hex')),
+          addressHeight: new MongoDb.Long(1, 0),
+          publicKey: new MongoDb.Binary(Buffer.from('0000000000000000000000000000000000000000000000000000000000000000', 'hex')),
+          publicKeyHeight: new MongoDb.Long(0, 0),
+          accountType: 0,
+          linkedAccountKey: new MongoDb.Binary(Buffer.from('0000000000000000000000000000000000000000000000000000000000000000', 'hex')),
+          importances: [
+            {
+              value: new MongoDb.Long(2398580345, 86526),
+              height: new MongoDb.Long(88846)
+            }
+          ],
+          activityBuckets: [
+            {
+              startHeight: new MongoDb.Long(88846, 0),
+              totalFeesPaid: new MongoDb.Long(0, 0),
+              beneficiaryCount: 0,
+              rawScore: new MongoDb.Long(2398580345, 86526)
+            }
+          ],
+          mosaics: [
+            {
+              id: new MongoDb.Long(92423592, 1370066984),
+              amount: new MongoDb.Long(833619904, 91176)
+            }
+          ]
+        }
+      }
+      expect(mongo.accounts(item)).to.eql({
+        account: {
+          address: 'TCXFXFHXSEOLGAX6PDU47XRB55NEOF2GFACVVQ5K',
+          addressHeight: '1',
+          publicKey: '0000000000000000000000000000000000000000000000000000000000000000',
+          publicKeyHeight: '0',
+          accountType: 0,
+          linkedAccountKey: '0000000000000000000000000000000000000000000000000000000000000000',
+          importances: [
+            {
+              height: '88846',
+              value: '371628738834041'
+            }
+          ],
+          activityBuckets: [
+            {
+              beneficiaryCount: 0,
+              rawScore: '371628738834041',
+              startHeight: '88846',
+              totalFeesPaid: '0'
+            }
+          ],
+          mosaics: [
+            {
+              amount: '391598771800000',
+              mosaicId: '51A99028058245A8'
+            }
+          ]
+        }
+      })
+    })
+  })
+
   describe('addressResolutionStatements', () => {})
   describe('blocks', () => {})
 
