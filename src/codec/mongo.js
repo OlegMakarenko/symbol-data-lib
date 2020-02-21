@@ -74,6 +74,22 @@ const basicReceipt = entry => {
   return callback(entry)
 }
 
+const accountRestriction = restriction => {
+  let buffer = restriction.buffer
+  if (buffer.length === 25) {
+    // Address
+    return shared.binaryToBase32(buffer)
+  } else if (buffer.length === 8) {
+    // Mosaic ID
+    return shared.idToHex(shared.binaryToUint64(buffer))
+  } else if (buffer.length === 2) {
+    // Entity type
+    return shared.binaryToUint16(buffer)
+  } else {
+    throw new Error(`invalid account restriction, got ${buffer.toString('hex')}`)
+  }
+}
+
 /**
  *  Codec for MongoDB collections.
  */
@@ -81,9 +97,9 @@ export default {
   accountRestrictions: item => ({
     accountRestrictions: {
       address: binaryToBase32(item.accountRestrictions.address),
-      restrictions: item.restrictions.map(restriction => ({
+      restrictions: item.accountRestrictions.restrictions.map(restriction => ({
         restrictionFlags: restriction.restrictionFlags,
-        values: restriction.values.map(binaryToHex)
+        values: restriction.values.map(accountRestriction)
       }))
     }
   }),
