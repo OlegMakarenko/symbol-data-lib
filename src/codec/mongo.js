@@ -29,6 +29,7 @@ const idToHex = id => shared.idToHex(longToUint64(id))
 const binaryToAscii = data => shared.binaryToAscii(data)
 const binaryToHex = data => shared.binaryToHex(data)
 const binaryToBase32 = data => shared.binaryToBase32(data.buffer)
+const binaryToId = data => shared.idToHex(shared.binaryToUint64(data))
 
 const balanceChangeReceipt = entry => ({
   version: entry.version,
@@ -85,7 +86,7 @@ const accountRestriction = restriction => {
     return shared.binaryToBase32(buffer)
   } else if (buffer.length === 8) {
     // Mosaic ID
-    return shared.idToHex(shared.binaryToUint64(buffer))
+    return binaryToId(buffer)
   } else if (buffer.length === 2) {
     // Entity type
     return shared.binaryToUint16(buffer)
@@ -94,13 +95,33 @@ const accountRestriction = restriction => {
   }
 }
 
-const transactionMeta = meta => ({
+const isEmbedded = transaction => transaction.meta.aggregateHash !== undefined
+
+const transactionMetaShared = meta => ({
   height: longToString(meta.height),
+  index: meta.index
+})
+
+const transactionMetaAggregate = meta => ({
+  ...transactionMetaShared(meta),
+  aggregateHash: binaryToHex(meta.aggregateHash),
+  aggregateId: meta.aggregateId.toHexString().toUpperCase()
+})
+
+const transactionMetaStandalone = meta => ({
+  ...transactionMetaShared(meta),
   hash: binaryToHex(meta.hash),
   merkleComponentHash: binaryToHex(meta.merkleComponentHash),
-  index: meta.index,
   addresses: meta.addresses.map(binaryToBase32)
 })
+
+const transactionMeta = (meta, embedded) => {
+  if (embedded) {
+    return transactionMetaAggregate(meta)
+  } else {
+    return transactionMetaStandalone(meta)
+  }
+}
 
 const basicEntity = entity => ({
   signerPublicKey: binaryToHex(entity.signerPublicKey),
@@ -114,15 +135,23 @@ const verifiableEntity = entity => ({
   signature: binaryToHex(entity.signature)
 })
 
-const embeddedTransactionShared = transaction => ({
+const transactionBaseAggregate = transaction => ({
   ...basicEntity(transaction)
 })
 
-const transactionShared = transaction => ({
+const transactionBaseStandalone = transaction => ({
   ...verifiableEntity(transaction),
   maxFee: longToString(transaction.maxFee),
   deadline: longToString(transaction.deadline)
 })
+
+const transactionBase = (transaction, embedded) => {
+  if (embedded) {
+    return transactionBaseAggregate(transaction)
+  } else {
+    return transactionBaseStandalone(transaction)
+  }
+}
 
 const mosaic = mosaic => ({
   mosaicId: idToHex(mosaic.id),
@@ -213,23 +242,39 @@ const lockTransaction = transaction => ({
 })
 
 const secretLockTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  mosaic: {
+    mosaicId: idToHex(transaction.mosaicId),
+    amount: longToString(transaction.amount)
+  },
+  duration: longToString(transaction.duration),
+  secret: binaryToHex(transaction.secret),
+  hashAlgorithm: transaction.hashAlgorithm,
+  recipientAddress: binaryToBase32(transaction.recipientAddress)
 })
 
 const secretProofTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  secret: binaryToHex(transaction.secret),
+  hashAlgorithm: transaction.hashAlgorithm,
+  recipientAddress: binaryToBase32(transaction.recipientAddress),
+  proof: binaryToHex(transaction.proof)
 })
 
 const accountRestrictionAddressTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  restrictionFlags: transaction.restrictionFlags,
+  restrictionAdditions: transaction.restrictionAdditions.map(binaryToBase32),
+  restrictionDeletions: transaction.restrictionDeletions.map(binaryToBase32)
 })
 
 const accountRestrictionMosaicTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  restrictionFlags: transaction.restrictionFlags,
+  restrictionAdditions: transaction.restrictionAdditions.map(binaryToId),
+  restrictionDeletions: transaction.restrictionDeletions.map(binaryToId)
 })
 
 const accountRestrictionOperationTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  restrictionFlags: transaction.restrictionFlags,
+  restrictionAdditions: transaction.restrictionAdditions.map(shared.binaryToUint16),
+  restrictionDeletions: transaction.restrictionDeletions.map(shared.binaryToUint16)
 })
 
 const linkAccountTransaction = transaction => ({
@@ -531,8 +576,10 @@ const codec = {
   }),
 
   transactions: item => {
-    let meta = transactionMeta(item.meta)
-    let transaction = transactionShared(item.transaction)
+    let embedded = isEmbedded(item)
+    let meta = transactionMeta(item.meta, embedded)
+    meta.id = item._id.toHexString().toUpperCase()
+    let transaction = transactionBase(item.transaction, embedded)
     if (transaction.type === constants.transactionTransfer) {
       Object.assign(transaction, transferTransaction(item.transaction))
     } else if (transaction.type === constants.transactionRegisterNamespace) {

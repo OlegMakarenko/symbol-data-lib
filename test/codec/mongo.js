@@ -20,6 +20,9 @@ import expect from 'expect.js'
 import MongoDb from 'mongodb'
 import mongo from '../../src/codec/mongo'
 
+// Create MongoDB ObjectID from hex.
+const object = hex => new MongoDb.ObjectID(hex)
+
 // Create MongoDB binary from hex
 const binary = hex => new MongoDb.Binary(Buffer.from(hex, 'hex'))
 
@@ -867,6 +870,7 @@ describe('mongo', () => {
   describe('transactions', () => {
     it('should parse a transfer transaction', () => {
       let item = {
+        _id: object('5E4C2D9E26EC0922222ECEED'),
         meta: {
           height: long(1, 0),
           hash: binary('77EB1324C8685C50189635C9575F3E1F0D74080243C6544D08345635EC564716'),
@@ -898,6 +902,7 @@ describe('mongo', () => {
         meta: {
           height: '1',
           hash: '77EB1324C8685C50189635C9575F3E1F0D74080243C6544D08345635EC564716',
+          id: '5E4C2D9E26EC0922222ECEED',
           merkleComponentHash: '77EB1324C8685C50189635C9575F3E1F0D74080243C6544D08345635EC564716',
           index: 9,
           addresses: [
@@ -926,6 +931,7 @@ describe('mongo', () => {
 
     it('should parse a register namespace transaction', () => {
       let item = {
+        _id: object('5E4C2D9E26EC0922222ECEE4'),
         meta: {
           height: long(1, 0),
           hash: binary('1F4B55D42C9C91805E73317319DDDA633667D5E44EB0F03678FF7F130555DF4B'),
@@ -954,6 +960,7 @@ describe('mongo', () => {
         meta: {
           height: '1',
           hash: '1F4B55D42C9C91805E73317319DDDA633667D5E44EB0F03678FF7F130555DF4B',
+          id: '5E4C2D9E26EC0922222ECEE4',
           merkleComponentHash: '1F4B55D42C9C91805E73317319DDDA633667D5E44EB0F03678FF7F130555DF4B',
           index: 0,
           addresses: [
@@ -978,14 +985,269 @@ describe('mongo', () => {
     })
 
     it('should parse an address alias transaction', () => {
-      // TODO(ahuszagh) Implement...
+      let item = {
+        _id: object('5E4C2DFC26EC0922222F2EF5'),
+        meta: {
+          height: long(7847, 0),
+          hash: binary('4AF654C9ED9B05383B9D8ED53725031129673C129CAB3289DFBF5C37E412746D'),
+          merkleComponentHash: binary('4AF654C9ED9B05383B9D8ED53725031129673C129CAB3289DFBF5C37E412746D'),
+          index: 0,
+          addresses: [
+            binary('98E0DA79944B614A6CEF698F30B3BA8F36785AB21E9408F08A')
+          ]
+        },
+        transaction: {
+          signature: binary('2347B462B2B05800AF3DF2E42983E6121100ABB76E682890606E20D97743491071A7349874DBF6EA36039312456056DE1836038534C72B90C8A6326FC6C71303'),
+          signerPublicKey: binary('AC332A2998873EDF5DD7B7F9B256B39C8E069E492483FF9D7F8B3580228A2F59'),
+          version: 1,
+          network: 0x98,
+          type: 0x424E,
+          maxFee: long(2000000, 0),
+          deadline: long(3101548547, 1),
+          namespaceId: long(4290400015, 2409642742),
+          aliasAction: 1,
+          address: binary('98E0DA79944B614A6CEF698F30B3BA8F36785AB21E9408F08A')
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '7847',
+          hash: '4AF654C9ED9B05383B9D8ED53725031129673C129CAB3289DFBF5C37E412746D',
+          id: '5E4C2DFC26EC0922222F2EF5',
+          merkleComponentHash: '4AF654C9ED9B05383B9D8ED53725031129673C129CAB3289DFBF5C37E412746D',
+          index: 0,
+          addresses: [
+            'TDQNU6MUJNQUU3HPNGHTBM52R43HQWVSD2KAR4EK'
+          ]
+        },
+        transaction: {
+          signature: '2347B462B2B05800AF3DF2E42983E6121100ABB76E682890606E20D97743491071A7349874DBF6EA36039312456056DE1836038534C72B90C8A6326FC6C71303',
+          signerPublicKey: 'AC332A2998873EDF5DD7B7F9B256B39C8E069E492483FF9D7F8B3580228A2F59',
+          version: 1,
+          network: 0x98,
+          type: 0x424E,
+          maxFee: '2000000',
+          deadline: '7396515843',
+          namespaceId: '8FA03AF6FFBA4F0F',
+          aliasAction: 1,
+          address: 'TDQNU6MUJNQUU3HPNGHTBM52R43HQWVSD2KAR4EK'
+        }
+      })
+    })
+
+    it('should parse a mosaic alias transaction', () => {
+      let item = {
+        _id: object('5E4C2D9E26EC0922222ECEEA'),
+        meta: {
+          height: long(1, 0),
+          hash: binary('EEE6421C3397A937068F9C09B172221DC77B5C695D504B50291F328C97325DF1'),
+          merkleComponentHash: binary('EEE6421C3397A937068F9C09B172221DC77B5C695D504B50291F328C97325DF1'),
+          index: 3,
+          addresses: [
+            binary('98875D60F721C3B15319826467D3F85F8FC9D7FA781665E4EA')
+          ]
+        },
+        transaction: {
+          signature: binary('5C59C66C448230B671EA61F1664128F86654FB49A95331245F6708933EE34ACDD74D38FA938157C679AA4923BCF29B298F203867F049C75337B951A72F7EC904'),
+          signerPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
+          version: 1,
+          network: 0x98,
+          type: 0x434E,
+          maxFee: long(0, 0),
+          deadline: long(1, 0),
+          namespaceId: long(1106554862, 3880491450),
+          aliasAction: 1,
+          mosaicId: long(92423592, 1370066984)
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '1',
+          hash: 'EEE6421C3397A937068F9C09B172221DC77B5C695D504B50291F328C97325DF1',
+          id: '5E4C2D9E26EC0922222ECEEA',
+          merkleComponentHash: 'EEE6421C3397A937068F9C09B172221DC77B5C695D504B50291F328C97325DF1',
+          index: 3,
+          addresses: [
+            'TCDV2YHXEHB3CUYZQJSGPU7YL6H4TV72PALGLZHK'
+          ]
+        },
+        transaction: {
+          signature: '5C59C66C448230B671EA61F1664128F86654FB49A95331245F6708933EE34ACDD74D38FA938157C679AA4923BCF29B298F203867F049C75337B951A72F7EC904',
+          signerPublicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+          version: 1,
+          network: 0x98,
+          type: 0x434E,
+          maxFee: '0',
+          deadline: '1',
+          namespaceId: 'E74B99BA41F4AFEE',
+          aliasAction: 1,
+          mosaicId: '51A99028058245A8'
+        }
+      })
+    })
+
+    it('should parse a mosaic definition transaction', () => {
+      let item = {
+        _id: object('5E4C2D9E26EC0922222ECEE7'),
+        meta: {
+          height: long(1, 0),
+          hash: binary('33BC10D8B818B90F12062C1022C4C553892C2F6187A8FC06F149B7FBE5D50B6A'),
+          merkleComponentHash: binary('33BC10D8B818B90F12062C1022C4C553892C2F6187A8FC06F149B7FBE5D50B6A'),
+          index: 2,
+          addresses: [
+            binary('987DD84AE6AF4B49C5F5648550F239F952BA6F4B3B9CFE3068'),
+            binary('98875D60F721C3B15319826467D3F85F8FC9D7FA781665E4EA')
+          ]
+        },
+        transaction: {
+          signature: binary('ED9FBA01087560C834A006AA48EE8351CA30B9B03DDBCC605EE11AFAB7B1395EF43452BEF931F63C7B0ED42FC42436ED64A463DEFADCFA6060602980CD17E207'),
+          signerPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
+          version: 1,
+          network: 0x98,
+          type: 0x414D,
+          maxFee: long(0, 0),
+          deadline: long(1, 0),
+          nonce: 0,
+          id: long(92423592, 1370066984),
+          flags: 2,
+          divisibility: 6,
+          duration: long(0, 0)
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '1',
+          hash: '33BC10D8B818B90F12062C1022C4C553892C2F6187A8FC06F149B7FBE5D50B6A',
+          id: '5E4C2D9E26EC0922222ECEE7',
+          merkleComponentHash: '33BC10D8B818B90F12062C1022C4C553892C2F6187A8FC06F149B7FBE5D50B6A',
+          index: 2,
+          addresses: [
+            'TB65QSXGV5FUTRPVMSCVB4RZ7FJLU32LHOOP4MDI',
+            'TCDV2YHXEHB3CUYZQJSGPU7YL6H4TV72PALGLZHK'
+          ]
+        },
+        transaction: {
+          signature: 'ED9FBA01087560C834A006AA48EE8351CA30B9B03DDBCC605EE11AFAB7B1395EF43452BEF931F63C7B0ED42FC42436ED64A463DEFADCFA6060602980CD17E207',
+          signerPublicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+          version: 1,
+          network: 0x98,
+          type: 0x414D,
+          maxFee: '0',
+          deadline: '1',
+          nonce: 0,
+          mosaicId: '51A99028058245A8',
+          flags: 2,
+          divisibility: 6,
+          duration: '0'
+        }
+      })
+    })
+
+    it('should parse a mosaic supply change transaction', () => {
+      let item = {
+        _id: object('5E4C2D9E26EC0922222ECEEB'),
+        meta: {
+          height: long(1, 0),
+          hash: binary('EAB74892D6FC2040FF20CDBD5E2497B27BB9B63AA47F619D7F18E2124C3A831A'),
+          merkleComponentHash: binary('EAB74892D6FC2040FF20CDBD5E2497B27BB9B63AA47F619D7F18E2124C3A831A'),
+          index: 4,
+          addresses: [
+            binary('98875D60F721C3B15319826467D3F85F8FC9D7FA781665E4EA')
+          ]
+        },
+        transaction: {
+          signature: binary('3D7680C645BDC54DCD7A51C94E5CAF945ED8D46642D85BDA657E1F8B83A4FAD38C17A3FA352325547E029716A8339C9E4C548B83B483F507D3054F1B92688805'),
+          signerPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
+          version: 1,
+          network: 0x98,
+          type: 0x424D,
+          maxFee: long(0, 0),
+          deadline: long(1, 0),
+          mosaicId: long(1106554862, 3880491450),
+          action: 1,
+          delta: long(3787496192, 1823523)
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '1',
+          hash: 'EAB74892D6FC2040FF20CDBD5E2497B27BB9B63AA47F619D7F18E2124C3A831A',
+          id: '5E4C2D9E26EC0922222ECEEB',
+          merkleComponentHash: 'EAB74892D6FC2040FF20CDBD5E2497B27BB9B63AA47F619D7F18E2124C3A831A',
+          index: 4,
+          addresses: [
+            'TCDV2YHXEHB3CUYZQJSGPU7YL6H4TV72PALGLZHK'
+          ]
+        },
+        transaction: {
+          signature: '3D7680C645BDC54DCD7A51C94E5CAF945ED8D46642D85BDA657E1F8B83A4FAD38C17A3FA352325547E029716A8339C9E4C548B83B483F507D3054F1B92688805',
+          signerPublicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+          version: 1,
+          network: 0x98,
+          type: 0x424D,
+          maxFee: '0',
+          deadline: '1',
+          mosaicId: 'E74B99BA41F4AFEE',
+          action: 1,
+          delta: '7831975436000000'
+        }
+      })
+    })
+
+    it('should parse a modify multisig transaction', () => {
+      let item = {
+        _id: object('5E4C2E0926EC0922222F3233'),
+        meta: {
+          height: long(8181, 0),
+          aggregateHash: binary('A91F6F092E96E0FE9BB2927A2EC8EFAFB4DEFBBC6F6CADB581AF168CD445F6B2'),
+          aggregateId: object('5E4C2E0926EC0922222F3232'),
+          index: 0
+        },
+        transaction: {
+          signerPublicKey: binary('AC332A2998873EDF5DD7B7F9B256B39C8E069E492483FF9D7F8B3580228A2F59'),
+          version: 1,
+          network: 0x98,
+          type: 0x4155,
+          minRemovalDelta: 3,
+          minApprovalDelta: 2,
+          publicKeyAdditions: [
+            binary('545651E3CEEFCC47A2763B059A95C99C3BE236258811382933340FC324ECEAA9'),
+            binary('DA997216C50D4425FB216285FC9110DE1E162E69B36A34DA8FCD8F9ED8980311'),
+            binary('110B8B7625A2E2573E5756D33EBCB882EDF7487344AA1CCEFC52E2FCE360AA06'),
+            binary('9AE55E3E5BFCDBF39E1DFE7E154C0837FA35CE0B683D85AF8C9ED40A2C07DEF8'),
+            binary('598203EDEB7BE359AFEC802E9EDE147230CCA026852EF804BD8864A38EBEAE4B')
+          ],
+          publicKeyDeletions: []
+        }
+      }
+      expect(mongo.transactions(item)).to.eql({
+        meta: {
+          height: '8181',
+          aggregateHash: 'A91F6F092E96E0FE9BB2927A2EC8EFAFB4DEFBBC6F6CADB581AF168CD445F6B2',
+          id: '5E4C2E0926EC0922222F3233',
+          aggregateId: '5E4C2E0926EC0922222F3232',
+          index: 0
+        },
+        transaction: {
+          signerPublicKey: 'AC332A2998873EDF5DD7B7F9B256B39C8E069E492483FF9D7F8B3580228A2F59',
+          version: 1,
+          network: 0x98,
+          type: 0x4155,
+          minRemovalDelta: 3,
+          minApprovalDelta: 2,
+          publicKeyAdditions: [
+            '545651E3CEEFCC47A2763B059A95C99C3BE236258811382933340FC324ECEAA9',
+            'DA997216C50D4425FB216285FC9110DE1E162E69B36A34DA8FCD8F9ED8980311',
+            '110B8B7625A2E2573E5756D33EBCB882EDF7487344AA1CCEFC52E2FCE360AA06',
+            '9AE55E3E5BFCDBF39E1DFE7E154C0837FA35CE0B683D85AF8C9ED40A2C07DEF8',
+            '598203EDEB7BE359AFEC802E9EDE147230CCA026852EF804BD8864A38EBEAE4B'
+          ],
+          publicKeyDeletions: []
+        }
+      })
     })
 
     // TODO(ahuszagh) Implement...
-    it('should parse a mosaic alias transaction', () => {})
-    it('should parse a mosaic definition transaction', () => {})
-    it('should parse a mosaic supply change transaction', () => {})
-    it('should parse a modify multisig transaction', () => {})
     it('should parse an aggregate complete transaction', () => {})
     it('should parse an aggregate bonded transaction', () => {})
     it('should parse a hash lock transaction', () => {})
