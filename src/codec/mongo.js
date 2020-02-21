@@ -208,9 +208,38 @@ export default {
   }),
 
   mosaicRestrictions: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
+    let entryType = item.mosaicRestrictionEntry.entryType
+    let result = {
+      mosaicRestrictionEntry: {
+        compositeHash: binaryToHex(item.mosaicRestrictionEntry.compositeHash),
+        entryType: entryType,
+        mosaicId: idToHex(item.mosaicRestrictionEntry.mosaicId)
+      }
+    }
+
+    // Specialize for the address or global
+    if (entryType === 0) {
+      // Address
+      result.mosaicRestrictionEntry.targetAddress = binaryToBase32(item.mosaicRestrictionEntry.targetAddress)
+      result.mosaicRestrictionEntry.restrictions = item.mosaicRestrictionEntry.restrictions.map(restriction => ({
+        key: idToHex(restriction.key),
+        value: idToHex(restriction.value)
+      }))
+    } else if (entryType === 1) {
+      // Global
+      result.mosaicRestrictionEntry.restrictions = item.mosaicRestrictionEntry.restrictions.map(subitem => ({
+        key: idToHex(subitem.key),
+        restriction: {
+          referenceMosaicId: idToHex(subitem.restriction.referenceMosaicId),
+          restrictionValue: idToHex(subitem.restriction.restrictionValue),
+          restrictionType: subitem.restriction.restrictionType
+        }
+      }))
+    } else {
+      throw new Error(`invalid MosaicRestrictionEntryType, got ${entryType}`)
+    }
+
+    return result
   },
 
   mosaics: item => ({

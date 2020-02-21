@@ -478,10 +478,130 @@ describe('mongo', () => {
 
   // TODO(ahuszagh) Implement...
   describe('hashLocks', () => {})
-
   describe('metadata', () => {})
-  describe('mosaicResolutionStatements', () => {})
-  describe('mosaicRestrictions', () => {})
+
+  describe('mosaicResolutionStatements', () => {
+    it('should parse a valid mosaic resolution statement', () => {
+      let item = {
+        statement: {
+          height: long(1, 0),
+          unresolved: long(1106554862, 3880491450),
+          resolutionEntries: [
+            {
+              source: {
+                primaryId: 5,
+                secondaryId: 0
+              },
+              resolved: long(92423592, 1370066984)
+            }
+          ]
+        }
+      }
+      expect(mongo.mosaicResolutionStatements(item)).to.eql({
+        statement: {
+          height: '1',
+          unresolved: 'E74B99BA41F4AFEE',
+          resolutionEntries: [
+            {
+              source: {
+                primaryId: 5,
+                secondaryId: 0
+              },
+              resolved: '51A99028058245A8'
+            }
+          ]
+        }
+      })
+    })
+  })
+
+  describe('mosaicRestrictions', () => {
+    it('should parse a valid mosaic restriction', () => {
+      // Global restriction
+      let item = {
+        mosaicRestrictionEntry: {
+          compositeHash: binary('D801EF269B147C8E1677F9DBFF549D82C9597B29C7A1CB2E623F76B29F08955D'),
+          entryType: 1,
+          mosaicId: long(3264161012, 1054803538),
+          restrictions: [
+            {
+              key: long(2807928890, 2988827215),
+              restriction: {
+                referenceMosaicId: long(0, 0),
+                restrictionValue: long(1, 0),
+                restrictionType: 1
+              }
+            },
+            {
+              key: long(1408183365, 4250713378),
+              restriction: {
+                referenceMosaicId: long(0, 0),
+                restrictionValue: long(1, 0),
+                restrictionType: 1
+              }
+            }
+          ]
+        }
+      }
+      expect(mongo.mosaicRestrictions(item)).to.eql({
+        mosaicRestrictionEntry: {
+          compositeHash: 'D801EF269B147C8E1677F9DBFF549D82C9597B29C7A1CB2E623F76B29F08955D',
+          entryType: 1,
+          mosaicId: '3EDF0652C28F24F4',
+          restrictions: [
+            {
+              key: 'B225E24FA75D983A',
+              restriction: {
+                referenceMosaicId: '0000000000000000',
+                restrictionValue: '0000000000000001',
+                restrictionType: 1
+              }
+            },
+            {
+              key: 'FD5CBD2253EF2C45',
+              restriction: {
+                referenceMosaicId: '0000000000000000',
+                restrictionValue: '0000000000000001',
+                restrictionType: 1
+              }
+            }
+          ]
+        }
+      })
+
+      // Address restriction
+      item = {
+        mosaicRestrictionEntry: {
+          compositeHash: binary('4BB9C6DCF56209A1E52E2F646B3994FD7F266784E407C7891DC34BE5BEEE4437'),
+          entryType: 0,
+          mosaicId: long(3264161012, 1054803538),
+          targetAddress: binary('98E0A3C020A97113893126969D78C7F5180B904C4A07DF478A'),
+          restrictions: [
+            {
+              key: long(2807928890, 2988827215),
+              value: long(2, 0)
+            }
+          ]
+        }
+      }
+      expect(mongo.mosaicRestrictions(item)).to.eql({
+        mosaicRestrictionEntry: {
+          compositeHash: '4BB9C6DCF56209A1E52E2F646B3994FD7F266784E407C7891DC34BE5BEEE4437',
+          entryType: 0,
+          mosaicId: '3EDF0652C28F24F4',
+          targetAddress: 'TDQKHQBAVFYRHCJRE2LJ26GH6UMAXECMJID56R4K',
+          restrictions: [
+            {
+              key: 'B225E24FA75D983A',
+              value: '0000000000000002'
+            }
+          ]
+        }
+      })
+    })
+  })
+
+  // TODO(ahuszagh) Implement...
   describe('mosaics', () => {})
   describe('multisigs', () => {})
   describe('namespaces', () => {})
