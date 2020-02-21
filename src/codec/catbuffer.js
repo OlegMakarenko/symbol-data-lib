@@ -579,6 +579,7 @@ export default class CatbufferReader extends Reader {
       // Add the embedded transactions.
       block.transactions = entityReader.transactions()
     }
+    entityReader.validateEmpty()
 
     return {
       entity,
