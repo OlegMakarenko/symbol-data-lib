@@ -20,6 +20,7 @@
  *  Codec to transform RocksDB models to JSON.
  */
 
+import assert from 'assert'
 import constants from './constants'
 import Reader from './reader'
 
@@ -27,6 +28,37 @@ import Reader from './reader'
 const ROLLBACK_BUFFER_SIZE = 2
 const IMPORTANCE_HISTORY_SIZE = 1 + ROLLBACK_BUFFER_SIZE
 const ACTIVITY_BUCKET_HISTORY_SIZE = 5 + ROLLBACK_BUFFER_SIZE
+
+// HELPERS
+
+/**
+ *  Format child namespace to the traditionally displayed format.
+ */
+const childNamespace = (child, root) => ({
+  registrationType: constants.namespaceChild,
+  depth: child.levels.length,
+  levels: child.levels,
+  alias: child.alias,
+  parentId: child.levels[child.levels.length - 2],
+  ownerPublicKey: root.owner,
+  startHeight: root.lifetimeStart,
+  endHeight: root.lifetimeEnd
+})
+
+/**
+ *  Format root namespace to the traditionally displayed format.
+ */
+const rootNamespace = (root, namespaceId) => ({
+  registrationType: constants.namespaceRoot,
+  depth: 1,
+  levels: [namespaceId],
+  alias: root.alias,
+  parentId: '0000000000000000',
+  ownerPublicKey: root.owner,
+  startHeight: root.lifetimeStart,
+  endHeight: root.lifetimeEnd,
+  children: root.children.map(child => childNamespace(child, root))
+})
 
 // READERS
 
@@ -46,31 +78,31 @@ class RocksReader extends Reader {
   }
 
   accountRestriction() {
-    let flags = this.uint16()
+    let restrictionFlags = this.uint16()
     let valuesCount = this.long()
     let values = []
-    if ((flags & constants.accountRestrictionAddress) !== 0) {
+    if ((restrictionFlags & constants.accountRestrictionAddress) !== 0) {
       this.nLong(values, valuesCount, 'address')
-    } else if ((flags & constants.accountRestrictionMosaic) !== 0) {
+    } else if ((restrictionFlags & constants.accountRestrictionMosaic) !== 0) {
       this.nLong(values, valuesCount, 'id')
-    } else if ((flags & constants.accountRestrictionTransactionType) !== 0) {
+    } else if ((restrictionFlags & constants.accountRestrictionTransactionType) !== 0) {
       this.nLong(values, valuesCount, 'entityType')
     } else {
-      throw new Error(`invalid account restriction flags, got ${flags}`)
+      throw new Error(`invalid account restriction flags, got ${restrictionFlags}`)
     }
 
     return {
-      flags,
+      restrictionFlags,
       values
     }
   }
 
   mosaic() {
-    let mosaicId = this.id()
+    let id = this.id()
     let amount = this.uint64()
 
     return {
-      mosaicId,
+      id,
       amount
     }
   }
@@ -109,13 +141,16 @@ class RocksReader extends Reader {
     return null
   }
 
-  mosaicRestrictions(valueFn) {
+  mosaicRestrictions(valueName, valueFn) {
     // Create the generic callback for all restriction types.
     let valueCallback = this.callback(valueFn)
     let callback = () => {
       let key = this.uint64()
       let value = valueCallback()
-      return {key, value}
+      return {
+        key,
+        [valueName]: value
+      }
     }
 
     // Read the restrictions.
@@ -133,7 +168,7 @@ class RocksReader extends Reader {
     const entryType = constants.mosaicRestrictionAddress
     let mosaicId = this.id()
     let targetAddress = this.address()
-    let restrictions = this.mosaicRestrictions('mosaicAddressRestrictionValue')
+    let restrictions = this.mosaicRestrictions('value', 'mosaicAddressRestrictionValue')
 
     return {
       entryType,
@@ -144,21 +179,21 @@ class RocksReader extends Reader {
   }
 
   mosaicGlobalRestrictionValue() {
-    let mosaicId = this.id()
-    let value = this.uint64()
-    let type = this.uint8()
+    let referenceMosaicId = this.id()
+    let restrictionValue = this.uint64()
+    let restrictionType = this.uint8()
 
     return {
-      mosaicId,
-      value,
-      type
+      referenceMosaicId,
+      restrictionValue,
+      restrictionType
     }
   }
 
   mosaicGlobalRestriction() {
     const entryType = constants.mosaicRestrictionGlobal
     let mosaicId = this.id()
-    let restrictions = this.mosaicRestrictions('mosaicGlobalRestrictionValue')
+    let restrictions = this.mosaicRestrictions('restriction', 'mosaicGlobalRestrictionValue')
 
     return {
       entryType,
@@ -185,15 +220,14 @@ class RocksReader extends Reader {
   childNamespace(rootId) {
     // Read the fully qualified path.
     let depth = this.uint8()
-    let path = [rootId]
-    this.n(path, depth, 'id')
-    let namespace = path.join('.')
+    let levels = [rootId]
+    this.n(levels, depth, 'id')
 
     // Read the alias
     let alias = this.alias()
 
     return {
-      namespace,
+      levels,
       alias
     }
   }
@@ -389,7 +423,7 @@ export default {
       //  Note: targetId can be either a MosaicId, a NamespaceId, or all 0s.
       //
       //  struct SecretLockInfo {
-      //    Key sourcePublicKey;
+      //    Key senderPublicKey;
       //    Key targetPublicKey;
       //    uint64_t scopedMetadataKey;
       //    uint64_t targetId;
@@ -401,7 +435,7 @@ export default {
       // Parse Information
       let reader = new RocksReader(data)
       reader.validateStateVersion(1)
-      let sourcePublicKey = reader.key()
+      let senderPublicKey = reader.key()
       let targetPublicKey = reader.key()
       let scopedMetadataKey = reader.uint64()
       let targetId = reader.id()
@@ -410,16 +444,13 @@ export default {
       let value = reader.hexN(valueSize)
       reader.validateEmpty()
 
-      let key = {
-        sourcePublicKey,
+      return {
+        senderPublicKey,
         targetPublicKey,
         scopedMetadataKey,
         targetId,
-        metadataType
-      }
-
-      return {
-        key,
+        metadataType,
+        valueSize,
         value
       }
     }
@@ -430,9 +461,9 @@ export default {
     value: data => {
       // Model:
       //  struct Mosaic {
-      //    MosaicId mosaicId;
+      //    MosaicId id;
       //    uint64_t supply;
-      //    Height height;
+      //    Height startHeight;
       //    Key ownerPublicKey;
       //    uint32_t revision;
       //    uint8_t flags;
@@ -443,9 +474,9 @@ export default {
       // Parse Information
       let reader = new RocksReader(data)
       reader.validateStateVersion(1)
-      let mosaicId = reader.id()
+      let id = reader.id()
       let supply = reader.uint64()
-      let height = reader.uint64()
+      let startHeight = reader.uint64()
       let ownerPublicKey = reader.key()
       let revision = reader.uint32()
       let flags = reader.uint8()
@@ -454,10 +485,12 @@ export default {
       reader.validateEmpty()
 
       return {
-        mosaicId,
+        id,
         supply,
-        height,
-        ownerPublicKey,
+        startHeight,
+        owner: {
+          publicKey: ownerPublicKey
+        },
         revision,
         flags,
         divisibility,
@@ -537,7 +570,7 @@ export default {
       reader.validateStateVersion(1)
       let minApproval = reader.uint32()
       let minRemoval = reader.uint32()
-      let key = reader.key()
+      let publicKey = reader.key()
       let cosignatoryPublicKeys = []
       let cosignatoryCount = reader.long()
       reader.nLong(cosignatoryPublicKeys, cosignatoryCount, 'key')
@@ -547,9 +580,11 @@ export default {
       reader.validateEmpty()
 
       return {
+        account: {
+          publicKey
+        },
         minApproval,
         minRemoval,
-        key,
         cosignatoryPublicKeys,
         multisigPublicKeys
       }
@@ -602,15 +637,15 @@ export default {
       reader.validateStateVersion(1)
       let historyDepth = reader.long()
       let namespaceId = reader.id()
-      let rootNamespace = []
+      let rootNamespaceHistory = []
       let callback = () => reader.rootNamespace(namespaceId)
-      reader.nLong(rootNamespace, historyDepth, callback)
+      reader.nLong(rootNamespaceHistory, historyDepth, callback)
       reader.validateEmpty()
 
-      return {
-        namespaceId,
-        rootNamespace
-      }
+      // Now we need to process it to the readable format we're used to.
+      // Return the entire history.
+      return rootNamespaceHistory
+        .map(root => rootNamespace(root, namespaceId))
     }
   },
 
@@ -643,7 +678,9 @@ export default {
       reader.validateEmpty()
 
       return {
-        senderPublicKey,
+        sender: {
+          publicKey: senderPublicKey
+        },
         mosaicId,
         amount,
         endHeight,

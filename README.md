@@ -142,7 +142,15 @@ symbol-data-lib also exposes a library, simplifying data access from catapult da
 
 # Detailed Instructions
 
-The following scripts use paths by default within the Docker container, however, it may be easier to run them from outside the docker container (to avoid having to install NPM, cloning the repository, and installing the dependencies). To do so, we must expose port `27017` on the `db` image:
+The following scripts use paths by default within the Docker container, however, it may be easier to run them from outside the docker container (to avoid having to install NPM, cloning the repository, and installing the dependencies). However, some issues arise when running these tools outside of a container.
+
+**Configuring Audit, Block, and Spool**
+
+The audit, block, and spool require superuser privileges (sudo or admin access) in order to read the generated data.
+
+**Configuring Mongo DB**
+
+Docker compose does not by default expose port 27017, so we must expose this in the `db` image:
 
 ```yaml
   db:
@@ -166,6 +174,10 @@ $ catapult-rocks-dump --data-dir "$catapult-service-bootstrap/data/api-node-0"  
 ```
 
 Alternatively, you can either modify the Dockerfiles to install, build, and link the scripts inside the `db` and `api-node-0` commands. From there, you would find the proper container ID via `docker ps`, and run `docker exec -it $id /bin/bash` to enter an interactive session of the running container. From there, run the desired script.
+
+**Configuring TCP**
+
+TODO(ahuszagh) Document
 
 # Compatibility Warning
 
