@@ -294,7 +294,6 @@ export default class CatbufferReader extends Reader {
 
     // Read the transactions.
     // May not be present, but `transactions` handles empty data.
-    // TODO(ahuszagh) Are the embedded transactions aligned? Are they?
     let transactionData = this.data.slice(0, transactionsSize)
     this.data = this.data.slice(transactionsSize)
     let transactionReader = new CatbufferReader(transactionData)
