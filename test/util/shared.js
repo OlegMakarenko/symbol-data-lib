@@ -74,4 +74,9 @@ describe('shared', () => {
     let buffer = Buffer.from('989D619A4C32CCDABE2B498AC1034B3FC8C30E56F183AF2F72', 'hex')
     expect(shared.binaryToBase32(buffer)).to.eql('TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S')
   })
+
+  it('should serialize a 64-bit integer to string', () => {
+    let uint64 = [4294967295, 4294967295]
+    expect(shared.uint64ToString(uint64)).to.equal('18446744073709551615')
+  })
 })

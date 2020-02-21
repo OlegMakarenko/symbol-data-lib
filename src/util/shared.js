@@ -133,6 +133,25 @@ const binaryToUint64 = data => {
 }
 
 /**
+ *  Serialize 64-bit integer to string, with radix.
+ */
+const uint64ToString = uint64 => {
+  let low = uint64[0]
+  let high = uint64[1]
+  let result = ''
+  while (true) {
+    let mod = (high % 10) * 0x100000000 + low
+    high = Math.floor(high / 10)
+    low = Math.floor(mod / 10)
+    result = (mod % 10).toString(10) + result
+    if (!high && !low) {
+      break
+    }
+  }
+  return result
+}
+
+/**
  *  Convert binary data to hex.
  */
 const binaryToHex = data => data.toString('hex').toUpperCase()
@@ -158,5 +177,6 @@ export default {
   binaryToUint64,
   binaryToHex,
   binaryToAscii,
-  binaryToBase32
+  binaryToBase32,
+  uint64ToString
 }

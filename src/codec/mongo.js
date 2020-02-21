@@ -22,7 +22,9 @@
 
 import shared from '../util/shared'
 
-const idToHex = id => shared.idToHex([id.getLowBitsUnsigned(), id.getHighBits() >>> 0])
+const longToUint64 = long => [long.getLowBitsUnsigned(), long.getHighBits() >>> 0]
+const longToString = long => shared.uint64ToString(longToUint64(long))
+const idToHex = id => shared.idToHex(longToUint64(id))
 const binaryToHex = data => shared.binaryToHex(data)
 const binaryToBase32 = data => shared.binaryToBase32(data.buffer)
 
@@ -31,7 +33,7 @@ const balanceChangeReceipt = entry => ({
   type: entry.type,
   targetPublicKey : binaryToHex(entry.targetPublicKey),
   mosaicId : idToHex(entry.mosaicId),
-  amount : entry.amount.toString()
+  amount : longToString(entry.amount)
 })
 
 const balanceTransferReceipt = entry => ({
@@ -40,7 +42,7 @@ const balanceTransferReceipt = entry => ({
   senderPublicKey : binaryToHex(entry.senderPublicKey),
   recipientAddress : binaryToBase32(entry.recipientAddress),
   mosaicId : idToHex(entry.mosaicId),
-  amount : entry.amount.toString()
+  amount : longToString(entry.amount)
 })
 
 const artifactExpiryReceipt = entry => ({
@@ -53,7 +55,7 @@ const inflationReceipt = entry => ({
   version: entry.version,
   type: entry.type,
   mosaicId : idToHex(entry.mosaicId),
-  amount : entry.amount.toString()
+  amount : longToString(entry.amount)
 })
 
 const unknownReceipt = entry => ({
@@ -107,31 +109,31 @@ export default {
   accounts: item => ({
     account: {
       address: binaryToBase32(item.account.address),
-      addressHeight: item.account.addressHeight.toString(),
+      addressHeight: longToString(item.account.addressHeight),
       publicKey: binaryToHex(item.account.publicKey),
-      publicKeyHeight: item.account.publicKeyHeight.toString(),
+      publicKeyHeight: longToString(item.account.publicKeyHeight),
       accountType: item.account.accountType,
       linkedAccountKey: binaryToHex(item.account.linkedAccountKey),
       importances: item.account.importances.map(importance => ({
-        value: importance.value.toString(),
-        height: importance.height.toString()
+        value: longToString(importance.value),
+        height: longToString(importance.height)
       })),
       activityBuckets: item.account.activityBuckets.map(bucket => ({
-        startHeight: bucket.startHeight.toString(),
-        totalFeesPaid: bucket.totalFeesPaid.toString(),
+        startHeight: longToString(bucket.startHeight),
+        totalFeesPaid: longToString(bucket.totalFeesPaid),
         beneficiaryCount: bucket.beneficiaryCount,
-        rawScore: bucket.rawScore.toString()
+        rawScore: longToString(bucket.rawScore)
       })),
       mosaics: item.account.mosaics.map(mosaic => ({
         mosaicId: idToHex(mosaic.id),
-        amount: mosaic.amount.toString()
+        amount: longToString(mosaic.amount)
       }))
     }
   }),
 
   addressResolutionStatements: item => ({
     statement: {
-      height: item.statement.height.toString(),
+      height: longToString(item.statement.height),
       unresolved: binaryToBase32(item.statement.unresolved),
       resolutionEntries: item.statement.resolutionEntries.map(entry => ({
         source: entry.source,
@@ -144,7 +146,7 @@ export default {
     meta: {
       hash: binaryToHex(item.meta.hash),
       generationHash: binaryToHex(item.meta.generationHash),
-      totalFee: item.meta.totalFee.toString(),
+      totalFee: longToString(item.meta.totalFee),
       stateHashSubCacheMerkleRoots: item.meta.stateHashSubCacheMerkleRoots.map(hash => binaryToHex(hash)),
       numTransactions: item.meta.numTransactions,
       transactionMerkleTree: item.meta.transactionMerkleTree.map(hash => binaryToHex(hash)),
@@ -157,9 +159,9 @@ export default {
       version: item.block.version,
       network: item.block.network,
       type: item.block.type,
-      height: item.block.height.toString(),
-      timestamp: item.block.timestamp.toString(),
-      difficulty: item.block.difficulty.toString(),
+      height: longToString(item.block.height),
+      timestamp: longToString(item.block.timestamp),
+      difficulty: longToString(item.block.difficulty),
       feeMultiplier: item.block.feeMultiplier,
       previousBlockHash: binaryToHex(item.block.previousBlockHash),
       transactionsHash: binaryToHex(item.block.transactionsHash),
@@ -171,9 +173,9 @@ export default {
 
   chainStatistic: item => ({
     current: {
-      height: item.current.height.toString(),
-      scoreLow: item.current.scoreLow.toString(),
-      scoreHigh: item.current.scoreHigh.toString()
+      height: longToString(item.current.height),
+      scoreLow: longToString(item.current.scoreLow),
+      scoreHigh: longToString(item.current.scoreHigh)
     }
   }),
 
@@ -184,8 +186,8 @@ export default {
         address: binaryToBase32(item.lock.senderAddress)
       },
       mosaicId: idToHex(item.lock.mosaicId),
-      amount: item.lock.amount.toString(),
-      endHeight: item.lock.endHeight.toString(),
+      amount: longToString(item.lock.amount),
+      endHeight: longToString(item.lock.endHeight),
       hash: binaryToHex(item.lock.hash),
     }
   }),
@@ -198,7 +200,7 @@ export default {
 
   mosaicResolutionStatements: item => ({
     statement: {
-      height: item.statement.height.toString(),
+      height: longToString(item.statement.height),
       unresolved: idToHex(item.statement.unresolved),
       resolutionEntries: item.statement.resolutionEntries.map(entry => ({
         source: entry.source,
@@ -245,8 +247,8 @@ export default {
   mosaics: item => ({
     mosaic: {
       id: idToHex(item.mosaic.id),
-      supply: item.mosaic.supply.toString(),
-      startHeight: item.mosaic.startHeight.toString(),
+      supply: longToString(item.mosaic.supply),
+      startHeight: longToString(item.mosaic.startHeight),
       owner: {
         publicKey: binaryToHex(item.mosaic.ownerPublicKey),
         address: binaryToBase32(item.mosaic.ownerAddress)
@@ -254,7 +256,7 @@ export default {
       revision: item.mosaic.revision,
       flags: item.mosaic.flags,
       divisibility: item.mosaic.divisibility,
-      duration: item.mosaic.duration.toString()
+      duration: longToString(item.mosaic.duration)
     }
   }),
 
@@ -290,8 +292,8 @@ export default {
           publicKey: binaryToHex(item.namespace.ownerPublicKey),
           address: binaryToBase32(item.namespace.ownerAddress)
         },
-        startHeight: item.namespace.startHeight.toString(),
-        endHeight: item.namespace.endHeight.toString(),
+        startHeight: longToString(item.namespace.startHeight),
+        endHeight: longToString(item.namespace.endHeight)
       }
     }
 
@@ -328,8 +330,8 @@ export default {
         address: binaryToBase32(item.lock.senderAddress)
       },
       mosaicId: idToHex(item.lock.mosaicId),
-      amount: item.lock.amount.toString(),
-      endHeight: item.lock.endHeight.toString(),
+      amount: longToString(item.lock.amount),
+      endHeight: longToString(item.lock.endHeight),
       hashAlgorithm: item.lock.hashAlgorithm,
       secret: binaryToHex(item.lock.secret),
       recipientAddress: binaryToBase32(item.lock.recipientAddress)
@@ -338,7 +340,7 @@ export default {
 
   transactionStatements: item => ({
     statement: {
-      height: item.statement.height.toString(),
+      height: longToString(item.statement.height),
       source: item.statement.source,
       receipts: item.statement.receipts.map(basicReceipt)
     }
@@ -348,7 +350,7 @@ export default {
     status: {
       hash: binaryToHex(item.status.hash),
       code: item.status.code,
-      deadline: item.status.deadline.toString()
+      deadline: longToString(item.status.deadline)
     }
   }),
 

@@ -601,10 +601,118 @@ describe('mongo', () => {
     })
   })
 
+  describe('mosaics', () => {
+    it('should parse a valid mosaic', () => {
+      let item = {
+        mosaic: {
+          id: long(92423592, 1370066984),
+          supply: long(3228438221, 1825527),
+          startHeight: long(1, 0),
+          ownerPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
+          ownerAddress: binary('98875D60F721C3B15319826467D3F85F8FC9D7FA781665E4EA'),
+          revision: 1,
+          flags: 2,
+          divisibility: 6,
+          duration: long(0, 0)
+        }
+      }
+      expect(mongo.mosaics(item)).to.eql({
+        mosaic: {
+          id: '51A99028058245A8',
+          supply: '7840581991403213',
+          startHeight: '1',
+          owner: {
+            publicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+            address: 'TCDV2YHXEHB3CUYZQJSGPU7YL6H4TV72PALGLZHK'
+          },
+          revision: 1,
+          flags: 2,
+          divisibility: 6,
+          duration: '0'
+        }
+      })
+    })
+  })
+
+  describe('multisigs', () => {
+    it('should parse a valid multisig', () => {
+      let item = {
+        multisig: {
+          accountPublicKey: binary('545651E3CEEFCC47A2763B059A95C99C3BE236258811382933340FC324ECEAA9'),
+          accountAddress: binary('98C46B1CDB2DA8865101C2E485066FD4A13A0E671D4E8DF061'),
+          minApproval: 0,
+          minRemoval: 0,
+          cosignatoryPublicKeys: [],
+          multisigPublicKeys: [
+            binary('AC332A2998873EDF5DD7B7F9B256B39C8E069E492483FF9D7F8B3580228A2F59')
+          ]
+        }
+      }
+      expect(mongo.multisigs(item)).to.eql({
+        multisig: {
+          account: {
+            publicKey: '545651E3CEEFCC47A2763B059A95C99C3BE236258811382933340FC324ECEAA9',
+            address: 'TDCGWHG3FWUIMUIBYLSIKBTP2SQTUDTHDVHI34DB'
+          },
+          minApproval: 0,
+          minRemoval: 0,
+          cosignatoryPublicKeys: [],
+          multisigPublicKeys: [
+            'AC332A2998873EDF5DD7B7F9B256B39C8E069E492483FF9D7F8B3580228A2F59'
+          ]
+        }
+      })
+    })
+  })
+
+  describe('namespaces', () => {
+    it('should parse a valid namespace', () => {
+      let item = {
+        meta: {
+          active: true,
+          index: 0
+        },
+        namespace: {
+          registrationType: 0,
+          depth: 1,
+          level0: long(2517996822, 2841583498),
+          alias: {
+            type: 0
+          },
+          parentId: long(0, 0),
+          ownerPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
+          ownerAddress: binary('98875D60F721C3B15319826467D3F85F8FC9D7FA781665E4EA'),
+          startHeight: long(1, 0),
+          endHeight: long(4294967295, 4294967295)
+        }
+      }
+      expect(mongo.namespaces(item)).to.eql({
+        meta: {
+          active: true,
+          index: 0
+        },
+        namespace: {
+          registrationType: 0,
+          depth: 1,
+          levels: [
+            'A95F1F8A96159516'
+          ],
+          alias: {
+            type: 0
+          },
+          parentId: '0000000000000000',
+          'owner': {
+            publicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+            address: 'TCDV2YHXEHB3CUYZQJSGPU7YL6H4TV72PALGLZHK'
+          },
+          startHeight: '1',
+          endHeight: '18446744073709551615'
+        }
+      })
+    })
+  })
+
   // TODO(ahuszagh) Implement...
-  describe('mosaics', () => {})
-  describe('multisigs', () => {})
-  describe('namespaces', () => {})
   describe('partialTransactions', () => {})
   describe('secretLocks', () => {})
   describe('transactionStatements', () => {})

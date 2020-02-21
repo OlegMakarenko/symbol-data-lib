@@ -21,7 +21,6 @@
  */
 
 import assert from 'assert'
-import MongoDb from 'mongodb'
 import Reader from './reader'
 import shared from '../util/shared'
 
@@ -207,7 +206,7 @@ export default class CatbufferReader extends Reader {
 
     // Parse the union data
     if (transaction.namespaceType === NAMESPACE_ROOT) {
-      transaction.duration = (new MongoDb.Long(union[0], union[1])).toString()
+      transaction.duration = shared.uint64ToString(union)
     } else if (transaction.namespaceType === NAMESPACE_CHILD) {
       transaction.parentId = shared.idToHex(union)
     } else {

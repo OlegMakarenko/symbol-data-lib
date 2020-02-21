@@ -118,7 +118,7 @@ export default class Reader {
   }
 
   uint64() {
-    return this.long().toString()
+    return shared.uint64ToString(this.rawUint64())
   }
 
   binaryN(n) {
