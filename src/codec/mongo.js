@@ -78,11 +78,15 @@ const basicReceipt = entry => {
  *  Codec for MongoDB collections.
  */
 export default {
-  accountRestrictions: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  },
+  accountRestrictions: item => ({
+    accountRestrictions: {
+      address: binaryToBase32(item.accountRestrictions.address),
+      restrictions: item.restrictions.map(restriction => ({
+        restrictionFlags: restriction.restrictionFlags,
+        values: restriction.values.map(binaryToHex)
+      }))
+    }
+  }),
 
   accounts: item => ({
     account: {
