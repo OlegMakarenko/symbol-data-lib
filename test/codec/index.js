@@ -20,6 +20,7 @@ describe('codec', () => {
   require('./audit'),
   require('./block'),
   require('./catbuffer'),
+  require('./config'),
   require('./mongo'),
   require('./reader'),
   require('./rocks'),

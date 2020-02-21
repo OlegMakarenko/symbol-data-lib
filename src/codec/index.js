@@ -22,6 +22,7 @@
 
 import audit from './audit'
 import block from './block'
+import config from './config'
 import mongo from './mongo'
 import rocks from './rocks'
 import spool from './spool'
@@ -29,6 +30,7 @@ import spool from './spool'
 export default {
   audit,
   block,
+  config,
   mongo,
   rocks,
   spool
