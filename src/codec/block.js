@@ -16,6 +16,10 @@
  *
  */
 
+/**
+ *  Codec to transform block models to JSON.
+ */
+
 import fs from 'fs'
 import path from 'path'
 import spool from './spool'

@@ -163,23 +163,36 @@ const registerNamespaceTransaction = transaction => {
 }
 
 const addressAliasTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  namespaceId: idToHex(transaction.namespaceId),
+  address: binaryToBase32(transaction.address),
+  aliasAction: transaction.aliasAction
 })
 
 const mosaicAliasTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  namespaceId: idToHex(transaction.namespaceId),
+  mosaicId: idToHex(transaction.mosaicId),
+  aliasAction: transaction.aliasAction
 })
 
 const mosaicDefinitionTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  mosaicId: idToHex(transaction.id),
+  duration: longToString(transaction.duration),
+  nonce: transaction.nonce,
+  flags: transaction.flags,
+  divisibility: transaction.divisibility
 })
 
 const mosaicSupplyChangeTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  mosaicId: idToHex(transaction.mosaicId),
+  delta: longToString(transaction.delta),
+  action: transaction.action
 })
 
 const modifyMultisigTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  minRemovalDelta: transaction.minRemovalDelta,
+  minApprovalDelta: transaction.minApprovalDelta,
+  publicKeyAdditions: transaction.publicKeyAdditions.map(binaryToHex),
+  publicKeyDeletions: transaction.publicKeyDeletions.map(binaryToHex)
 })
 
 const aggregateCompleteTransaction = transaction => ({
@@ -191,7 +204,12 @@ const aggregateBondedTransaction = transaction => ({
 })
 
 const lockTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+  mosaic: {
+    mosaicId: idToHex(transaction.mosaicId),
+    amount: longToString(transaction.amount)
+  },
+  duration: longToString(transaction.duration),
+  hash: binaryToHex(transaction.hash)
 })
 
 const secretLockTransaction = transaction => ({
@@ -241,7 +259,7 @@ const namespaceMetadataTransaction = transaction => ({
 /**
  *  Codec for MongoDB collections.
  */
-export default {
+const codec = {
   accountRestrictions: item => ({
     accountRestrictions: {
       address: binaryToBase32(item.accountRestrictions.address),
@@ -476,11 +494,8 @@ export default {
     return result
   },
 
-  partialTransactions: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  },
+  // Same as transactions, just for only partial transactions.
+  partialTransactions: item => codec.transactions(item),
 
   secretLocks: item => ({
     lock: {
@@ -570,9 +585,8 @@ export default {
     }
   },
 
-  unconfirmedTransactions: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
-  }
+  // Same as transactions, just for only unconfirmed transactions.
+  unconfirmedTransactions: item => codec.transactions(item)
 }
+
+export default codec
