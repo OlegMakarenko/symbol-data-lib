@@ -188,6 +188,7 @@ export default {
       mosaicId: idToHex(item.lock.mosaicId),
       amount: longToString(item.lock.amount),
       endHeight: longToString(item.lock.endHeight),
+      status: item.lock.status,
       hash: binaryToHex(item.lock.hash),
     }
   }),
@@ -347,9 +348,11 @@ export default {
       mosaicId: idToHex(item.lock.mosaicId),
       amount: longToString(item.lock.amount),
       endHeight: longToString(item.lock.endHeight),
+      status: item.lock.status,
       hashAlgorithm: item.lock.hashAlgorithm,
       secret: binaryToHex(item.lock.secret),
-      recipientAddress: binaryToBase32(item.lock.recipientAddress)
+      recipientAddress: binaryToBase32(item.lock.recipientAddress),
+      compositeHash: binaryToHex(item.lock.compositeHash)
     }
   }),
 

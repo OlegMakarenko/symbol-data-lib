@@ -476,8 +476,34 @@ describe('mongo', () => {
     })
   })
 
-  // TODO(ahuszagh) Implement...
-  describe('hashLocks', () => {})
+  describe('hashLocks', () => {
+    it('should parse a valid hash lock', () => {
+      let item = {
+        lock: {
+          senderPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
+          senderAddress: binary('98875D60F721C3B15319826467D3F85F8FC9D7FA781665E4EA'),
+          mosaicId: long(92423592, 1370066984),
+          amount: long(100, 0),
+          endHeight: long(3000, 0),
+          status: 0,
+          hash: binary('0000000000000000000000000000000000000000000000000000000000000000')
+        }
+      }
+      expect(mongo.hashLocks(item)).to.eql({
+        lock: {
+          sender: {
+            publicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+            address: 'TCDV2YHXEHB3CUYZQJSGPU7YL6H4TV72PALGLZHK'
+          },
+          mosaicId: '51A99028058245A8',
+          amount: '100',
+          endHeight: '3000',
+          status: 0,
+          hash: '0000000000000000000000000000000000000000000000000000000000000000'
+        }
+      })
+    })
+  })
 
   describe('metadata', () => {
     it('should parse valid metadata', () => {
@@ -742,7 +768,41 @@ describe('mongo', () => {
 
   // TODO(ahuszagh) Implement...
   describe('partialTransactions', () => {})
-  describe('secretLocks', () => {})
+
+  describe('secretLocks', () => {
+    it('should parse a valid secret lock', () => {
+      let item = {
+        lock: {
+          senderPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
+          senderAddress: binary('98875D60F721C3B15319826467D3F85F8FC9D7FA781665E4EA'),
+          mosaicId: long(92423592, 1370066984),
+          amount: long(100, 0),
+          endHeight: long(3000, 0),
+          status: 0,
+          hashAlgorithm: 1,
+          secret: binary('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'),
+          recipientAddress: binary('992BE6B9E9B101B8BB00000000000000000000000000000000'),
+          compositeHash: binary('0000000000000000000000000000000000000000000000000000000000000000')
+        }
+      }
+      expect(mongo.secretLocks(item)).to.eql({
+        lock: {
+          sender: {
+            publicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+            address: 'TCDV2YHXEHB3CUYZQJSGPU7YL6H4TV72PALGLZHK'
+          },
+          mosaicId: '51A99028058245A8',
+          amount: '100',
+          endHeight: '3000',
+          status: 0,
+          hashAlgorithm: 1,
+          secret: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+          recipientAddress: 'TEV6NOPJWEA3ROYAAAAAAAAAAAAAAAAAAAAAAAAA',
+          compositeHash: '0000000000000000000000000000000000000000000000000000000000000000'
+        }
+      })
+    })
+  })
 
   describe('transactionStatements', () => {
     it('should parse a valid transaction statement', () => {
@@ -785,8 +845,26 @@ describe('mongo', () => {
     })
   })
 
+  describe('transactionStatuses', () => {
+    it('should parse a valid transaction status', () => {
+      let item = {
+        status: {
+          hash: binary('0000000000000000000000000000000000000000000000000000000000000000'),
+          code: 0,
+          deadline: long(1, 0)
+        }
+      }
+      expect(mongo.transactionStatuses(item)).to.eql({
+          status: {
+          hash: '0000000000000000000000000000000000000000000000000000000000000000',
+          code: 0,
+          deadline: '1'
+        }
+      })
+    })
+  })
+
   // TODO(ahuszagh) Implement...
-  describe('transactionStatuses', () => {})
   describe('transactions', () => {})
   describe('unconfirmedTransactions', () => {})
 })
