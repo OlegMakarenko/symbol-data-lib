@@ -225,13 +225,17 @@ const modifyMultisigTransaction = transaction => ({
   publicKeyDeletions: transaction.publicKeyDeletions.map(binaryToHex)
 })
 
-const aggregateCompleteTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
+const aggregateTransaction = transaction => ({
+  transactionsHash: binaryToHex(transaction.transactionsHash),
+  cosignatures: transaction.cosignatures.map(cosignature => ({
+    signerPublicKey: binaryToHex(cosignature.signerPublicKey),
+    signature: binaryToHex(cosignature.signature)
+  }))
 })
 
-const aggregateBondedTransaction = transaction => ({
-  // TODO(ahuszagh) Implement these...
-})
+const aggregateCompleteTransaction = transaction => aggregateTransaction(transaction)
+
+const aggregateBondedTransaction = transaction => aggregateTransaction(transaction)
 
 const lockTransaction = transaction => ({
   mosaic: {
