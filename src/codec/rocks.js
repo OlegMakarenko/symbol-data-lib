@@ -20,20 +20,13 @@
  *  Codec to transform RocksDB models to JSON.
  */
 
+import constants from './constants'
 import Reader from './reader'
 
 // CONSTANTS
 const ROLLBACK_BUFFER_SIZE = 2
 const IMPORTANCE_HISTORY_SIZE = 1 + ROLLBACK_BUFFER_SIZE
 const ACTIVITY_BUCKET_HISTORY_SIZE = 5 + ROLLBACK_BUFFER_SIZE
-const ALIAS_NONE = 0
-const ALIAS_MOSAIC = 1
-const ALIAS_ADDRESS = 2
-const ACCOUNT_RESTRICTION_ADDRESS = 0x0001
-const ACCOUNT_RESTRICTION_MOSAIC_ID = 0x0002
-const ACCOUNT_RESTRICTION_TRANSACTION_TYPE = 0x0004
-const MOSAIC_RESTRICTION_ADDRESS = 0
-const MOSAIC_RESTRICTION_GLOBAL = 1
 
 // READERS
 
@@ -52,17 +45,15 @@ class RocksReader extends Reader {
     }
   }
 
-  // READERS
-
   accountRestriction() {
     let flags = this.uint16()
     let valuesCount = this.long()
     let values = []
-    if ((flags & ACCOUNT_RESTRICTION_ADDRESS) !== 0) {
+    if ((flags & constants.accountRestrictionAddress) !== 0) {
       this.nLong(values, valuesCount, 'address')
-    } else if ((flags & ACCOUNT_RESTRICTION_MOSAIC_ID) !== 0) {
+    } else if ((flags & constants.accountRestrictionMosaic) !== 0) {
       this.nLong(values, valuesCount, 'id')
-    } else if ((flags & ACCOUNT_RESTRICTION_TRANSACTION_TYPE) !== 0) {
+    } else if ((flags & constants.accountRestrictionTransactionType) !== 0) {
       this.nLong(values, valuesCount, 'entityType')
     } else {
       throw new Error(`invalid account restriction flags, got ${flags}`)
@@ -139,7 +130,7 @@ class RocksReader extends Reader {
   }
 
   mosaicAddressRestriction() {
-    const entryType = MOSAIC_RESTRICTION_ADDRESS
+    const entryType = constants.mosaicRestrictionAddress
     let mosaicId = this.id()
     let targetAddress = this.address()
     let restrictions = this.mosaicRestrictions('mosaicAddressRestrictionValue')
@@ -165,7 +156,7 @@ class RocksReader extends Reader {
   }
 
   mosaicGlobalRestriction() {
-    const entryType = MOSAIC_RESTRICTION_GLOBAL
+    const entryType = constants.mosaicRestrictionGlobal
     let mosaicId = this.id()
     let restrictions = this.mosaicRestrictions('mosaicGlobalRestrictionValue')
 
@@ -178,13 +169,13 @@ class RocksReader extends Reader {
 
   alias() {
     let type = this.uint8()
-    if (type === ALIAS_MOSAIC) {
+    if (type === constants.aliasMosaic) {
       let mosaicId = this.id()
       return {type, mosaicId}
-    } else if (type === ALIAS_ADDRESS) {
+    } else if (type === constants.aliasAddress) {
       let address = this.address()
       return {type, address}
-    } else if (type === ALIAS_NONE) {
+    } else if (type === constants.aliasNone) {
       return {type}
     } else {
       throw new Error(`invalid alias type ${type}`)
@@ -514,9 +505,9 @@ export default {
       reader.validateStateVersion(1)
       let entryType = reader.uint8()
       let value
-      if (entryType === MOSAIC_RESTRICTION_ADDRESS) {
+      if (entryType === constants.mosaicRestrictionAddress) {
         value = reader.mosaicAddressRestriction()
-      } else if (entryType === MOSAIC_RESTRICTION_GLOBAL) {
+      } else if (entryType === constants.mosaicRestrictionGlobal) {
         value = reader.mosaicGlobalRestriction()
       } else {
         throw new Error(`invalid mosaic restriction type, got ${entryType}`)

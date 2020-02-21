@@ -17,6 +17,7 @@
  */
 
 import expect from 'expect.js'
+import constants from '../../src/codec/constants'
 import CatbufferReader from '../../src/codec/catbuffer'
 
 describe('catbuffer', () => {
@@ -162,7 +163,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4154).receipientAddress).to.equal('SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL')
+    expect(reader.transactionHeader(constants.transactionTransfer).receipientAddress).to.equal('SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL')
   })
 
   it('should parse a register namespace transaction', () => {
@@ -202,7 +203,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x414E).duration).to.equal('1000')
+    expect(reader.transactionHeader(constants.transactionRegisterNamespace).duration).to.equal('1000')
   })
 
   it('should parse an address alias transaction', () => {
@@ -234,7 +235,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x424E).namespaceId).to.equal('1A0E4DF21A0E4DF2')
+    expect(reader.transactionHeader(constants.transactionAddressAlias).namespaceId).to.equal('1A0E4DF21A0E4DF2')
   })
 
   it('should parse a mosaic alias transaction', () => {
@@ -266,7 +267,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x434E).namespaceId).to.equal('1A0E4DF21A0E4DF2')
+    expect(reader.transactionHeader(constants.transactionMosaicAlias).namespaceId).to.equal('1A0E4DF21A0E4DF2')
   })
 
   it('should parse a mosaic definition transaction', () => {
@@ -308,7 +309,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x414D).duration).to.equal('1000')
+    expect(reader.transactionHeader(constants.transactionMosaicDefinition).duration).to.equal('1000')
   })
 
   it('should parse a mosaic supply change transaction', () => {
@@ -340,7 +341,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x424D).delta).to.equal('100000')
+    expect(reader.transactionHeader(constants.transactionMosaicSupplyChange).delta).to.equal('100000')
   })
 
   it('should parse a modify multisig transaction', () => {
@@ -388,7 +389,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4155).minRemovalDelta).to.equal(1)
+    expect(reader.transactionHeader(constants.transactionModifyMultisigAccount).minRemovalDelta).to.equal(1)
   })
 
   it('should parse an aggregate complete transaction', () => {
@@ -452,7 +453,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4141).aggregateHash).to.equal('3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006')
+    expect(reader.transactionHeader(constants.transactionAggregateComplete).aggregateHash).to.equal('3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006')
   })
 
   it('should parse an aggregate bonded transaction', () => {
@@ -516,7 +517,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4241).aggregateHash).to.equal('3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006')
+    expect(reader.transactionHeader(constants.transactionAggregateBonded).aggregateHash).to.equal('3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006')
   })
 
   it('should parse a hash lock transaction', () => {
@@ -554,7 +555,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4148).duration).to.equal('100000')
+    expect(reader.transactionHeader(constants.transactionLock).duration).to.equal('100000')
   })
 
   it('should parse a secret lock transaction', () => {
@@ -602,7 +603,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4152).duration).to.equal('100000')
+    expect(reader.transactionHeader(constants.transactionSecretLock).duration).to.equal('100000')
   })
 
   it('should parse a secret proof transaction', () => {
@@ -642,7 +643,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4252).proof).to.equal('AE311DAD16F95EBDE866')
+    expect(reader.transactionHeader(constants.transactionSecretProof).proof).to.equal('AE311DAD16F95EBDE866')
   })
 
   it('should parse an account restriction address transaction', () => {
@@ -686,7 +687,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4150).restrictionFlags).to.equal(1)
+    expect(reader.transactionHeader(constants.transactionAccountRestrictionAddress).restrictionFlags).to.equal(1)
   })
 
   it('should parse an account restriction mosaic transaction', () => {
@@ -730,7 +731,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4250).restrictionFlags).to.equal(2)
+    expect(reader.transactionHeader(constants.transactionAccountRestrictionMosaic).restrictionFlags).to.equal(2)
   })
 
   it('should parse an account restriction operation transaction', () => {
@@ -774,7 +775,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4350).restrictionFlags).to.equal(4)
+    expect(reader.transactionHeader(constants.transactionAccountRestrictionOperation).restrictionFlags).to.equal(4)
   })
 
   it('should parse a link account transaction', () => {
@@ -803,7 +804,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x414C).linkAction).to.equal(0)
+    expect(reader.transactionHeader(constants.transactionLinkAccount).linkAction).to.equal(0)
   })
 
   it('should parse a mosaic address restriction transaction', () => {
@@ -845,7 +846,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4251).restrictionKey).to.equal('17279655951921914625')
+    expect(reader.transactionHeader(constants.transactionMosaicAddressRestriction).restrictionKey).to.equal('17279655951921914625')
   })
 
   it('should parse a mosaic global restriction transaction', () => {
@@ -895,7 +896,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4151).restrictionKey).to.equal('17279655951921914625')
+    expect(reader.transactionHeader(constants.transactionMosaicGlobalRestriction).restrictionKey).to.equal('17279655951921914625')
   })
 
   it('should parse an account metadata transaction', () => {
@@ -935,7 +936,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4144).valueSizeDelta).to.equal(40)
+    expect(reader.transactionHeader(constants.transactionAccountMetadataTransaction).valueSizeDelta).to.equal(40)
   })
 
   it('should parse a mosaic metadata transaction', () => {
@@ -979,7 +980,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4244).valueSizeDelta).to.equal(40)
+    expect(reader.transactionHeader(constants.transactionMosaicMetadataTransaction).valueSizeDelta).to.equal(40)
   })
 
   it('should parse a namespace metadata transaction', () => {
@@ -1023,7 +1024,7 @@ describe('catbuffer', () => {
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4344).valueSizeDelta).to.equal(40)
+    expect(reader.transactionHeader(constants.transactionNamespaceMetadataTransaction).valueSizeDelta).to.equal(40)
   })
 
   it('should parse a complete transaction', () => {

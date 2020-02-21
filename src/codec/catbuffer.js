@@ -21,33 +21,9 @@
  */
 
 import assert from 'assert'
+import constants from './constants'
 import Reader from './reader'
 import shared from '../util/shared'
-
-// CONSTANTS
-const TRANSACTION_TRANSFER = 0x4154
-const TRANSACTION_REGISTER_NAMESPACE = 0x414E
-const TRANSACTION_ADDRESS_ALIAS = 0x424E
-const TRANSACTION_MOSAIC_ALIAS = 0x434E
-const TRANSACTION_MOSAIC_DEFINITION = 0x414D
-const TRANSACTION_MOSAIC_SUPPLY_CHANGE = 0x424D
-const TRANSACTION_MODIFY_MULTISIG_ACCOUNT = 0x4155
-const TRANSACTION_AGGREGATE_COMPLETE = 0x4141
-const TRANSACTION_AGGREGATE_BONDED = 0x4241
-const TRANSACTION_LOCK = 0x4148
-const TRANSACTION_SECRET_LOCK = 0x4152
-const TRANSACTION_SECRET_PROOF = 0x4252
-const TRANSACTION_ACCOUNT_RESTRICTION_ADDRESS = 0x4150
-const TRANSACTION_ACCOUNT_RESTRICTION_MOSAIC = 0x4250
-const TRANSACTION_ACCOUNT_RESTRICTION_OPERATION = 0x4350
-const TRANSACTION_LINK_ACCOUNT = 0x414C
-const TRANSACTION_MOSAIC_ADDRESS_RESTRICTION = 0x4251
-const TRANSACTION_MOSAIC_GLOBAL_RESTRICTION = 0x4151
-const TRANSACTION_ACCOUNT_METADATA_TRANSACTION = 0x4144
-const TRANSACTION_MOSAIC_METADATA_TRANSACTION = 0x4244
-const TRANSACTION_NAMESPACE_METADATA_TRANSACTION = 0x4344
-const NAMESPACE_ROOT = 0
-const NAMESPACE_CHILD = 1
 
 // HELPERS
 
@@ -205,9 +181,9 @@ export default class CatbufferReader extends Reader {
     transaction.name = this.asciiN(nameSize)
 
     // Parse the union data
-    if (transaction.namespaceType === NAMESPACE_ROOT) {
+    if (transaction.namespaceType === constants.namespaceRoot) {
       transaction.duration = shared.uint64ToString(union)
-    } else if (transaction.namespaceType === NAMESPACE_CHILD) {
+    } else if (transaction.namespaceType === constants.namespaceChild) {
       transaction.parentId = shared.idToHex(union)
     } else {
       throw new Error(`invalid namespace type, got ${transaction.namespaceType}`)
@@ -456,47 +432,47 @@ export default class CatbufferReader extends Reader {
   }
 
   transactionHeader(type, embedded) {
-    if (type === TRANSACTION_TRANSFER) {
+    if (type === constants.transactionTransfer) {
       return this.transferTransaction(embedded)
-    } else if (type === TRANSACTION_REGISTER_NAMESPACE) {
+    } else if (type === constants.transactionRegisterNamespace) {
       return this.registerNamespaceTransaction(embedded)
-    } else if (type === TRANSACTION_ADDRESS_ALIAS) {
+    } else if (type === constants.transactionAddressAlias) {
       return this.addressAliasTransaction(embedded)
-    } else if (type === TRANSACTION_MOSAIC_ALIAS) {
+    } else if (type === constants.transactionMosaicAlias) {
       return this.mosaicAliasTransaction(embedded)
-    } else if (type === TRANSACTION_MOSAIC_DEFINITION) {
+    } else if (type === constants.transactionMosaicDefinition) {
       return this.mosaicDefinitionTransaction(embedded)
-    } else if (type === TRANSACTION_MOSAIC_SUPPLY_CHANGE) {
+    } else if (type === constants.transactionMosaicSupplyChange) {
       return this.mosaicSupplyChangeTransaction(embedded)
-    } else if (type === TRANSACTION_MODIFY_MULTISIG_ACCOUNT) {
+    } else if (type === constants.transactionModifyMultisigAccount) {
       return this.modifyMultisigTransaction(embedded)
-    } else if (type === TRANSACTION_AGGREGATE_COMPLETE) {
+    } else if (type === constants.transactionAggregateComplete) {
       return this.aggregateCompleteTransaction(embedded)
-    } else if (type === TRANSACTION_AGGREGATE_BONDED) {
+    } else if (type === constants.transactionAggregateBonded) {
       return this.aggregateBondedTransaction(embedded)
-    } else if (type === TRANSACTION_LOCK) {
+    } else if (type === constants.transactionLock) {
       return this.lockTransaction(embedded)
-    } else if (type === TRANSACTION_SECRET_LOCK) {
+    } else if (type === constants.transactionSecretLock) {
       return this.secretLockTransaction(embedded)
-    } else if (type === TRANSACTION_SECRET_PROOF) {
+    } else if (type === constants.transactionSecretProof) {
       return this.secretProofTransaction(embedded)
-    } else if (type === TRANSACTION_ACCOUNT_RESTRICTION_ADDRESS) {
+    } else if (type === constants.transactionAccountRestrictionAddress) {
       return this.accountRestrictionAddressTransaction(embedded)
-    } else if (type === TRANSACTION_ACCOUNT_RESTRICTION_MOSAIC) {
+    } else if (type === constants.transactionAccountRestrictionMosaic) {
       return this.accountRestrictionMosaicTransaction(embedded)
-    } else if (type === TRANSACTION_ACCOUNT_RESTRICTION_OPERATION) {
+    } else if (type === constants.transactionAccountRestrictionOperation) {
       return this.accountRestrictionOperationTransaction(embedded)
-    } else if (type === TRANSACTION_LINK_ACCOUNT) {
+    } else if (type === constants.transactionLinkAccount) {
       return this.linkAccountTransaction(embedded)
-    } else if (type === TRANSACTION_MOSAIC_ADDRESS_RESTRICTION) {
+    } else if (type === constants.transactionMosaicAddressRestriction) {
       return this.mosaicAddressRestrictionTransaction(embedded)
-    } else if (type === TRANSACTION_MOSAIC_GLOBAL_RESTRICTION) {
+    } else if (type === constants.transactionMosaicGlobalRestriction) {
       return this.mosaicGlobalRestrictionTransaction(embedded)
-    } else if (type === TRANSACTION_ACCOUNT_METADATA_TRANSACTION) {
+    } else if (type === constants.transactionAccountMetadataTransaction) {
       return this.accountMetadataTransaction(embedded)
-    } else if (type === TRANSACTION_MOSAIC_METADATA_TRANSACTION) {
+    } else if (type === constants.transactionMosaicMetadataTransaction) {
       return this.mosaicMetadataTransaction(embedded)
-    } else if (type === TRANSACTION_NAMESPACE_METADATA_TRANSACTION) {
+    } else if (type === constants.transactionNamespaceMetadataTransaction) {
       return this.namespaceMetadataTransaction(embedded)
     } else {
       throw new Error(`invalid transaction type, got ${type}`)

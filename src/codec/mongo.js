@@ -20,11 +20,13 @@
  *  Codec to transform MongoDB models to JSON.
  */
 
+import constants from './constants'
 import shared from '../util/shared'
 
 const longToUint64 = long => [long.getLowBitsUnsigned(), long.getHighBits() >>> 0]
 const longToString = long => shared.uint64ToString(longToUint64(long))
 const idToHex = id => shared.idToHex(longToUint64(id))
+const binaryToAscii = data => shared.binaryToAscii(data)
 const binaryToHex = data => shared.binaryToHex(data)
 const binaryToBase32 = data => shared.binaryToBase32(data.buffer)
 
@@ -92,6 +94,150 @@ const accountRestriction = restriction => {
   }
 }
 
+const transactionMeta = meta => ({
+  height: longToString(meta.height),
+  hash: binaryToHex(meta.hash),
+  merkleComponentHash: binaryToHex(meta.merkleComponentHash),
+  index: meta.index,
+  addresses: meta.addresses.map(binaryToBase32)
+})
+
+const basicEntity = entity => ({
+  signerPublicKey: binaryToHex(entity.signerPublicKey),
+  version: entity.version,
+  network: entity.network,
+  type: entity.type
+})
+
+const verifiableEntity = entity => ({
+  ...basicEntity(entity),
+  signature: binaryToHex(entity.signature)
+})
+
+const embeddedTransactionShared = transaction => ({
+  ...basicEntity(transaction)
+})
+
+const transactionShared = transaction => ({
+  ...verifiableEntity(transaction),
+  maxFee: longToString(transaction.maxFee),
+  deadline: longToString(transaction.deadline)
+})
+
+const mosaic = mosaic => ({
+  mosaicId: idToHex(mosaic.id),
+  amount: longToString(mosaic.amount)
+})
+
+const transferTransaction = transaction => {
+  let result = {
+    recipientAddress: binaryToBase32(transaction.recipientAddress),
+    mosaics: transaction.mosaics.map(mosaic)
+  }
+  if (transaction.message !== undefined) {
+    result.message = {
+      type: transaction.message.type,
+      payload: binaryToHex(transaction.message.payload)
+    }
+  }
+
+  return result
+}
+
+const registerNamespaceTransaction = transaction => {
+  let result = {
+    namespaceType: transaction.registrationType,
+    namespaceId: idToHex(transaction.id),
+    name: binaryToAscii(transaction.name)
+  }
+
+  if (result.namespaceType === constants.namespaceRoot) {
+    result.duration = longToString(transaction.duration)
+  } else if (transaction.namespaceType === constants.namespaceChild) {
+    result.parentId = idToHex(transaction.parentId)
+  } else {
+    throw new Error(`invalid namespace type, got ${result.namespaceType}`)
+  }
+
+  return result
+}
+
+const addressAliasTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const mosaicAliasTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const mosaicDefinitionTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const mosaicSupplyChangeTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const modifyMultisigTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const aggregateCompleteTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const aggregateBondedTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const lockTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const secretLockTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const secretProofTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const accountRestrictionAddressTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const accountRestrictionMosaicTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const accountRestrictionOperationTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const linkAccountTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const mosaicAddressRestrictionTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const mosaicGlobalRestrictionTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const accountMetadataTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const mosaicMetadataTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
+const namespaceMetadataTransaction = transaction => ({
+  // TODO(ahuszagh) Implement these...
+})
+
 /**
  *  Codec for MongoDB collections.
  */
@@ -124,10 +270,7 @@ export default {
         beneficiaryCount: bucket.beneficiaryCount,
         rawScore: longToString(bucket.rawScore)
       })),
-      mosaics: item.account.mosaics.map(mosaic => ({
-        mosaicId: idToHex(mosaic.id),
-        amount: longToString(mosaic.amount)
-      }))
+      mosaics: item.account.mosaics.map(mosaic)
     }
   }),
 
@@ -373,9 +516,58 @@ export default {
   }),
 
   transactions: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
+    let meta = transactionMeta(item.meta)
+    let transaction = transactionShared(item.transaction)
+    if (transaction.type === constants.transactionTransfer) {
+      Object.assign(transaction, transferTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionRegisterNamespace) {
+      Object.assign(transaction, registerNamespaceTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionAddressAlias) {
+      Object.assign(transaction, addressAliasTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionMosaicAlias) {
+      Object.assign(transaction, mosaicAliasTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionMosaicDefinition) {
+      Object.assign(transaction, mosaicDefinitionTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionMosaicSupplyChange) {
+      Object.assign(transaction, mosaicSupplyChangeTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionModifyMultisigAccount) {
+      Object.assign(transaction, modifyMultisigTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionAggregateComplete) {
+      Object.assign(transaction, aggregateCompleteTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionAggregateBonded) {
+      Object.assign(transaction, aggregateBondedTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionLock) {
+      Object.assign(transaction, lockTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionSecretLock) {
+      Object.assign(transaction, secretLockTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionSecretProof) {
+      Object.assign(transaction, secretProofTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionAccountRestrictionAddress) {
+      Object.assign(transaction, accountRestrictionAddressTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionAccountRestrictionMosaic) {
+      Object.assign(transaction, accountRestrictionMosaicTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionAccountRestrictionOperation) {
+      Object.assign(transaction, accountRestrictionOperationTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionLinkAccount) {
+      Object.assign(transaction, linkAccountTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionMosaicAddressRestriction) {
+      Object.assign(transaction, mosaicAddressRestrictionTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionMosaicGlobalRestriction) {
+      Object.assign(transaction, mosaicGlobalRestrictionTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionAccountMetadataTransaction) {
+      Object.assign(transaction, accountMetadataTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionMosaicMetadataTransaction) {
+      Object.assign(transaction, mosaicMetadataTransaction(item.transaction))
+    } else if (transaction.type === constants.transactionNamespaceMetadataTransaction) {
+      Object.assign(transaction, namespaceMetadataTransaction(item.transaction))
+    } else {
+      throw new Error(`invalid transaction type, got ${transaction.type}`)
+    }
+
+    return {
+      meta,
+      transaction
+    }
   },
 
   unconfirmedTransactions: item => {
