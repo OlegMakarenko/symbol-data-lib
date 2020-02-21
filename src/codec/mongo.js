@@ -30,6 +30,7 @@ const binaryToAscii = data => shared.binaryToAscii(data)
 const binaryToHex = data => shared.binaryToHex(data)
 const binaryToBase32 = data => shared.binaryToBase32(data.buffer)
 const binaryToId = data => shared.idToHex(shared.binaryToUint64(data))
+const objectIdToHex = id => id.toHexString().toUpperCase()
 
 const balanceChangeReceipt = entry => ({
   version: entry.version,
@@ -105,7 +106,7 @@ const transactionMetaShared = meta => ({
 const transactionMetaAggregate = meta => ({
   ...transactionMetaShared(meta),
   aggregateHash: binaryToHex(meta.aggregateHash),
-  aggregateId: meta.aggregateId.toHexString().toUpperCase()
+  aggregateId: objectIdToHex(meta.aggregateId)
 })
 
 const transactionMetaStandalone = meta => ({
@@ -154,7 +155,7 @@ const transactionBase = (transaction, embedded) => {
 }
 
 const mosaic = mosaic => ({
-  mosaicId: idToHex(mosaic.id),
+  id: idToHex(mosaic.id),
   amount: longToString(mosaic.amount)
 })
 
@@ -386,6 +387,9 @@ const codec = {
   }),
 
   hashLocks: item => ({
+    meta: {
+      id: objectIdToHex(item._id)
+    },
     lock: {
       sender: {
         publicKey: binaryToHex(item.lock.senderPublicKey),
@@ -501,7 +505,10 @@ const codec = {
     const aliasAddress = 2
 
     let result = {
-      meta: item.meta,
+      meta: {
+        ...item.meta,
+        id: objectIdToHex(item._id)
+      },
       namespace: {
         registrationType: item.namespace.registrationType,
         depth: item.namespace.depth,
@@ -543,6 +550,9 @@ const codec = {
   partialTransactions: item => codec.transactions(item),
 
   secretLocks: item => ({
+    meta: {
+      id: objectIdToHex(item._id)
+    },
     lock: {
       sender: {
         publicKey: binaryToHex(item.lock.senderPublicKey),
@@ -578,7 +588,7 @@ const codec = {
   transactions: item => {
     let embedded = isEmbedded(item)
     let meta = transactionMeta(item.meta, embedded)
-    meta.id = item._id.toHexString().toUpperCase()
+    meta.id = objectIdToHex(item._id)
     let transaction = transactionBase(item.transaction, embedded)
     if (transaction.type === constants.transactionTransfer) {
       Object.assign(transaction, transferTransaction(item.transaction))

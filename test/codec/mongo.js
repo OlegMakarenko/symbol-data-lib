@@ -33,6 +33,7 @@ describe('mongo', () => {
   describe('accountRestrictions', () => {
     it('should parse a valid account restriction', () => {
       let item = {
+        _id: object('5E4C31E2A969920083C1A49C'),
         accountRestrictions: {
             address: binary('98AE5B94F7911CB302FE78E9CFDE21EF5A47174628055AC3AA'),
             restrictions: [
@@ -90,6 +91,7 @@ describe('mongo', () => {
   describe('accounts', () => {
     it('should parse a valid account', () => {
       let item = {
+        _id: object('5E4C2D9EA969920083BA222A'),
         account: {
           address: binary('98AE5B94F7911CB302FE78E9CFDE21EF5A47174628055AC3AA'),
           addressHeight: long(1, 0),
@@ -144,7 +146,7 @@ describe('mongo', () => {
           mosaics: [
             {
               amount: '391598771800000',
-              mosaicId: '51A99028058245A8'
+              id: '51A99028058245A8'
             }
           ]
         }
@@ -155,6 +157,7 @@ describe('mongo', () => {
   describe('addressResolutionStatements', () => {
     it('should parse a valid address resolution statement', () => {
       let item = {
+        _id: object('5E4C2F5A26EC09222231A02B'),
         statement : {
           height : long(31929, 0),
           unresolved : binary('992BE6B9E9B101B8BB00000000000000000000000000000000'),
@@ -190,6 +193,7 @@ describe('mongo', () => {
   describe('blocks', () => {
     it('should parse a valid block', () => {
       let item = {
+        id: object('5E4C2D9E26EC0922222ECEE3'),
         meta: {
           hash: binary('6E5DC4D3B6027AA2CF77CCD0222DE9E85536385829C72D77189F214C1AC81098'),
           generationHash: binary('45870419226A7E51D61D94AD728231EDC6C9B3086EF9255A8421A4F26870456A'),
@@ -463,6 +467,7 @@ describe('mongo', () => {
   describe('chainStatistic', () => {
     it('should parse a valid chain statistic', () => {
       let item = {
+        _id: object('5E4C2D9EA969920083BA221E'),
         current: {
           height: long(57549, 0),
           scoreLow: long(3899910630, 134312366),
@@ -482,27 +487,31 @@ describe('mongo', () => {
   describe('hashLocks', () => {
     it('should parse a valid hash lock', () => {
       let item = {
+        _id: object('5E4FEDFB04C8F484369DB548'),
         lock: {
-          senderPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
-          senderAddress: binary('98875D60F721C3B15319826467D3F85F8FC9D7FA781665E4EA'),
+          senderPublicKey: binary('B572879C8E8627C181803285EF7F447EBB8441988CD20AF398B2F7D56BECD7E8'),
+          senderAddress: binary('982EA12CE00864F5DA5C13EDB6073CB3A4B171739C6C286E1D'),
           mosaicId: long(92423592, 1370066984),
-          amount: long(100, 0),
-          endHeight: long(3000, 0),
+          amount: long(10000000, 0),
+          endHeight: long(91481, 0),
           status: 0,
-          hash: binary('0000000000000000000000000000000000000000000000000000000000000000')
+          hash: binary('530398AF0A6211661B00F91C4C5A1E0467C406B59C41A0993CDA38A1A58096DC')
         }
       }
       expect(mongo.hashLocks(item)).to.eql({
+        meta: {
+          id: '5E4FEDFB04C8F484369DB548'
+        },
         lock: {
           sender: {
-            publicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
-            address: 'TCDV2YHXEHB3CUYZQJSGPU7YL6H4TV72PALGLZHK'
+            publicKey: 'B572879C8E8627C181803285EF7F447EBB8441988CD20AF398B2F7D56BECD7E8',
+            address: 'TAXKCLHABBSPLWS4CPW3MBZ4WOSLC4LTTRWCQ3Q5'
           },
           mosaicId: '51A99028058245A8',
-          amount: '100',
-          endHeight: '3000',
+          amount: '10000000',
+          endHeight: '91481',
           status: 0,
-          hash: '0000000000000000000000000000000000000000000000000000000000000000'
+          hash: '530398AF0A6211661B00F91C4C5A1E0467C406B59C41A0993CDA38A1A58096DC'
         }
       })
     })
@@ -511,6 +520,7 @@ describe('mongo', () => {
   describe('metadata', () => {
     it('should parse valid metadata', () => {
       let item = {
+        _id: object('5E4C31F8A969920083C1B56D'),
         metadataEntry: {
           compositeHash: binary('C137A1CE8CD711F35FEB3861764EA0C7659CCE6C0CF972CBF74E43ED64436D62'),
           senderPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
@@ -540,6 +550,7 @@ describe('mongo', () => {
   describe('mosaicResolutionStatements', () => {
     it('should parse a valid mosaic resolution statement', () => {
       let item = {
+        _id: object('5E4C2D9E26EC0922222ECF12'),
         statement: {
           height: long(1, 0),
           unresolved: long(1106554862, 3880491450),
@@ -576,6 +587,7 @@ describe('mongo', () => {
     it('should parse a valid mosaic restriction', () => {
       // Global restriction
       let item = {
+        _id: object('5E4C3234A969920083C20560'),
         mosaicRestrictionEntry: {
           compositeHash: binary('D801EF269B147C8E1677F9DBFF549D82C9597B29C7A1CB2E623F76B29F08955D'),
           entryType: 1,
@@ -628,6 +640,7 @@ describe('mongo', () => {
 
       // Address restriction
       item = {
+        _id: object('5E4F46CEA720F9FC5059814B'),
         mosaicRestrictionEntry: {
           compositeHash: binary('4BB9C6DCF56209A1E52E2F646B3994FD7F266784E407C7891DC34BE5BEEE4437'),
           entryType: 0,
@@ -661,6 +674,7 @@ describe('mongo', () => {
   describe('mosaics', () => {
     it('should parse a valid mosaic', () => {
       let item = {
+        _id: object('5E4C2D9EA969920083BA225F'),
         mosaic: {
           id: long(92423592, 1370066984),
           supply: long(3228438221, 1825527),
@@ -694,6 +708,7 @@ describe('mongo', () => {
   describe('multisigs', () => {
     it('should parse a valid multisig', () => {
       let item = {
+        _id: object('5E4C2E09A969920083BAABC7'),
         multisig: {
           accountPublicKey: binary('545651E3CEEFCC47A2763B059A95C99C3BE236258811382933340FC324ECEAA9'),
           accountAddress: binary('98C46B1CDB2DA8865101C2E485066FD4A13A0E671D4E8DF061'),
@@ -725,6 +740,7 @@ describe('mongo', () => {
   describe('namespaces', () => {
     it('should parse a valid namespace', () => {
       let item = {
+        _id: object('5E4C2D9E26EC0922222ECF0F'),
         meta: {
           active: true,
           index: 0
@@ -746,7 +762,8 @@ describe('mongo', () => {
       expect(mongo.namespaces(item)).to.eql({
         meta: {
           active: true,
-          index: 0
+          index: 0,
+          id: '5E4C2D9E26EC0922222ECF0F'
         },
         namespace: {
           registrationType: 0,
@@ -775,6 +792,7 @@ describe('mongo', () => {
   describe('secretLocks', () => {
     it('should parse a valid secret lock', () => {
       let item = {
+        _id: object('AAAAAAAAAAAAAAAAAAAAAAAA'),
         lock: {
           senderPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
           senderAddress: binary('98875D60F721C3B15319826467D3F85F8FC9D7FA781665E4EA'),
@@ -789,6 +807,9 @@ describe('mongo', () => {
         }
       }
       expect(mongo.secretLocks(item)).to.eql({
+        meta: {
+          id: 'AAAAAAAAAAAAAAAAAAAAAAAA'
+        },
         lock: {
           sender: {
             publicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
@@ -810,6 +831,7 @@ describe('mongo', () => {
   describe('transactionStatements', () => {
     it('should parse a valid transaction statement', () => {
       let item = {
+        _id: object('5E4C2D9E26EC0922222ECF11'),
         statement: {
           height: long(1, 0),
           source: {
@@ -851,6 +873,7 @@ describe('mongo', () => {
   describe('transactionStatuses', () => {
     it('should parse a valid transaction status', () => {
       let item = {
+        _id: object('AAAAAAAAAAAAAAAAAAAAAAAA'),
         status: {
           hash: binary('0000000000000000000000000000000000000000000000000000000000000000'),
           code: 0,
@@ -921,7 +944,7 @@ describe('mongo', () => {
           recipientAddress: 'TCXFXFHXSEOLGAX6PDU47XRB55NEOF2GFACVVQ5K',
           mosaics: [
             {
-              mosaicId: 'E74B99BA41F4AFEE',
+              id: 'E74B99BA41F4AFEE',
               amount: '391598771800000'
             }
           ]
