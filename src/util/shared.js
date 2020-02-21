@@ -139,7 +139,7 @@ const uint64ToString = uint64 => {
   let low = uint64[0]
   let high = uint64[1]
   let result = ''
-  while (true) {
+  for (;;) {
     let mod = (high % 10) * 0x100000000 + low
     high = Math.floor(high / 10)
     low = Math.floor(mod / 10)
