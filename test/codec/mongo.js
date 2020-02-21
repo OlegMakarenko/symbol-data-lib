@@ -478,7 +478,35 @@ describe('mongo', () => {
 
   // TODO(ahuszagh) Implement...
   describe('hashLocks', () => {})
-  describe('metadata', () => {})
+
+  describe('metadata', () => {
+    it('should parse valid metadata', () => {
+      let item = {
+        metadataEntry: {
+          compositeHash: binary('C137A1CE8CD711F35FEB3861764EA0C7659CCE6C0CF972CBF74E43ED64436D62'),
+          senderPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          targetPublicKey: binary('3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC'),
+          scopedMetadataKey: long(3621910282, 3608761926),
+          targetId: long(0, 0),
+          metadataType: 0,
+          valueSize: 23,
+          value: binary('7B7465737465724163636F756E743A416E74686F6E797D')
+        }
+      }
+      expect(mongo.metadata(item)).to.eql({
+        metadataEntry: {
+          compositeHash: 'C137A1CE8CD711F35FEB3861764EA0C7659CCE6C0CF972CBF74E43ED64436D62',
+          senderPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          targetPublicKey: '3C24259DD34FFB8777BE57B5092CFCF761E2AAA780B58C85A3242F8AD3FBFDAC',
+          scopedMetadataKey: '15499514454841882378',
+          targetId: '0000000000000000',
+          metadataType: 0,
+          valueSize: 23,
+          value: '7B7465737465724163636F756E743A416E74686F6E797D'
+        }
+      })
+    })
+  })
 
   describe('mosaicResolutionStatements', () => {
     it('should parse a valid mosaic resolution statement', () => {
@@ -553,7 +581,7 @@ describe('mongo', () => {
               key: 'B225E24FA75D983A',
               restriction: {
                 referenceMosaicId: '0000000000000000',
-                restrictionValue: '0000000000000001',
+                restrictionValue: '1',
                 restrictionType: 1
               }
             },
@@ -561,7 +589,7 @@ describe('mongo', () => {
               key: 'FD5CBD2253EF2C45',
               restriction: {
                 referenceMosaicId: '0000000000000000',
-                restrictionValue: '0000000000000001',
+                restrictionValue: '1',
                 restrictionType: 1
               }
             }
@@ -715,7 +743,49 @@ describe('mongo', () => {
   // TODO(ahuszagh) Implement...
   describe('partialTransactions', () => {})
   describe('secretLocks', () => {})
-  describe('transactionStatements', () => {})
+
+  describe('transactionStatements', () => {
+    it('should parse a valid transaction statement', () => {
+      let item = {
+        statement: {
+          height: long(1, 0),
+          source: {
+            primaryId: 0,
+            secondaryId: 0
+          },
+          receipts: [
+            {
+              version: 1,
+              type: 8515,
+              targetPublicKey: binary('9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF'),
+              mosaicId: long(92423592, 1370066984),
+              amount: long(0, 0)
+            }
+          ]
+        }
+      }
+      expect(mongo.transactionStatements(item)).to.eql({
+        statement: {
+          height: '1',
+          source: {
+            primaryId: 0,
+            secondaryId: 0
+          },
+          receipts: [
+            {
+              version: 1,
+              type: 8515,
+              targetPublicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+              mosaicId: '51A99028058245A8',
+              amount: '0'
+            }
+          ]
+        }
+      })
+    })
+  })
+
+  // TODO(ahuszagh) Implement...
   describe('transactionStatuses', () => {})
   describe('transactions', () => {})
   describe('unconfirmedTransactions', () => {})

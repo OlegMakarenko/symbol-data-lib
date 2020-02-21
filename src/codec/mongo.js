@@ -193,9 +193,24 @@ export default {
   }),
 
   metadata: item => {
-    // TODO(ahuszagh) Implement...
-    console.log(item)
-    throw new Error('not yet implemented')
+    let result = {
+      metadataEntry: {
+        compositeHash: binaryToHex(item.metadataEntry.compositeHash),
+        senderPublicKey: binaryToHex(item.metadataEntry.senderPublicKey),
+        targetPublicKey: binaryToHex(item.metadataEntry.targetPublicKey),
+        scopedMetadataKey: longToString(item.metadataEntry.scopedMetadataKey),
+        targetId: idToHex(item.metadataEntry.targetId),
+        metadataType: item.metadataEntry.metadataType,
+        valueSize: item.metadataEntry.valueSize
+      }
+    }
+
+    // Value is optional if empty.
+    if (item.metadataEntry.value !== undefined) {
+      result.metadataEntry.value = binaryToHex(item.metadataEntry.value)
+    }
+
+    return result
   },
 
   mosaicResolutionStatements: item => ({
@@ -233,7 +248,7 @@ export default {
         key: idToHex(subitem.key),
         restriction: {
           referenceMosaicId: idToHex(subitem.restriction.referenceMosaicId),
-          restrictionValue: idToHex(subitem.restriction.restrictionValue),
+          restrictionValue: longToString(subitem.restriction.restrictionValue),
           restrictionType: subitem.restriction.restrictionType
         }
       }))

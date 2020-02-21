@@ -394,9 +394,9 @@ export default class CatbufferReader extends Reader {
   mosaicAddressRestrictionTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
-    transaction.restrictionKey = this.id()
-    transaction.previousRestrictionValue = this.id()
-    transaction.newRestrictionValue = this.id()
+    transaction.restrictionKey = this.uint64()
+    transaction.previousRestrictionValue = this.uint64()
+    transaction.newRestrictionValue = this.uint64()
     transaction.targetAddress = this.address()
     this.validateEmpty()
 
@@ -407,9 +407,9 @@ export default class CatbufferReader extends Reader {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.referenceMosaicId = this.id()
-    transaction.restrictionKey = this.id()
-    transaction.previousRestrictionValue = this.id()
-    transaction.newRestrictionValue = this.id()
+    transaction.restrictionKey = this.uint64()
+    transaction.previousRestrictionValue = this.uint64()
+    transaction.newRestrictionValue = this.uint64()
     transaction.previousRestrictionType = this.uint8()
     transaction.newRestrictionType = this.uint8()
     this.validateEmpty()
@@ -420,7 +420,7 @@ export default class CatbufferReader extends Reader {
   accountMetadataTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
-    transaction.scopedMetadataKey = this.id()
+    transaction.scopedMetadataKey = this.uint64()
     transaction.valueSizeDelta = this.int16()
     let valueSize = this.uint16()
     transaction.value = this.hexN(valueSize)
@@ -432,7 +432,7 @@ export default class CatbufferReader extends Reader {
   mosaicMetadataTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
-    transaction.scopedMetadataKey = this.id()
+    transaction.scopedMetadataKey = this.uint64()
     transaction.targetMosaicId = this.id()
     transaction.valueSizeDelta = this.int16()
     let valueSize = this.uint16()
@@ -445,7 +445,7 @@ export default class CatbufferReader extends Reader {
   namespaceMetadataTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
-    transaction.scopedMetadataKey = this.id()
+    transaction.scopedMetadataKey = this.uint64()
     transaction.targetNamespaceId = this.id()
     transaction.valueSizeDelta = this.int16()
     let valueSize = this.uint16()

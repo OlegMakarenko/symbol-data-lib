@@ -824,9 +824,9 @@ describe('catbuffer', () => {
     let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
     expect(reader.mosaicAddressRestrictionTransaction(true)).to.eql({
       mosaicId: '2C1F2C93C19AFB5D',
-      restrictionKey: 'EFCDAB8967452301',
-      previousRestrictionValue: 'DF9B5713CE8A4602',
-      newRestrictionValue: '2064A8EC3175B9FD',
+      restrictionKey: '17279655951921914625',
+      previousRestrictionValue: '16112567834429244930',
+      newRestrictionValue: '2334176239280306685',
       targetAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
     })
 
@@ -837,15 +837,15 @@ describe('catbuffer', () => {
       maxFee: '0',
       deadline: '1',
       mosaicId: '2C1F2C93C19AFB5D',
-      restrictionKey: 'EFCDAB8967452301',
-      previousRestrictionValue: 'DF9B5713CE8A4602',
-      newRestrictionValue: '2064A8EC3175B9FD',
+      restrictionKey: '17279655951921914625',
+      previousRestrictionValue: '16112567834429244930',
+      newRestrictionValue: '2334176239280306685',
       targetAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
     })
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4251).restrictionKey).to.equal('EFCDAB8967452301')
+    expect(reader.transactionHeader(0x4251).restrictionKey).to.equal('17279655951921914625')
   })
 
   it('should parse a mosaic global restriction transaction', () => {
@@ -871,9 +871,9 @@ describe('catbuffer', () => {
     expect(reader.mosaicGlobalRestrictionTransaction(true)).to.eql({
       mosaicId: '2C1F2C93C19AFB5D',
       referenceMosaicId: '0000000000000000',
-      restrictionKey: 'EFCDAB8967452301',
-      previousRestrictionValue: 'DF9B5713CE8A4602',
-      newRestrictionValue: '2064A8EC3175B9FD',
+      restrictionKey: '17279655951921914625',
+      previousRestrictionValue: '16112567834429244930',
+      newRestrictionValue: '2334176239280306685',
       previousRestrictionType: 1,
       newRestrictionType: 3
     })
@@ -886,16 +886,16 @@ describe('catbuffer', () => {
       deadline: '1',
       mosaicId: '2C1F2C93C19AFB5D',
       referenceMosaicId: '0000000000000000',
-      restrictionKey: 'EFCDAB8967452301',
-      previousRestrictionValue: 'DF9B5713CE8A4602',
-      newRestrictionValue: '2064A8EC3175B9FD',
+      restrictionKey: '17279655951921914625',
+      previousRestrictionValue: '16112567834429244930',
+      newRestrictionValue: '2334176239280306685',
       previousRestrictionType: 1,
       newRestrictionType: 3
     })
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(0x4151).restrictionKey).to.equal('EFCDAB8967452301')
+    expect(reader.transactionHeader(0x4151).restrictionKey).to.equal('17279655951921914625')
   })
 
   it('should parse an account metadata transaction', () => {
@@ -916,7 +916,7 @@ describe('catbuffer', () => {
     let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
     expect(reader.accountMetadataTransaction(true)).to.eql({
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
-      scopedMetadataKey: 'EFCDAB8967452301',
+      scopedMetadataKey: '17279655951921914625',
       valueSizeDelta: 40,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
     })
@@ -928,7 +928,7 @@ describe('catbuffer', () => {
       maxFee: '0',
       deadline: '1',
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
-      scopedMetadataKey: 'EFCDAB8967452301',
+      scopedMetadataKey: '17279655951921914625',
       valueSizeDelta: 40,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
     })
@@ -958,7 +958,7 @@ describe('catbuffer', () => {
     let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
     expect(reader.mosaicMetadataTransaction(true)).to.eql({
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
-      scopedMetadataKey: 'EFCDAB8967452301',
+      scopedMetadataKey: '17279655951921914625',
       targetMosaicId: '2C1F2C93C19AFB5D',
       valueSizeDelta: 40,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
@@ -971,7 +971,7 @@ describe('catbuffer', () => {
       maxFee: '0',
       deadline: '1',
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
-      scopedMetadataKey: 'EFCDAB8967452301',
+      scopedMetadataKey: '17279655951921914625',
       targetMosaicId: '2C1F2C93C19AFB5D',
       valueSizeDelta: 40,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
@@ -1002,7 +1002,7 @@ describe('catbuffer', () => {
     let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
     expect(reader.namespaceMetadataTransaction(true)).to.eql({
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
-      scopedMetadataKey: 'EFCDAB8967452301',
+      scopedMetadataKey: '17279655951921914625',
       targetNamespaceId: '1A0E4DF21A0E4DF2',
       valueSizeDelta: 40,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
@@ -1015,7 +1015,7 @@ describe('catbuffer', () => {
       maxFee: '0',
       deadline: '1',
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
-      scopedMetadataKey: 'EFCDAB8967452301',
+      scopedMetadataKey: '17279655951921914625',
       targetNamespaceId: '1A0E4DF21A0E4DF2',
       valueSizeDelta: 40,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
