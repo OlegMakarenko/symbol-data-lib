@@ -42,6 +42,59 @@ const connect = async options => {
   return client
 }
 
+// API
+
+/**
+ *  List of all known MongoDB collections.
+ */
+const COLLECTIONS = [
+  'accounts',
+  'addressResolutionStatements',
+  'blocks',
+  'chainStatistic',
+  'hashLocks',
+  'mosaicResolutionStatements',
+  'mosaics',
+  'multisigs',
+  'namespaces',
+  'secretLocks',
+  'transactionStatements',
+  'transactionStatuses'
+]
+
+/**
+ *  Get if the collection name is valid.
+ *
+ *  @param collection {String}     - Collection name.
+ */
+const isValidCollection = collection => {
+  return collection === 'all' || COLLECTIONS.indexOf(collection) !== -1
+}
+
+/**
+ *  Dump single MongoDB collection to JSON.
+ */
+const dumpOne = async options => {
+  let codec = mongoCodec[options.collection]
+  return options.db.collection(options.collection)
+    .find()
+    .limit(options.limit)
+    .sort({ _id: -1 })
+    .map(codec)
+    .toArray()
+}
+
+/**
+ *  Dump all MongoDB collections to JSON.
+ */
+const dumpAll = async options => {
+  let result = {}
+  for (let collection of COLLECTIONS) {
+    result[collection] = await dumpOne({...options, collection})
+  }
+  return result
+}
+
 /**
  *  Dump MongoDB data to JSON.
  *
@@ -54,19 +107,19 @@ const connect = async options => {
 const dump = async options => {
   let client = await connect(options)
   let db = client.db()
-  let codec = mongoCodec[options.collection]
-  let data = await db.collection(options.collection)
-    .find()
-    .limit(options.limit)
-    .sort({ _id: -1 })
-    .map(codec)
-    .toArray()
-
+  let data
+  if (options.collection === 'all') {
+    data = await dumpAll({...options, db})
+  } else {
+    data = await dumpOne({...options, db})
+  }
   client.close()
 
   return data
 }
 
 export default {
+  COLLECTIONS,
+  isValidCollection,
   dump
 }

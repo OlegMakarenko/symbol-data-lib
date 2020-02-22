@@ -19,20 +19,7 @@
 
 import '@babel/polyfill'
 import yargs from 'yargs'
-import catapultScripts from '../src'
-
-const ROCKS_COLLECTIONS = [
-  'AccountRestrictionCache',
-  'AccountStateCache',
-  'HashCache',
-  'HashLockInfoCache',
-  'MetadataCache',
-  'MosaicCache',
-  'MosaicRestrictionCache',
-  'MultisigCache',
-  'NamespaceCache',
-  'SecretLockInfoCache'
-]
+import symbolData from '../src'
 
 // ARGUMENTS
 // ---------
@@ -57,8 +44,8 @@ const options = yargs
     alias: 'c',
     describe: (
       'Name of collection to dump.\n'
-      + 'Valid collections names:\n- '
-      + ROCKS_COLLECTIONS.join('\n- ')
+      + 'Valid collections names:\n- all\n- '
+      + symbolData.rocks.COLLECTIONS.join('\n- ')
     )
   })
   .option('limit', {
@@ -91,15 +78,17 @@ if (options.verbose) {
 }
 
 // Validate the collection name is supported.
-if (ROCKS_COLLECTIONS.indexOf(options.collection) === -1) {
+if (!symbolData.rocks.isValidCollection(options.collection)) {
   throw new Error(`collection name ${options.collection} is not yet supported`)
 }
 
 // Dump the RocksDB data to JSON.
-catapultScripts.rocks.dump(options).then(result => {
+symbolData.rocks.dump(options).then(result => {
   // Hash cache only hash keys, no values.
   if (options.collection === 'HashCache') {
     result = Object.keys(result)
+  } else if (options.collection === 'all') {
+    result.HashCache = Object.keys(result.HashCache)
   }
 
   let json = JSON.stringify(result, null, 4) + '\n'

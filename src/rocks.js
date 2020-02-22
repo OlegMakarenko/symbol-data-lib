@@ -23,17 +23,37 @@
 import rocksCodec from './codec/rocks'
 import Level from './util/level'
 
+// API
+
 /**
- *  Dump RocksDB data to JSON.
- *
- *  @param options {Object}       - Options to specify dump parameters.
- *    @field dataDir {String}     - Path to the catapult data directory.
- *    @field node {String}        - Name of the node (api-node-0).
- *    @field collection {String}  - Collection name.
- *    @field limit {Number}       - Maximum number of items to dump.
- *    @field verbose {Boolean}    - Display debug information.
+ *  List of all known RocksDB collections.
  */
-const dump = async options => {
+const COLLECTIONS = [
+  'AccountRestrictionCache',
+  'AccountStateCache',
+  'HashCache',
+  'HashLockInfoCache',
+  'MetadataCache',
+  'MosaicCache',
+  'MosaicRestrictionCache',
+  'MultisigCache',
+  'NamespaceCache',
+  'SecretLockInfoCache'
+]
+
+/**
+ *  Get if the collection name is valid.
+ *
+ *  @param collection {String}     - Collection name.
+ */
+const isValidCollection = collection => {
+  return collection === 'all' || COLLECTIONS.indexOf(collection) !== -1
+}
+
+/**
+ *  Dump single RocksDB collection to JSON.
+ */
+const dumpOne = async options => {
   // Create a new rocksdb, read-only handle.
   let path = `${options.dataDir}/statedb/${options.collection}`
   let level = new Level(path)
@@ -71,6 +91,37 @@ const dump = async options => {
   return result
 }
 
+/**
+ *  Dump all RocksDB collections to JSON.
+ */
+const dumpAll = async options => {
+  let result = {}
+  for (let collection of COLLECTIONS) {
+    result[collection] = await dumpOne({...options, collection})
+  }
+  return result
+}
+
+/**
+ *  Dump RocksDB data to JSON.
+ *
+ *  @param options {Object}       - Options to specify dump parameters.
+ *    @field dataDir {String}     - Path to the catapult data directory.
+ *    @field node {String}        - Name of the node (api-node-0).
+ *    @field collection {String}  - Collection name.
+ *    @field limit {Number}       - Maximum number of items to dump.
+ *    @field verbose {Boolean}    - Display debug information.
+ */
+const dump = async options => {
+  if (options.collection === 'all') {
+    return dumpAll(options)
+  } else {
+    return dumpOne(options)
+  }
+}
+
 export default {
+  COLLECTIONS,
+  isValidCollection,
   dump
 }

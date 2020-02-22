@@ -19,22 +19,7 @@
 
 import '@babel/polyfill'
 import yargs from 'yargs'
-import catapultScripts from '../src'
-
-const MONGO_COLLECTIONS = [
-  'accounts',
-  'addressResolutionStatements',
-  'blocks',
-  'chainStatistic',
-  'hashLocks',
-  'mosaicResolutionStatements',
-  'mosaics',
-  'multisigs',
-  'namespaces',
-  'secretLocks',
-  'transactionStatements',
-  'transactionStatuses'
-]
+import symbolData from '../src'
 
 // ARGUMENTS
 // ---------
@@ -59,8 +44,8 @@ const options = yargs
     alias: 'c',
     describe: (
       'Name of collection to dump.\n'
-      + 'Valid collections names:\n- '
-      + MONGO_COLLECTIONS.join('\n- ')
+      + 'Valid collections names:\n- all\n- '
+      + symbolData.mongo.COLLECTIONS.join('\n- ')
     )
   })
   .option('limit', {
@@ -93,12 +78,12 @@ if (options.verbose) {
 }
 
 // Validate the collection name is supported.
-if (MONGO_COLLECTIONS.indexOf(options.collection) === -1) {
+if (!symbolData.mongo.isValidCollection(options.collection)) {
   throw new Error(`collection name ${options.collection} is not yet supported`)
 }
 
 // Dump the MongoDB data to JSON.
-catapultScripts.mongo.dump(options).then(result => {
+symbolData.mongo.dump(options).then(result => {
   let json = JSON.stringify(result, null, 4) + '\n'
   if (options.output !== undefined) {
     fs.writeFileSync(options.output, json)
