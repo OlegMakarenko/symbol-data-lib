@@ -7,6 +7,7 @@ Library and command-line scripts to facilitate debugging and accessing NEM Node 
 - Blocks
 - Spool
 - Audit
+- Configuration Files
 - And more.
 
 # Getting Started

@@ -25,6 +25,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import shared from '../util/shared'
 
 // HELPERS
 
@@ -76,6 +77,21 @@ const parseInteger = value => {
 }
 
 /**
+ *  Parse a generic hex integer from an INI value.
+ */
+const parseHexInteger = value => {
+  let str = value.replace(/'/g, '')
+  if (!/^0x[A-Fa-f0-9]+$/.test(str)) {
+    throw new Error(`unexpected hex integer string, got ${value}`)
+  }
+  let digits = str.slice(2)
+  let high = parseInt(digits.slice(0, 8), 16)
+  let low = parseInt(digits.slice(8), 16)
+
+  return shared.idToHex([low, high])
+}
+
+/**
  *  Parse a generic boolean value.
  */
 const parseBoolean = value => {
@@ -92,6 +108,21 @@ const parseBoolean = value => {
  *  Parse a generic string (identity operation).
  */
 const parseString = value => value
+
+/**
+ *  Parse a list of strings.
+ */
+const parseStringList = value => {
+  let list = []
+  for (let item of value.split(',')) {
+    let trimmed = item.trim()
+    if (trimmed.length === 0) {
+      throw new Error('unexpected empty string in list')
+    }
+    list.push(trimmed)
+  }
+  return list
+}
 
 const DELEGATION_POLICIES = new Set(['Age', 'Importance'])
 
@@ -141,6 +172,52 @@ const parseColorMode = value => {
   return value
 }
 
+const NETWORK_IDENTIFIERS = new Set(['mijin', 'mijin-test', 'public', 'public-test'])
+
+/**
+ *  Parse the network identifier.
+ */
+const parseNetworkIdentifier = value => {
+  if (!NETWORK_IDENTIFIERS.has(value)) {
+    throw new Error(`invalid network identifier, got ${value}`)
+  }
+  return value
+}
+
+const NODE_EQUALITY = new Set(['public-key', 'host'])
+
+/**
+ *  Parse the network identifier.
+ */
+const parseNodeEqualityStrategy = value => {
+  if (!NODE_EQUALITY.has(value)) {
+    throw new Error(`invalid node equality strategy, got ${value}`)
+  }
+  return value
+}
+
+/**
+ *  Parse a time span.
+ */
+const parseTimeSpan = value => {
+  // Check the value matches the correct regular expression, then return it.
+  if (!/^\d+(?:(?:ms)|[smh])$/i.test(value)) {
+    throw new Error(`invalid time span, got ${value}`)
+  }
+  return value
+}
+
+/**
+ *  Parse a block span.
+ */
+const parseBlockSpan = value => {
+  // Check the value matches the correct regular expression, then return it.
+  if (!/^\d+[mhd]$/i.test(value)) {
+    throw new Error(`invalid block span, got ${value}`)
+  }
+  return value
+}
+
 const LOGGING_SECTIONS = new Set(['console', 'console.component.levels', 'file', 'file.component.levels'])
 
 /**
@@ -148,6 +225,13 @@ const LOGGING_SECTIONS = new Set(['console', 'console.component.levels', 'file',
  */
 const isValidLoggingSection = key => {
   return LOGGING_SECTIONS.has(key)
+}
+
+/**
+ *  Get if the plugin name is valid.
+ */
+const isValidPluginName = name => {
+  return /[A-Za-z.]/.test(name)
 }
 
 // TODO(ahuszagh) Need parsers for specialized values
@@ -199,6 +283,174 @@ const parseIni = ini => {
 }
 
 // CODEC
+
+/**
+ *  Codec for well-known plugin stores.
+ */
+const plugin = {
+  'catapult.plugins.accountlink': data => {
+    // Sometimes a dummy value will be kept to ensure it loads.
+    if (Object.keys(data).length > 1) {
+      throw new Error('invalid catapult.plugins.accountlink plugin, got unexpected keys.')
+    }
+
+    return {}
+  },
+
+  'catapult.plugins.aggregate': data => {
+    let maxTransactionsPerAggregate = parseInteger(data.maxTransactionsPerAggregate)
+    let maxCosignaturesPerAggregate = parseInteger(data.maxCosignaturesPerAggregate)
+    let enableStrictCosignatureCheck = parseBoolean(data.enableStrictCosignatureCheck)
+    let enableBondedAggregateSupport = parseBoolean(data.enableBondedAggregateSupport)
+    let maxBondedTransactionLifetime = parseTimeSpan(data.maxBondedTransactionLifetime)
+    if (Object.keys(data).length !== 5) {
+      throw new Error('invalid catapult.plugins.aggregate plugin, got unexpected keys.')
+    }
+
+    return {
+      maxTransactionsPerAggregate,
+      maxCosignaturesPerAggregate,
+      enableStrictCosignatureCheck,
+      enableBondedAggregateSupport,
+      maxBondedTransactionLifetime
+    }
+  },
+
+  'catapult.plugins.lockhash': data => {
+    let lockedFundsPerAggregate = parseBigInteger(data.lockedFundsPerAggregate)
+    let maxHashLockDuration = parseBlockSpan(data.maxHashLockDuration)
+    if (Object.keys(data).length !== 2) {
+      throw new Error('invalid catapult.plugins.lockhash plugin, got unexpected keys.')
+    }
+
+    return {
+      lockedFundsPerAggregate,
+      maxHashLockDuration
+    }
+  },
+
+  'catapult.plugins.locksecret': data => {
+    let maxSecretLockDuration = parseBlockSpan(data.maxSecretLockDuration)
+    let minProofSize = parseInteger(data.minProofSize)
+    let maxProofSize = parseInteger(data.maxProofSize)
+    if (Object.keys(data).length !== 3) {
+      throw new Error('invalid catapult.plugins.locksecret plugin, got unexpected keys.')
+    }
+
+    return {
+      maxSecretLockDuration,
+      minProofSize,
+      maxProofSize
+    }
+  },
+
+  'catapult.plugins.metadata': data => {
+    let maxValueSize = parseInteger(data.maxValueSize)
+    if (Object.keys(data).length !== 1) {
+      throw new Error('invalid catapult.plugins.locksecret metadata, got unexpected keys.')
+    }
+
+    return {
+      maxValueSize
+    }
+  },
+
+  'catapult.plugins.mosaic': data => {
+    let maxMosaicsPerAccount = parseInteger(data.maxMosaicsPerAccount)
+    let maxMosaicDuration = parseBlockSpan(data.maxMosaicDuration)
+    let maxMosaicDivisibility = parseInteger(data.maxMosaicDivisibility)
+    let mosaicRentalFeeSinkPublicKey = parseString(data.mosaicRentalFeeSinkPublicKey)
+    let mosaicRentalFee = parseBigInteger(data.mosaicRentalFee)
+    if (Object.keys(data).length !== 5) {
+      throw new Error('invalid catapult.plugins.mosaic metadata, got unexpected keys.')
+    }
+
+    return {
+      maxMosaicsPerAccount,
+      maxMosaicDuration,
+      maxMosaicDivisibility,
+      mosaicRentalFeeSinkPublicKey,
+      mosaicRentalFee
+    }
+  },
+
+  'catapult.plugins.multisig': data => {
+    let maxMultisigDepth = parseInteger(data.maxMultisigDepth)
+    let maxCosignatoriesPerAccount = parseInteger(data.maxCosignatoriesPerAccount)
+    let maxCosignedAccountsPerAccount = parseInteger(data.maxCosignedAccountsPerAccount)
+    if (Object.keys(data).length !== 3) {
+      throw new Error('invalid catapult.plugins.multisig metadata, got unexpected keys.')
+    }
+
+    return {
+      maxMultisigDepth,
+      maxCosignatoriesPerAccount,
+      maxCosignedAccountsPerAccount
+    }
+  },
+
+  'catapult.plugins.namespace': data => {
+    let maxNameSize = parseInteger(data.maxNameSize)
+    let maxChildNamespaces = parseInteger(data.maxChildNamespaces)
+    let maxNamespaceDepth = parseInteger(data.maxNamespaceDepth)
+    let minNamespaceDuration = parseBlockSpan(data.minNamespaceDuration)
+    let maxNamespaceDuration = parseBlockSpan(data.maxNamespaceDuration)
+    let namespaceGracePeriodDuration = parseBlockSpan(data.namespaceGracePeriodDuration)
+    let reservedRootNamespaceNames = parseStringList(data.reservedRootNamespaceNames)
+    let namespaceRentalFeeSinkPublicKey = parseString(data.namespaceRentalFeeSinkPublicKey)
+    let rootNamespaceRentalFeePerBlock = parseBigInteger(data.rootNamespaceRentalFeePerBlock)
+    let childNamespaceRentalFee = parseBigInteger(data.childNamespaceRentalFee)
+    if (Object.keys(data).length !== 10) {
+      throw new Error('invalid catapult.plugins.namespace metadata, got unexpected keys.')
+    }
+
+    return {
+      maxNameSize,
+      maxChildNamespaces,
+      maxNamespaceDepth,
+      minNamespaceDuration,
+      maxNamespaceDuration,
+      namespaceGracePeriodDuration,
+      reservedRootNamespaceNames,
+      namespaceRentalFeeSinkPublicKey,
+      rootNamespaceRentalFeePerBlock,
+      childNamespaceRentalFee
+    }
+  },
+
+  'catapult.plugins.restrictionaccount': data => {
+    let maxAccountRestrictionValues = parseInteger(data.maxAccountRestrictionValues)
+    if (Object.keys(data).length !== 1) {
+      throw new Error('invalid catapult.plugins.restrictionaccount metadata, got unexpected keys.')
+    }
+
+    return {
+      maxAccountRestrictionValues
+    }
+  },
+
+  'catapult.plugins.restrictionmosaic': data => {
+    let maxMosaicRestrictionValues = parseInteger(data.maxMosaicRestrictionValues)
+    if (Object.keys(data).length !== 1) {
+      throw new Error('invalid catapult.plugins.restrictionmosaic metadata, got unexpected keys.')
+    }
+
+    return {
+      maxMosaicRestrictionValues
+    }
+  },
+
+  'catapult.plugins.transfer': data => {
+    let maxMessageSize = parseInteger(data.maxMessageSize)
+    if (Object.keys(data).length !== 1) {
+      throw new Error('invalid catapult.plugins.transfer metadata, got unexpected keys.')
+    }
+
+    return {
+      maxMessageSize
+    }
+  }
+}
 
 /**
  *  Codec for the config stores.
@@ -350,17 +602,125 @@ const codec = {
 
   // Parse the messaging config file from data.
   messaging: data => {
-    // TODO(ahuszagh) Implement
+    let ini = parseIni(data)
+    let subscriberPort = parseInteger(ini.messaging.subscriberPort)
+    if (Object.keys(ini).length !== 1 || Object.keys(ini.messaging).length !== 1) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    return {
+      subscriberPort
+    }
   },
 
   // Parse the network config file from data.
   network: data => {
-    // TODO(ahuszagh) Implement
+    let ini = parseIni(data)
+
+    // Network
+    let network = {
+      identifier: parseNetworkIdentifier(ini.network.identifier),
+      nodeEqualityStrategy: parseNodeEqualityStrategy(ini.network.nodeEqualityStrategy),
+      publicKey: parseString(ini.network.publicKey),
+      generationHash: parseString(ini.network.generationHash),
+      epochAdjustment: parseTimeSpan(ini.network.epochAdjustment)
+    }
+    if (Object.keys(ini.network).length !== 5) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    // Chain
+    let enableVerifiableState = parseBoolean(ini.chain.enableVerifiableState)
+    let enableVerifiableReceipts = parseBoolean(ini.chain.enableVerifiableReceipts)
+    let currencyMosaicId = parseHexInteger(ini.chain.currencyMosaicId)
+    let harvestingMosaicId = parseHexInteger(ini.chain.harvestingMosaicId)
+    let blockGenerationTargetTime = parseTimeSpan(ini.chain.blockGenerationTargetTime)
+    let blockTimeSmoothingFactor = parseInteger(ini.chain.blockTimeSmoothingFactor)
+    let importanceGrouping = parseBigInteger(ini.chain.importanceGrouping)
+    let importanceActivityPercentage = parseInteger(ini.chain.importanceActivityPercentage)
+    let maxRollbackBlocks = parseInteger(ini.chain.maxRollbackBlocks)
+    let maxDifficultyBlocks = parseInteger(ini.chain.maxDifficultyBlocks)
+    let defaultDynamicFeeMultiplier = parseInteger(ini.chain.defaultDynamicFeeMultiplier)
+    let maxTransactionLifetime = parseTimeSpan(ini.chain.maxTransactionLifetime)
+    let maxBlockFutureTime = parseTimeSpan(ini.chain.maxBlockFutureTime)
+    let initialCurrencyAtomicUnits = parseBigInteger(ini.chain.initialCurrencyAtomicUnits)
+    let maxMosaicAtomicUnits = parseBigInteger(ini.chain.maxMosaicAtomicUnits)
+    let totalChainImportance = parseBigInteger(ini.chain.totalChainImportance)
+    let minHarvesterBalance = parseBigInteger(ini.chain.minHarvesterBalance)
+    let maxHarvesterBalance = parseBigInteger(ini.chain.maxHarvesterBalance)
+    let harvestBeneficiaryPercentage = parseInteger(ini.chain.harvestBeneficiaryPercentage)
+    let blockPruneInterval = parseInteger(ini.chain.blockPruneInterval)
+    let maxTransactionsPerBlock = parseInteger(ini.chain.maxTransactionsPerBlock)
+    if (Object.keys(ini.chain).length !== 21) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    // Parse the plugins.
+    let pluginPrefix = 'plugin:'
+    let plugins = {}
+    for (let [key, value] of Object.entries(ini)) {
+      // Validate the key and skip the network and chain keys.
+      if (key === 'network' || key === 'chain') {
+        continue
+      } else if (!key.startsWith(pluginPrefix)) {
+        throw new Error('invalid configuration file, got unexpected keys.')
+      }
+
+      // Parse and validate the plugin name.
+      let name = key.slice(pluginPrefix.length)
+      if (!isValidPluginName(name)) {
+        throw new Error('invalid configuration file, got invalid plugin name.')
+      }
+
+      // Parse the plugin data.
+      let callback = plugin[name]
+      if (callback !== undefined) {
+        // Well-known plugin, use it.
+        plugins[name] = callback(value)
+      } else {
+        // Custom plugin, just keep the default data.
+        plugins[name] = value
+      }
+    }
+
+    return {
+      network,
+      enableVerifiableState,
+      enableVerifiableReceipts,
+      currencyMosaicId,
+      harvestingMosaicId,
+      blockGenerationTargetTime,
+      blockTimeSmoothingFactor,
+      importanceGrouping,
+      importanceActivityPercentage,
+      maxRollbackBlocks,
+      maxDifficultyBlocks,
+      defaultDynamicFeeMultiplier,
+      maxTransactionLifetime,
+      maxBlockFutureTime,
+      initialCurrencyAtomicUnits,
+      maxMosaicAtomicUnits,
+      totalChainImportance,
+      minHarvesterBalance,
+      maxHarvesterBalance,
+      harvestBeneficiaryPercentage,
+      blockPruneInterval,
+      maxTransactionsPerBlock,
+      plugins
+    }
   },
 
   // Parse the network height config file from data.
   networkHeight: data => {
-    // TODO(ahuszagh) Implement
+    let ini = parseIni(data)
+    let maxNodes = parseInteger(ini.networkheight.maxNodes)
+    if (Object.keys(ini).length !== 1 || Object.keys(ini.networkheight).length !== 1) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    return {
+      maxNodes
+    }
   },
 
   // Parse the node config file from data.
@@ -390,7 +750,15 @@ const codec = {
 
   // Parse the time sync config file from data.
   timeSync: data => {
-    // TODO(ahuszagh) Implement
+    let ini = parseIni(data)
+    let maxNodes = parseInteger(ini.timesynchronization.maxNodes)
+    if (Object.keys(ini).length !== 1 || Object.keys(ini.timesynchronization).length !== 1) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    return {
+      maxNodes
+    }
   },
 
   // Parse the user config file from data.

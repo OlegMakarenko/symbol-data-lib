@@ -242,7 +242,136 @@ describe('config', () => {
     expect(actual).to.eql(config.file(file))
   })
 
-  // TODO(ahuszagh) Add more...
+  it('should parse messaging data', () => {
+    let data = '[messaging]\n\nsubscriberPort = 7902\n'
+    let actual = config.messaging(data)
+    expect(actual).to.eql({
+      subscriberPort: 7902
+    })
+
+    let file = path.join(CONFIG_DIR, 'config-messaging.properties')
+    expect(actual).to.eql(config.file(file))
+  })
+
+  it('should parse network data', () => {
+    let file = path.join(CONFIG_DIR, 'config-network.properties')
+    expect(config.file(file)).to.eql({
+      network:{
+        identifier: 'public-test',
+        nodeEqualityStrategy: 'public-key',
+        publicKey: '9BE93593C699867F1B4F624FD37BC7FB93499CDEC9929088F2FF1031293960FF',
+        generationHash: '45870419226A7E51D61D94AD728231EDC6C9B3086EF9255A8421A4F26870456A',
+        epochAdjustment: '1573430400s'
+      },
+      enableVerifiableState: true,
+      enableVerifiableReceipts: true,
+      currencyMosaicId: '51A99028058245A8',
+      harvestingMosaicId: '51A99028058245A8',
+      blockGenerationTargetTime: '15s',
+      blockTimeSmoothingFactor: 3000,
+      importanceGrouping: '1433',
+      importanceActivityPercentage: 5,
+      maxRollbackBlocks: 398,
+      maxDifficultyBlocks: 60,
+      defaultDynamicFeeMultiplier: 1000,
+      maxTransactionLifetime: '24h',
+      maxBlockFutureTime: '500ms',
+      initialCurrencyAtomicUnits: '7831975436000000',
+      maxMosaicAtomicUnits: '9000000000000000',
+      totalChainImportance: '7831975436000000',
+      minHarvesterBalance: '10000000000',
+      maxHarvesterBalance: '50000000000000',
+      harvestBeneficiaryPercentage: 25,
+      blockPruneInterval: 360,
+      maxTransactionsPerBlock: 1500,
+      plugins: {
+        'catapult.plugins.accountlink': {},
+        'catapult.plugins.aggregate': {
+          maxTransactionsPerAggregate: 1000,
+          maxCosignaturesPerAggregate: 25,
+          enableStrictCosignatureCheck: false,
+          enableBondedAggregateSupport: true,
+          maxBondedTransactionLifetime: '48h'
+        },
+        'catapult.plugins.lockhash': {
+          lockedFundsPerAggregate: '10000000',
+          maxHashLockDuration: '2d'
+        },
+        'catapult.plugins.locksecret': {
+          maxSecretLockDuration: '30d',
+          minProofSize: 1,
+          maxProofSize: 1000
+        },
+        'catapult.plugins.metadata': {
+          maxValueSize: 1024
+        },
+        'catapult.plugins.mosaic': {
+          maxMosaicsPerAccount: 1000,
+          maxMosaicDuration: '3650d',
+          maxMosaicDivisibility: 6,
+          mosaicRentalFeeSinkPublicKey: '4428A4DA56362C2293A277159F7C1E270FE7BD6CED461877494006C7D69F1172',
+          mosaicRentalFee: '500'
+        },
+        'catapult.plugins.multisig': {
+          maxMultisigDepth: 3,
+          maxCosignatoriesPerAccount: 25,
+          maxCosignedAccountsPerAccount: 25
+        },
+        'catapult.plugins.namespace': {
+          maxNameSize: 64,
+          maxChildNamespaces: 256,
+          maxNamespaceDepth: 3,
+          minNamespaceDuration: '30d',
+          maxNamespaceDuration: '365d',
+          namespaceGracePeriodDuration: '30d',
+          reservedRootNamespaceNames: [
+            'symbol',
+            'symbl',
+            'xym',
+            'xem',
+            'nem',
+            'user',
+            'account',
+            'org',
+            'com',
+            'biz',
+            'net',
+            'edu',
+            'mil',
+            'gov',
+            'info'
+          ],
+          namespaceRentalFeeSinkPublicKey: '4428A4DA56362C2293A277159F7C1E270FE7BD6CED461877494006C7D69F1172',
+          rootNamespaceRentalFeePerBlock: '1',
+          childNamespaceRentalFee: '100'
+        },
+        'catapult.plugins.restrictionaccount': {
+          maxAccountRestrictionValues: 512
+        },
+        'catapult.plugins.restrictionmosaic': {
+          maxMosaicRestrictionValues: 20
+        },
+        'catapult.plugins.transfer': {
+          maxMessageSize: 1024
+        }
+      }
+    })
+  })
+
+  it('should parse network height data', () => {
+    let data = '[networkheight]\n\nmaxNodes = 5\n'
+    let actual = config.networkHeight(data)
+    expect(actual).to.eql({
+      maxNodes: 5
+    })
+
+    let file = path.join(CONFIG_DIR, 'config-networkheight.properties')
+    expect(actual).to.eql(config.file(file))
+  })
+
+  it('should parse node data', () => {
+    // TODO(ahuszagh) Implement...
+  })
 
   it('should parse partial transactions data', () => {
     let data = '[partialtransactions]\n\ncacheMaxResponseSize = 20MB\ncacheMaxSize = 1\'000\'000\n'
@@ -254,6 +383,33 @@ describe('config', () => {
 
     let file = path.join(CONFIG_DIR, 'config-pt.properties')
     expect(actual).to.eql(config.file(file))
+  })
+
+  it('should parse task data', () => {
+    // TODO(ahuszagh) Implement...
+  })
+
+  it('should parse time synchronization data', () => {
+    let data = '[timesynchronization]\n\nmaxNodes = 20\n'
+    let actual = config.timeSync(data)
+    expect(actual).to.eql({
+      maxNodes: 20
+    })
+
+    let file = path.join(CONFIG_DIR, 'config-timesync.properties')
+    expect(actual).to.eql(config.file(file))
+  })
+
+  it('should parse user data', () => {
+    // TODO(ahuszagh) Implement...
+  })
+
+  it('should parse peers API data', () => {
+    // TODO(ahuszagh) Implement...
+  })
+
+  it('should parse peers P2P data', () => {
+    // TODO(ahuszagh) Implement...
   })
 
   // TODO(ahuszagh) need to parse the directory.
