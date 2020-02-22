@@ -179,7 +179,17 @@ Alternatively, you can either modify the Dockerfiles to install, build, and link
 
 **Configuring TCP**
 
-TODO(ahuszagh) Document
+Docker compose does not by default expose port 7900 and 7902, so we must expose this in the `api-node` and `api-broker` images, respectively:
+
+```yaml
+  api-node:
+    ports:
+    - "7900:7900"
+
+  api-broker:
+    ports:
+    - "7902:7902"
+```
 
 # Compatibility Warning
 

@@ -116,6 +116,33 @@ describe('tcp', () => {
   })
 
   describe('nodePeers', () => {
-    // TODO(ahuszagh) Here...
+    it('should parse a node peers request', () => {
+      let buffer = Buffer.from('', 'hex')
+      expect(tcp.nodePeers.request(buffer)).to.eql({})
+    })
+
+    it('should parse a node peers response', () => {
+      let buffer = Buffer.from('54000000000000008D270FA5E8E30D01182E8A339A31818856E30ABD0249662CFBA43CE8610333D303000000DC1E980E1539352E3231362E3231352E323435436F6C6F6D626961546573746E65744E6F646531305500000000000000318FE9A12487C0C518D35C09DE12D2AB8FF194638FA05F71E9E3619DA30E3F5503000000DC1E980E163134302E3232372E3132332E3932282A5E2D5E292F53796D626F6C2D746573746E6F6465', 'hex')
+      expect(tcp.nodePeers.response(buffer)).to.eql([
+        {
+          version: 0,
+          publicKey: '8D270FA5E8E30D01182E8A339A31818856E30ABD0249662CFBA43CE8610333D3',
+          roles: 3,
+          port: 7900,
+          networkIdentifier: 152,
+          host: '95.216.215.245',
+          friendlyName: 'ColombiaTestnetNode10'
+        },
+        {
+          version: 0,
+          publicKey: '318FE9A12487C0C518D35C09DE12D2AB8FF194638FA05F71E9E3619DA30E3F55',
+          roles: 3,
+          port: 7900,
+          networkIdentifier: 152,
+          host: '140.227.123.92',
+          friendlyName: '(*^-^)/Symbol-testnode'
+        }
+      ])
+    })
   })
 })
