@@ -204,7 +204,28 @@ const codec = {
 
   // Parse time synchronization information.
   timeSync: {
-    // TODO(ahuszagh) Implement...
+    // Parse a time synchronization request.
+    request: data => {
+      let reader = new TcpReader(data)
+      reader.validateEmpty()
+
+      return {}
+    },
+
+    // Parse a time synchronization response.
+    response: data => {
+      let reader = new TcpReader(data)
+      let sendTimestamp = reader.uint64()
+      let receiveTimestamp = reader.uint64()
+      reader.validateEmpty()
+
+      return {
+        communicationTimestamps: {
+          sendTimestamp,
+          receiveTimestamp
+        }
+      }
+    }
   },
 
   // TODO(ahuszagh) Add in a lot more codecs.

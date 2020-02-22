@@ -145,4 +145,21 @@ describe('tcp', () => {
       ])
     })
   })
+
+  describe('timeSync', () => {
+    it('should parse a time sync request', () => {
+      let buffer = Buffer.from('', 'hex')
+      expect(tcp.timeSync.request(buffer)).to.eql({})
+    })
+
+    it('should parse a time sync response', () => {
+      let buffer = Buffer.from('B11ABF1602000000B11ABF1602000000', 'hex')
+      expect(tcp.timeSync.response(buffer)).to.eql({
+        communicationTimestamps: {
+          sendTimestamp: '8971557553',
+          receiveTimestamp: '8971557553'
+        }
+      })
+    })
+  })
 })
