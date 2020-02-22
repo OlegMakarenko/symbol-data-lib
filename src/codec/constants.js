@@ -93,7 +93,11 @@ export default {
   receiptAddressResolution: 1,
   receiptMosaicResolution: 2,
 
-  // Packet types.
+  // Packet information and types.
+  packetHeaderSize: 8,
+  challengeSize: 64,
+  serverChallenge: 1,
+  clientChallenge: 2,
   nodeDiscoveryPullPing: 601,
   nodeDiscoveryPullPeers: 603,
   timeSyncNetworkTime: 700

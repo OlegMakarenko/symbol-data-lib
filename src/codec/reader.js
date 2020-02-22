@@ -122,6 +122,9 @@ export default class Reader {
   }
 
   binaryN(n) {
+    if (this.data.length < n) {
+      throw new Error(`cannot extract ${n} bytes, buffer only contains ${this.data.length}`)
+    }
     let value = this.data.slice(0, n)
     this.data = this.data.slice(n)
     return value

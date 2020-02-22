@@ -904,8 +904,8 @@ describe('catbuffer', () => {
     let deadline = '0100000000000000'
     let targetPublicKey = '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
     let scopedMetadataKey = '0123456789ABCDEF'
-    let valueSizeDelta = '2800'
-    let valueSize = '2800'
+    let valueSizeDelta = '1400'
+    let valueSize = '1400'
     let value = '700B6F624F41EB1A423F735ADA96982D7F2B756F'
 
     // Embedded
@@ -918,7 +918,7 @@ describe('catbuffer', () => {
     expect(reader.accountMetadataTransaction(true)).to.eql({
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
       scopedMetadataKey: '17279655951921914625',
-      valueSizeDelta: 40,
+      valueSizeDelta: 20,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
     })
 
@@ -930,13 +930,13 @@ describe('catbuffer', () => {
       deadline: '1',
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
       scopedMetadataKey: '17279655951921914625',
-      valueSizeDelta: 40,
+      valueSizeDelta: 20,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
     })
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(constants.transactionAccountMetadataTransaction).valueSizeDelta).to.equal(40)
+    expect(reader.transactionHeader(constants.transactionAccountMetadataTransaction).valueSizeDelta).to.equal(20)
   })
 
   it('should parse a mosaic metadata transaction', () => {
@@ -945,8 +945,8 @@ describe('catbuffer', () => {
     let targetPublicKey = '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
     let scopedMetadataKey = '0123456789ABCDEF'
     let targetMosaicId = '5DFB9AC1932C1F2C'
-    let valueSizeDelta = '2800'
-    let valueSize = '2800'
+    let valueSizeDelta = '1400'
+    let valueSize = '1400'
     let value = '700B6F624F41EB1A423F735ADA96982D7F2B756F'
 
     // Embedded
@@ -961,7 +961,7 @@ describe('catbuffer', () => {
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
       scopedMetadataKey: '17279655951921914625',
       targetMosaicId: '2C1F2C93C19AFB5D',
-      valueSizeDelta: 40,
+      valueSizeDelta: 20,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
     })
 
@@ -974,13 +974,13 @@ describe('catbuffer', () => {
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
       scopedMetadataKey: '17279655951921914625',
       targetMosaicId: '2C1F2C93C19AFB5D',
-      valueSizeDelta: 40,
+      valueSizeDelta: 20,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
     })
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(constants.transactionMosaicMetadataTransaction).valueSizeDelta).to.equal(40)
+    expect(reader.transactionHeader(constants.transactionMosaicMetadataTransaction).valueSizeDelta).to.equal(20)
   })
 
   it('should parse a namespace metadata transaction', () => {
@@ -989,8 +989,8 @@ describe('catbuffer', () => {
     let targetPublicKey = '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
     let scopedMetadataKey = '0123456789ABCDEF'
     let targetNamespaceId = 'F24D0E1AF24D0E1A'
-    let valueSizeDelta = '2800'
-    let valueSize = '2800'
+    let valueSizeDelta = '1400'
+    let valueSize = '1400'
     let value = '700B6F624F41EB1A423F735ADA96982D7F2B756F'
 
     // Embedded
@@ -1005,7 +1005,7 @@ describe('catbuffer', () => {
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
       scopedMetadataKey: '17279655951921914625',
       targetNamespaceId: '1A0E4DF21A0E4DF2',
-      valueSizeDelta: 40,
+      valueSizeDelta: 20,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
     })
 
@@ -1018,13 +1018,13 @@ describe('catbuffer', () => {
       targetPublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
       scopedMetadataKey: '17279655951921914625',
       targetNamespaceId: '1A0E4DF21A0E4DF2',
-      valueSizeDelta: 40,
+      valueSizeDelta: 20,
       value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
     })
 
     // Check transaction header
     reader = new CatbufferReader(Buffer.from(transaction, 'hex'))
-    expect(reader.transactionHeader(constants.transactionNamespaceMetadataTransaction).valueSizeDelta).to.equal(40)
+    expect(reader.transactionHeader(constants.transactionNamespaceMetadataTransaction).valueSizeDelta).to.equal(20)
   })
 
   it('should parse a complete transaction', () => {

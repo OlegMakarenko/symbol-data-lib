@@ -24,5 +24,6 @@ describe('codec', () => {
   require('./mongo'),
   require('./reader'),
   require('./rocks'),
-  require('./spool')
+  require('./spool'),
+  require('./tcp')
 })
