@@ -26,6 +26,7 @@ import config from './config'
 import mongo from './mongo'
 import rocks from './rocks'
 import spool from './spool'
+import tcp from './tcp'
 
 export default {
   audit,
@@ -33,5 +34,6 @@ export default {
   config,
   mongo,
   rocks,
-  spool
+  spool,
+  tcp
 }

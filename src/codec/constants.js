@@ -91,5 +91,10 @@ export default {
 
   // Alias resolution receipt type.
   receiptAddressResolution: 1,
-  receiptMosaicResolution: 2
+  receiptMosaicResolution: 2,
+
+  // Packet types.
+  nodeDiscoveryPullPing: 601,
+  nodeDiscoveryPullPeers: 603,
+  timeSyncNetworkTime: 700
 }

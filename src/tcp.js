@@ -16,22 +16,3 @@
  *
  */
 
-import audit from './audit'
-import block from './block'
-import codec from './codec'
-import config from './config'
-import mongo from './mongo'
-import rocks from './rocks'
-import spool from './spool'
-import tcp from './tcp'
-
-export default {
-  audit,
-  block,
-  codec,
-  config,
-  mongo,
-  rocks,
-  spool,
-  tcp
-}
