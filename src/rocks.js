@@ -21,8 +21,8 @@
  */
 
 import rocksCodec from './codec/rocks'
-import collection from './util/collection'
 import Level from './util/level'
+import name from './util/name'
 
 const COLLECTION_LOOKUP = new Set([
   'AccountRestrictionCache',
@@ -49,8 +49,8 @@ const COLLECTIONS = Array.from(COLLECTION_LOOKUP).sort()
  *
  *  @param collection {String}     - Comma-separated list of collection names.
  */
-const isValidCollection = name => {
-  return collection.isValid(name, COLLECTIONS, COLLECTION_LOOKUP)
+const isValidCollection = collection => {
+  return name.isValid(collection, COLLECTIONS, COLLECTION_LOOKUP)
 }
 
 /**
@@ -121,7 +121,7 @@ const dumpMany = async (options, collections) => {
  *    @field verbose {Boolean}    - Display debug information.
  */
 const dump = async options => {
-  let collections = collection.parse(options.collection, COLLECTIONS)
+  let collections = name.parse(options.collection, COLLECTIONS)
   if (collections.length !== 1) {
     return dumpMany(options, collections)
   } else {

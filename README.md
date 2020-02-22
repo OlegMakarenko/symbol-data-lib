@@ -136,6 +136,16 @@ Connected to rocks at /data/statedb/AccountStateCache
         ]
     }
 }
+
+# Dump the time-sync configuration file.
+$ catapult-config-dump --collection time-sync --verbose
+Running catapult-config-dump with: 
+    data-dir     = /userconfig/resources
+    collection   = time-sync
+    output       = stdout
+{
+    "maxNodes": 20
+}
 ```
 
 # Library Usage

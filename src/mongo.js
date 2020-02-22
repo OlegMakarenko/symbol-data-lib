@@ -22,7 +22,7 @@
 
 import MongoDb from 'mongodb'
 import mongoCodec from './codec/mongo'
-import collection from './util/collection'
+import name from './util/name'
 
 const COLLECTION_LOOKUP = new Set([
   'accounts',
@@ -70,8 +70,8 @@ const COLLECTIONS = Array.from(COLLECTION_LOOKUP).sort()
  *
  *  @param collection {String}     - Comma-separated list of collection names.
  */
-const isValidCollection = name => {
-  return collection.isValid(name, COLLECTIONS, COLLECTION_LOOKUP)
+const isValidCollection = collection => {
+  return name.isValid(collection, COLLECTIONS, COLLECTION_LOOKUP)
 }
 
 /**
@@ -108,7 +108,7 @@ const dumpMany = async (options, collections) => {
  *    @field verbose {Boolean}    - Display debug information.
  */
 const dump = async options => {
-  let collections = collection.parse(options.collection, COLLECTIONS)
+  let collections = name.parse(options.collection, COLLECTIONS)
   let client = await connect(options)
   let db = client.db()
   let data

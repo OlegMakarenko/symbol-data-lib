@@ -17,27 +17,27 @@
  */
 
 /**
- *  Utilities to facilitate processing collection names.
+ *  Utilities to facilitate processing collection or file names.
  */
 
 /**
- *  Parse comma-separated collection names to array.
+ *  Parse comma-separated names to array.
  */
-const parse = (collection, all) => {
-  if (collection === 'all') {
+const parse = (name, all) => {
+  if (name === 'all') {
     return all
   }
 
-  return collection.split(',')
-    .map(name => name.trim())
+  return name.split(',')
+    .map(x => x.trim())
 }
 
 /**
- *  Get if the collection name(s) are valid.
+ *  Get if the name(s) are valid.
  */
-const isValid = (collection, all, lookup) => {
-  return parse(collection, all)
-    .every(name => lookup.has(name))
+const isValid = (name, all, lookup) => {
+  return parse(name, all)
+    .every(x => lookup.has(x))
 }
 
 export default {
