@@ -22,6 +22,22 @@
 
 import MongoDb from 'mongodb'
 import mongoCodec from './codec/mongo'
+import collection from './util/collection'
+
+const COLLECTION_LOOKUP = new Set([
+  'accounts',
+  'addressResolutionStatements',
+  'blocks',
+  'chainStatistic',
+  'hashLocks',
+  'mosaicResolutionStatements',
+  'mosaics',
+  'multisigs',
+  'namespaces',
+  'secretLocks',
+  'transactionStatements',
+  'transactionStatuses'
+])
 
 /**
  *  Get connection to MongoDB.
@@ -47,28 +63,15 @@ const connect = async options => {
 /**
  *  List of all known MongoDB collections.
  */
-const COLLECTIONS = [
-  'accounts',
-  'addressResolutionStatements',
-  'blocks',
-  'chainStatistic',
-  'hashLocks',
-  'mosaicResolutionStatements',
-  'mosaics',
-  'multisigs',
-  'namespaces',
-  'secretLocks',
-  'transactionStatements',
-  'transactionStatuses'
-]
+const COLLECTIONS = Array.from(COLLECTION_LOOKUP).sort()
 
 /**
- *  Get if the collection name is valid.
+ *  Get if the collection name(s) are valid.
  *
- *  @param collection {String}     - Collection name.
+ *  @param collection {String}     - Comma-separated list of collection names.
  */
-const isValidCollection = collection => {
-  return collection === 'all' || COLLECTIONS.indexOf(collection) !== -1
+const isValidCollection = name => {
+  return collection.isValid(name, COLLECTIONS, COLLECTION_LOOKUP)
 }
 
 /**
@@ -87,9 +90,9 @@ const dumpOne = async options => {
 /**
  *  Dump all MongoDB collections to JSON.
  */
-const dumpAll = async options => {
+const dumpMany = async (options, collections) => {
   let result = {}
-  for (let collection of COLLECTIONS) {
+  for (let collection of collections) {
     result[collection] = await dumpOne({...options, collection})
   }
   return result
@@ -105,11 +108,12 @@ const dumpAll = async options => {
  *    @field verbose {Boolean}    - Display debug information.
  */
 const dump = async options => {
+  let collections = collection.parse(options.collection, COLLECTIONS)
   let client = await connect(options)
   let db = client.db()
   let data
-  if (options.collection === 'all') {
-    data = await dumpAll({...options, db})
+  if (collections.length !== 1) {
+    data = await dumpMany({...options, db}, collections)
   } else {
     data = await dumpOne({...options, db})
   }

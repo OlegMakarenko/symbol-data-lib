@@ -43,7 +43,8 @@ const options = yargs
   .option('collection', {
     alias: 'c',
     describe: (
-      'Name of collection to dump.\n'
+      'Name of collection(s) to dump.\n'
+      + 'Multiple collections can be provided with comma separators.\n'
       + 'Valid collections names:\n- all\n- '
       + symbolData.rocks.COLLECTIONS.join('\n- ')
     )
@@ -84,13 +85,6 @@ if (!symbolData.rocks.isValidCollection(options.collection)) {
 
 // Dump the RocksDB data to JSON.
 symbolData.rocks.dump(options).then(result => {
-  // Hash cache only hash keys, no values.
-  if (options.collection === 'HashCache') {
-    result = Object.keys(result)
-  } else if (options.collection === 'all') {
-    result.HashCache = Object.keys(result.HashCache)
-  }
-
   let json = JSON.stringify(result, null, 4) + '\n'
   if (options.output !== undefined) {
     fs.writeFileSync(options.output, json)

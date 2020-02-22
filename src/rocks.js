@@ -21,14 +21,10 @@
  */
 
 import rocksCodec from './codec/rocks'
+import collection from './util/collection'
 import Level from './util/level'
 
-// API
-
-/**
- *  List of all known RocksDB collections.
- */
-const COLLECTIONS = [
+const COLLECTION_LOOKUP = new Set([
   'AccountRestrictionCache',
   'AccountStateCache',
   'HashCache',
@@ -39,15 +35,22 @@ const COLLECTIONS = [
   'MultisigCache',
   'NamespaceCache',
   'SecretLockInfoCache'
-]
+])
+
+// API
 
 /**
- *  Get if the collection name is valid.
- *
- *  @param collection {String}     - Collection name.
+ *  List of all known RocksDB collections.
  */
-const isValidCollection = collection => {
-  return collection === 'all' || COLLECTIONS.indexOf(collection) !== -1
+const COLLECTIONS = Array.from(COLLECTION_LOOKUP).sort()
+
+/**
+ *  Get if the collection name(s) are valid.
+ *
+ *  @param collection {String}     - Comma-separated list of collection names.
+ */
+const isValidCollection = name => {
+  return collection.isValid(name, COLLECTIONS, COLLECTION_LOOKUP)
 }
 
 /**
@@ -88,15 +91,20 @@ const dumpOne = async options => {
   // Close the rocksdb handle.
   await level.close()
 
+  // Process the extracted data.
+  if (options.collection === 'HashCache') {
+    result = Object.keys(result)
+  }
+
   return result
 }
 
 /**
  *  Dump all RocksDB collections to JSON.
  */
-const dumpAll = async options => {
+const dumpMany = async (options, collections) => {
   let result = {}
-  for (let collection of COLLECTIONS) {
+  for (let collection of collections) {
     result[collection] = await dumpOne({...options, collection})
   }
   return result
@@ -108,13 +116,14 @@ const dumpAll = async options => {
  *  @param options {Object}       - Options to specify dump parameters.
  *    @field dataDir {String}     - Path to the catapult data directory.
  *    @field node {String}        - Name of the node (api-node-0).
- *    @field collection {String}  - Collection name.
+ *    @field collection {String}  - Collection name(s).
  *    @field limit {Number}       - Maximum number of items to dump.
  *    @field verbose {Boolean}    - Display debug information.
  */
 const dump = async options => {
-  if (options.collection === 'all') {
-    return dumpAll(options)
+  let collections = collection.parse(options.collection, COLLECTIONS)
+  if (collections.length !== 1) {
+    return dumpMany(options, collections)
   } else {
     return dumpOne(options)
   }

@@ -27,7 +27,7 @@ import Reader from './reader'
 
 class TcpReader extends Reader {
   static solitary(data, fn) {
-    let reader = new RocksReader(data)
+    let reader = new TcpReader(data)
     return reader.solitary(fn)
   }
 
@@ -38,19 +38,6 @@ class TcpReader extends Reader {
 
 // TODO(ahuszagh) Check catapult-meta/catapult-rest/demo/packet.py
 //    Shows how to connect, etc.
-
-/**
- *  Parse a generic packet, unknown if the request or type.
- */
-const parsePacket = (data, codecName) => {
-  if (data.length === codec[codecName].requestSize) {
-    return codec[codecName].request(data)
-  } else if (data.length === codec[codecName].responseSize) {
-    return codec[codecName].response(data)
-  } else {
-    throw new Error(`invalid packet type for codec ${codecName}, got ${data.length}`)
-  }
-}
 
 // CODEC
 
@@ -106,7 +93,7 @@ const codec = {
   // Parse a client challenge.
   clientChallenge: {
     // Parse a client challenge request.
-    request: data => {
+    request: () => {
       throw new Error('client challenge request does not exist.')
     },
 

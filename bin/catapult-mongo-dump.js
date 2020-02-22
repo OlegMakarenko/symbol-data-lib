@@ -43,7 +43,8 @@ const options = yargs
   .option('collection', {
     alias: 'c',
     describe: (
-      'Name of collection to dump.\n'
+      'Name of collection(s) to dump.\n'
+      + 'Multiple collections can be provided with comma separators.\n'
       + 'Valid collections names:\n- all\n- '
       + symbolData.mongo.COLLECTIONS.join('\n- ')
     )
