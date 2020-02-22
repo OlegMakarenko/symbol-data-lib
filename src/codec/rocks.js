@@ -20,7 +20,6 @@
  *  Codec to transform RocksDB models to JSON.
  */
 
-import assert from 'assert'
 import constants from './constants'
 import Reader from './reader'
 

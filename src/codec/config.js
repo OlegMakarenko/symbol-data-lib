@@ -41,8 +41,6 @@ const splitOne = (string, character) => {
   }
 }
 
-// TODO(ahuszagh) Need specialized ways to parse integers, etc.
-
 // PARSERS
 
 /**
@@ -59,7 +57,7 @@ const parseFileSize = value => {
 /**
  *  Parse a big integer from an INI value.
  */
-const parseBigInteger= value => {
+const parseBigInteger = value => {
   let str = value.replace(/'/g, '')
   if (str.length === 0) {
     throw new Error('invalid integer, got empty string')
@@ -218,6 +216,56 @@ const parseBlockSpan = value => {
   return value
 }
 
+const NODE_ROLES = new Set(['Peer', 'Api'])
+
+/**
+ *  Parse the node role.
+ */
+const parseNodeRole = value => {
+  if (!NODE_ROLES.has(value)) {
+    throw new Error(`invalid node role, got ${value}`)
+  }
+  return value
+}
+
+/**
+ *  Parse a list of node roles.
+ */
+const parseNodeRoleList = value => {
+  return value.split(',').map(parseNodeRole)
+}
+
+const TRANSACTION_SELECTION = new Set(['oldest', 'minimize-fee', 'maximize-fee'])
+
+/**
+ *  Parse a transaction selection strategy.
+ */
+const parseTransactionSelectionStrategy = value => {
+  if (!TRANSACTION_SELECTION.has(value)) {
+    throw new Error(`invalid transaction selection strategy, got ${value}`)
+  }
+  return value
+}
+
+const SECURITY_MODE = new Set(['Signed', 'None'])
+
+/**
+ *  Parse a connection security mode.
+ */
+const parseConnectionSecurityMode = value => {
+  if (!SECURITY_MODE.has(value)) {
+    throw new Error(`invalid connection security mode, got ${value}`)
+  }
+  return value
+}
+
+/**
+ *  Parse a list of connection security modes.
+ */
+const parseConnectionSecurityModeList = value => {
+  return value.split(',').map(parseConnectionSecurityMode)
+}
+
 const LOGGING_SECTIONS = new Set(['console', 'console.component.levels', 'file', 'file.component.levels'])
 
 /**
@@ -233,9 +281,6 @@ const isValidLoggingSection = key => {
 const isValidPluginName = name => {
   return /[A-Za-z.]/.test(name)
 }
-
-// TODO(ahuszagh) Need parsers for specialized values
-//   Etc...
 
 /**
  *  Parse a general INI file from a UTF-8 string.
@@ -261,7 +306,7 @@ const parseIni = ini => {
         throw new Error('invalid section in INI file, no ending bracket.')
       }
       let section = trimmed.slice(1, trimmed.length - 1).trim()
-      if (result.hasOwnProperty(section)) {
+      if (Object.prototype.hasOwnProperty.call(result, section)) {
         throw new Error(`section ${section} already defined, cannot have duplicate sections.`)
       }
       result[section] = current = {}
@@ -272,7 +317,7 @@ const parseIni = ini => {
         throw new Error('invalid key/value pair in INI file, no "=" character found.')
       }
       let [key, value] = split.map(item => item.trim())
-      if (current.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(current, key)) {
         throw new Error(`section has duplicate key ${key}, cannot have duplicate keys.`)
       }
       current[key] = value
@@ -725,7 +770,112 @@ const codec = {
 
   // Parse the node config file from data.
   node: data => {
-    // TODO(ahuszagh) Implement
+    let ini = parseIni(data)
+
+    // Node
+    let node = {
+      port: parseInteger(ini.node.port),
+      apiPort: parseInteger(ini.node.apiPort),
+      maxIncomingConnectionsPerIdentity: parseInteger(ini.node.maxIncomingConnectionsPerIdentity),
+      enableAddressReuse: parseBoolean(ini.node.enableAddressReuse),
+      enableSingleThreadPool: parseBoolean(ini.node.enableSingleThreadPool),
+      enableCacheDatabaseStorage: parseBoolean(ini.node.enableCacheDatabaseStorage),
+      enableAutoSyncCleanup: parseBoolean(ini.node.enableAutoSyncCleanup),
+      enableTransactionSpamThrottling: parseBoolean(ini.node.enableTransactionSpamThrottling),
+      transactionSpamThrottlingMaxBoostFee: parseBigInteger(ini.node.transactionSpamThrottlingMaxBoostFee),
+      maxBlocksPerSyncAttempt: parseInteger(ini.node.maxBlocksPerSyncAttempt),
+      maxChainBytesPerSyncAttempt: parseFileSize(ini.node.maxChainBytesPerSyncAttempt),
+      shortLivedCacheTransactionDuration: parseTimeSpan(ini.node.shortLivedCacheTransactionDuration),
+      shortLivedCacheBlockDuration: parseTimeSpan(ini.node.shortLivedCacheBlockDuration),
+      shortLivedCachePruneInterval: parseTimeSpan(ini.node.shortLivedCachePruneInterval),
+      shortLivedCacheMaxSize: parseInteger(ini.node.shortLivedCacheMaxSize),
+      minFeeMultiplier: parseBigInteger(ini.node.minFeeMultiplier),
+      transactionSelectionStrategy: parseTransactionSelectionStrategy(ini.node.transactionSelectionStrategy),
+      unconfirmedTransactionsCacheMaxResponseSize: parseFileSize(ini.node.unconfirmedTransactionsCacheMaxResponseSize),
+      unconfirmedTransactionsCacheMaxSize: parseInteger(ini.node.unconfirmedTransactionsCacheMaxSize),
+      connectTimeout: parseTimeSpan(ini.node.connectTimeout),
+      syncTimeout: parseTimeSpan(ini.node.syncTimeout),
+      socketWorkingBufferSize: parseFileSize(ini.node.socketWorkingBufferSize),
+      socketWorkingBufferSensitivity: parseInteger(ini.node.socketWorkingBufferSensitivity),
+      maxPacketDataSize: parseFileSize(ini.node.maxPacketDataSize),
+      blockDisruptorSize: parseInteger(ini.node.blockDisruptorSize),
+      blockElementTraceInterval: parseInteger(ini.node.blockElementTraceInterval),
+      transactionDisruptorSize: parseInteger(ini.node.transactionDisruptorSize),
+      transactionElementTraceInterval: parseInteger(ini.node.transactionElementTraceInterval),
+      enableDispatcherAbortWhenFull: parseBoolean(ini.node.enableDispatcherAbortWhenFull),
+      enableDispatcherInputAuditing: parseBoolean(ini.node.enableDispatcherInputAuditing),
+      outgoingSecurityMode: parseConnectionSecurityModeList(ini.node.outgoingSecurityMode),
+      incomingSecurityModes: parseConnectionSecurityModeList(ini.node.incomingSecurityModes),
+      maxCacheDatabaseWriteBatchSize: parseFileSize(ini.node.maxCacheDatabaseWriteBatchSize),
+      maxTrackedNodes: parseInteger(ini.node.maxTrackedNodes),
+      batchVerificationRandomSource: parseString(ini.node.batchVerificationRandomSource),
+      trustedHosts: parseStringList(ini.node.trustedHosts),
+      localNetworks: parseStringList(ini.node.localNetworks)
+    }
+    if (Object.keys(ini.node).length != 37) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    // Local node.
+    let localNode = {
+      host: parseString(ini.localnode.host),
+      friendlyName: parseString(ini.localnode.friendlyName),
+      version: parseInteger(ini.localnode.version),
+      roles: parseNodeRoleList(ini.localnode.roles)
+    }
+    if (Object.keys(ini.localnode).length != 4) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    // Outgoing connections.
+    let outgoingConnections = {
+      maxConnections: parseInteger(ini.outgoing_connections.maxConnections),
+      maxConnectionAge: parseInteger(ini.outgoing_connections.maxConnectionAge),
+      maxConnectionBanAge: parseInteger(ini.outgoing_connections.maxConnectionBanAge),
+      numConsecutiveFailuresBeforeBanning: parseInteger(ini.outgoing_connections.numConsecutiveFailuresBeforeBanning)
+    }
+    if (Object.keys(ini.outgoing_connections).length != 4) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    // Incoming connections.
+    let incomingConnections = {
+      maxConnections: parseInteger(ini.incoming_connections.maxConnections),
+      maxConnectionAge: parseInteger(ini.incoming_connections.maxConnectionAge),
+      maxConnectionBanAge: parseInteger(ini.incoming_connections.maxConnectionBanAge),
+      numConsecutiveFailuresBeforeBanning: parseInteger(ini.incoming_connections.numConsecutiveFailuresBeforeBanning),
+      backlogSize: parseInteger(ini.incoming_connections.backlogSize)
+    }
+    if (Object.keys(ini.incoming_connections).length != 5) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    // Banning.
+    let banning = {
+      defaultBanDuration: parseTimeSpan(ini.banning.defaultBanDuration),
+      maxBanDuration: parseTimeSpan(ini.banning.maxBanDuration),
+      keepAliveDuration: parseTimeSpan(ini.banning.keepAliveDuration),
+      maxBannedNodes: parseInteger(ini.banning.maxBannedNodes),
+      numReadRateMonitoringBuckets: parseInteger(ini.banning.numReadRateMonitoringBuckets),
+      readRateMonitoringBucketDuration: parseTimeSpan(ini.banning.readRateMonitoringBucketDuration),
+      maxReadRateMonitoringTotalSize: parseFileSize(ini.banning.maxReadRateMonitoringTotalSize)
+    }
+    if (Object.keys(ini.banning).length != 7) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    // Validate object keys.
+    if (Object.keys(ini).length != 5) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    return {
+      node,
+      localNode,
+      outgoingConnections,
+      incomingConnections,
+      banning
+    }
   },
 
   // Parse the partial transactions config file from data.
@@ -745,7 +895,34 @@ const codec = {
 
   // Parse the task config file from data.
   task: data => {
-    // TODO(ahuszagh) Implement
+    let ini = parseIni(data)
+    let tasks = {}
+    for (let [key, value] of Object.entries(ini)) {
+      if (Object.prototype.hasOwnProperty.call(value, 'repeatDelay')) {
+        // Uniform
+        tasks[key] = {
+          startDelay: parseTimeSpan(value.startDelay),
+          repeatDelay: parseTimeSpan(value.repeatDelay)
+        }
+        if (Object.keys(value).length !== 2) {
+          throw new Error('invalid configuration file, got unexpected keys.')
+        }
+      } else {
+        // Decelerating
+        tasks[key] = {
+          startDelay: parseTimeSpan(value.startDelay),
+          minDelay: parseTimeSpan(value.minDelay),
+          maxDelay: parseTimeSpan(value.maxDelay),
+          numPhaseOneRounds: parseInteger(value.numPhaseOneRounds),
+          numTransitionRounds: parseInteger(value.numTransitionRounds)
+        }
+        if (Object.keys(value).length !== 5) {
+          throw new Error('invalid configuration file, got unexpected keys.')
+        }
+      }
+    }
+
+    return tasks
   },
 
   // Parse the time sync config file from data.
@@ -763,20 +940,53 @@ const codec = {
 
   // Parse the user config file from data.
   user: data => {
-    // TODO(ahuszagh) Implement
+    let ini = parseIni(data)
+
+    // Account
+    let bootPrivateKey = parseString(ini.account.bootPrivateKey)
+    let enableDelegatedHarvestersAutoDetection = parseBoolean(ini.account.enableDelegatedHarvestersAutoDetection)
+    if (Object.keys(ini.account).length !== 2) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    // Storage
+    let dataDirectory = parseString(ini.storage.dataDirectory)
+    let pluginsDirectory = parseString(ini.storage.pluginsDirectory)
+    if (Object.keys(ini.storage).length !== 2) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    // Validate entire object
+    if (Object.keys(ini).length !== 2) {
+      throw new Error('invalid configuration file, got unexpected keys.')
+    }
+
+    return {
+      bootPrivateKey,
+      enableDelegatedHarvestersAutoDetection,
+      dataDirectory,
+      pluginsDirectory
+    }
   },
 
-  // TODO(ahuszagh) Add more config file types...
+  // Parse the generic peers config file from data.
+  peers: data => {
+    let json = JSON.parse(data)
+    return json.knownPeers.map(peer => ({
+      publicKey: parseString(peer.publicKey),
+      endpoint: peer.endpoint,
+      metadata: {
+        name: parseString(peer.metadata.name),
+        roles: parseNodeRoleList(peer.metadata.roles)
+      },
+    }))
+  },
 
   // Parse the peers API config file from data.
-  peersApi: data => {
-    // TODO(ahuszagh) Implement
-  },
+  peersApi: data => codec.peers(data),
 
   // Parse the peers P2P config file from data.
-  peersP2p: data => {
-    // TODO(ahuszagh) Implement
-  },
+  peersP2p: data => codec.peers(data),
 
   // Read a generic configuration file.
   file: file => {

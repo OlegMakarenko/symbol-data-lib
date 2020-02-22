@@ -370,7 +370,84 @@ describe('config', () => {
   })
 
   it('should parse node data', () => {
-    // TODO(ahuszagh) Implement...
+    let file = path.join(CONFIG_DIR, 'config-node.properties')
+    expect(config.file(file)).to.eql({
+      node: {
+        port: 7900,
+        apiPort: 7901,
+        maxIncomingConnectionsPerIdentity: 3,
+        enableAddressReuse: false,
+        enableSingleThreadPool: false,
+        enableCacheDatabaseStorage: true,
+        enableAutoSyncCleanup: false,
+        enableTransactionSpamThrottling: true,
+        transactionSpamThrottlingMaxBoostFee: '10000000',
+        maxBlocksPerSyncAttempt: 400,
+        maxChainBytesPerSyncAttempt: '100MB',
+        shortLivedCacheTransactionDuration: '10m',
+        shortLivedCacheBlockDuration: '100m',
+        shortLivedCachePruneInterval: '90s',
+        shortLivedCacheMaxSize: 200000,
+        minFeeMultiplier: '100',
+        transactionSelectionStrategy: 'maximize-fee',
+        unconfirmedTransactionsCacheMaxResponseSize: '20MB',
+        unconfirmedTransactionsCacheMaxSize: 50000,
+        connectTimeout: '15s',
+        syncTimeout: '120s',
+        socketWorkingBufferSize: '512KB',
+        socketWorkingBufferSensitivity: 100,
+        maxPacketDataSize: '150MB',
+        blockDisruptorSize: 4096,
+        blockElementTraceInterval: 1,
+        transactionDisruptorSize: 16384,
+        transactionElementTraceInterval: 10,
+        enableDispatcherAbortWhenFull: false,
+        enableDispatcherInputAuditing: true,
+        outgoingSecurityMode: [ 'Signed' ],
+        incomingSecurityModes: [ 'None', 'Signed' ],
+        maxCacheDatabaseWriteBatchSize: '5MB',
+        maxTrackedNodes: 5000,
+        batchVerificationRandomSource: '/dev/urandom',
+        trustedHosts: [
+          '127.0.0.1'
+        ],
+        localNetworks: [
+          '127.0.0.1',
+          '172.20.0.9'
+        ]
+      },
+      localNode: {
+        host: '',
+        friendlyName: 'C1B4E25B',
+        version: 0,
+        roles: [
+          'Api',
+          'Peer'
+        ]
+      },
+      outgoingConnections: {
+        maxConnections: 10,
+        maxConnectionAge: 200,
+        maxConnectionBanAge: 20,
+        numConsecutiveFailuresBeforeBanning: 30
+      },
+      incomingConnections: {
+        maxConnections: 512,
+        maxConnectionAge: 200,
+        maxConnectionBanAge: 20,
+        numConsecutiveFailuresBeforeBanning: 30,
+        backlogSize: 512
+      },
+      banning: {
+        defaultBanDuration: '12h',
+        maxBanDuration: '72h',
+        keepAliveDuration: '48h',
+        maxBannedNodes: 5000,
+        numReadRateMonitoringBuckets: 4,
+        readRateMonitoringBucketDuration: '15s',
+        maxReadRateMonitoringTotalSize: '100MB'
+      }
+    })
   })
 
   it('should parse partial transactions data', () => {
@@ -386,7 +463,82 @@ describe('config', () => {
   })
 
   it('should parse task data', () => {
-    // TODO(ahuszagh) Implement...
+    let file = path.join(CONFIG_DIR, 'config-task.properties')
+    expect(config.file(file)).to.eql({
+      'age peers task for service Api Writers': {
+        startDelay: '1m',
+        repeatDelay: '1m'
+      },
+      'age peers task for service Readers': {
+        startDelay: '1m',
+        repeatDelay: '1m'
+      },
+      'batch partial transaction task': {
+        startDelay: '500ms',
+        repeatDelay: '500ms'
+      },
+      'batch transaction task': {
+        startDelay: '500ms',
+        repeatDelay: '500ms'
+      },
+      'connect peers task for service Pt': {
+        startDelay: '1s',
+        repeatDelay: '1m'
+      },
+      'connect peers task for service Sync': {
+        startDelay: '1s',
+        repeatDelay: '1m'
+      },
+      'harvesting task': {
+        startDelay: '30s',
+        repeatDelay: '1s'
+      },
+      'logging task': {
+        startDelay: '1m',
+        repeatDelay: '10m'
+      },
+      'network chain height detection': {
+        startDelay: '1s',
+        repeatDelay: '15s'
+      },
+      'node discovery peers task': {
+        startDelay: '1m',
+        minDelay: '1m',
+        maxDelay: '10m',
+        numPhaseOneRounds: 10,
+        numTransitionRounds: 20
+      },
+      'node discovery ping task': {
+        startDelay: '2m',
+        repeatDelay: '5m'
+      },
+      'pull partial transactions task': {
+        startDelay: '10s',
+        repeatDelay: '3s'
+      },
+      'pull unconfirmed transactions task': {
+        startDelay: '4s',
+        repeatDelay: '3s'
+      },
+      'static node refresh task': {
+        startDelay: '5ms',
+        minDelay: '15s',
+        maxDelay: '24h',
+        numPhaseOneRounds: 20,
+        numTransitionRounds: 20
+      },
+      'synchronizer task': {
+        startDelay: '3s',
+        repeatDelay: '3s'
+      },
+      'time synchronization task': {
+        startDelay: '1m',
+        minDelay: '3m',
+        maxDelay: '180m',
+        numPhaseOneRounds: 5,
+        numTransitionRounds: 10
+      }
+    })
   })
 
   it('should parse time synchronization data', () => {
@@ -401,19 +553,158 @@ describe('config', () => {
   })
 
   it('should parse user data', () => {
-    // TODO(ahuszagh) Implement...
+    let data = '[account]\n\nbootPrivateKey = D62FC2647D523394C5883650F972646303D9D717CCADA9B645EA6A893F323171\nenableDelegatedHarvestersAutoDetection = true\n\n[storage]\n\ndataDirectory = /data\npluginsDirectory = /usr/catapult/lib\n'
+    let actual = config.user(data)
+    expect(actual).to.eql({
+      bootPrivateKey: 'D62FC2647D523394C5883650F972646303D9D717CCADA9B645EA6A893F323171',
+      enableDelegatedHarvestersAutoDetection: true,
+      dataDirectory: '/data',
+      pluginsDirectory: '/usr/catapult/lib'
+    })
+
+    let file = path.join(CONFIG_DIR, 'config-user.properties')
+    expect(actual).to.eql(config.file(file))
   })
 
   it('should parse peers API data', () => {
-    // TODO(ahuszagh) Implement...
+    let file = path.join(CONFIG_DIR, 'peers-api.json')
+    expect(config.file(file)).to.eql([
+      {
+        publicKey: 'B3E0DA69C4B05D83095329BE6AFE63C390947E42F46C9E88C68366A11CC7744F',
+        endpoint: {
+          host: 'api-xym-3-01.ap-northeast-1.nemtech.network',
+          port: 7900
+        },
+        metadata:  {
+          name: 'api-xym-3-01-ap-northeast-1',
+          roles: [
+            'Api'
+          ]
+        }
+      },
+      {
+        publicKey: 'EED6DC460C8F221D734C4042BE954AE4462CFC69C9867445F372129871027348',
+        endpoint: {
+          host: 'api-xym-3-01.ap-southeast-1.nemtech.network',
+          port: 7900
+        },
+        metadata:  {
+          name: 'api-xym-3-01-ap-southeast-1',
+          roles: [
+            'Api'
+          ]
+        }
+      },
+      {
+        publicKey: 'B719697D23BFBB00A61F007BC804EFE55000B444EF32FF6BBA895A2FE7DDBD7C',
+        endpoint: {
+          host: 'api-xym-3-01.us-west-2.nemtech.network',
+          port: 7900
+        },
+        metadata: {
+          name: 'api-xym-3-01-us-west-2',
+          roles: [
+            'Api'
+          ]
+        }
+      },
+      {
+        publicKey: '73FAE8B25A86225CF07C35D311F00AEDAE97BF86E5B8ED9E178AA06D6EC3E4AE',
+        endpoint: {
+          host: 'api-xym-harvest-3-01.us-west-2.nemtech.network',
+          port: 7900
+        },
+        metadata:  {
+          name: 'api-xym-harvest-3-01-us-west-2',
+          roles: [
+            'Peer',
+            'Api'
+          ]
+        }
+      }
+    ])
   })
 
   it('should parse peers P2P data', () => {
-    // TODO(ahuszagh) Implement...
+    let file = path.join(CONFIG_DIR, 'peers-p2p.json')
+    expect(config.file(file)).to.eql([
+      {
+        publicKey: '8830AE4B12856EF0FA185383EA59A2EC9FF5E71A5373BAF1133DBCC218C57FDB',
+        endpoint: {
+          host: 'beacon-xym-3-01.us-west-1.nemtech.network',
+          port: 7900
+        },
+        metadata: {
+          name: 'beacon-xym-3-01-us-west-1',
+          roles: [
+            'Peer'
+          ]
+        }
+      },
+      {
+        publicKey: '9B7A9EC47943AAB7DB8A09F26F2612BDAECCE9F4C94BC1CD65BBF212778AAD83',
+        endpoint: {
+          host: 'beacon-xym-3-01.eu-west-1.nemtech.network',
+          port: 7900
+        },
+        metadata: {
+          name: 'beacon-xym-3-01-eu-west-1',
+          roles: [
+            'Peer'
+          ]
+        }
+      },
+      {
+        publicKey: '7FD1F433E417FBB39D2DB6BAAAD43BC2D4F51FA42AAFE9AB51638A1A106298AD',
+        endpoint: {
+          host: 'beacon-xym-3-01.ap-northeast-1.nemtech.network',
+          port: 7900
+        },
+        metadata: {
+          name: 'beacon-xym-3-01-ap-northeast-1',
+          roles: [
+            'Peer'
+          ]
+        }
+      },
+      {
+        publicKey: '6782BCA81B7D50439E07286ECC83152F95A57786CBEDC501E71EFC2EA83BE883',
+        endpoint: {
+          host: 'beacon-xym-3-01.ap-southeast-1.nemtech.network',
+          port: 7900
+        },
+        metadata: {
+          name: 'beacon-xym-3-01-ap-southeast-1',
+          roles: [
+            'Peer'
+          ]
+        }
+      }
+    ])
   })
 
-  // TODO(ahuszagh) need to parse the directory.
-  // Need to check the file parse works.
+  it('should parse a directory', () => {
+    let actual = config.directory(CONFIG_DIR)
+    expect(Object.keys(actual)).to.eql([
+      'config-database.properties',
+      'config-extensions-broker.properties',
+      'config-extensions-recovery.properties',
+      'config-extensions-server.properties',
+      'config-harvesting.properties',
+      'config-inflation.properties',
+      'config-logging-broker.properties',
+      'config-logging-recovery.properties',
+      'config-logging-server.properties',
+      'config-messaging.properties',
+      'config-network.properties',
+      'config-networkheight.properties',
+      'config-node.properties',
+      'config-pt.properties',
+      'config-task.properties',
+      'config-timesync.properties',
+      'config-user.properties',
+      'peers-api.json',
+      'peers-p2p.json'
+    ])
+  })
 })
-
-// TODO(ahuszagh) Here...
