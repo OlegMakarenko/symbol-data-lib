@@ -190,9 +190,9 @@ const codec = {
     }
   },
 
-  // Parse pull block information.
+  // Parse pull blocks information.
   pullBlocks: {
-    // Parse a pull block request.
+    // Parse a pull blocks request.
     request: data => {
       let reader = new TcpReader(data)
       let height = reader.uint64()
@@ -207,7 +207,7 @@ const codec = {
       }
     },
 
-    // Parse a pull block response.
+    // Parse a pull blocks response.
     response: data => {
       let reader = new TcpReader(data)
       let blocks = []
@@ -217,6 +217,41 @@ const codec = {
       reader.validateEmpty()
 
       return blocks
+    }
+  },
+
+  // Parse pull transactions information.
+  pullTransactions: {
+    // TODO(ahuszagh) Implement...
+  },
+
+  // Parse sub cache merkle roots.
+  subCacheMerkleRoots: {
+    // Parse a sub cache merkle request.
+    request: data => {
+      let reader = new TcpReader(data)
+      let height = reader.uint64()
+      reader.validateEmpty()
+
+      return {
+        height
+      }
+    },
+
+    // Parse a sub cache merkle response.
+    response: data => {
+      if (data.length % 32 !== 0) {
+        throw new Error('invalid block hashes response.');
+      }
+
+      let hashes = []
+      let reader = new TcpReader(data)
+      while (reader.data.length !== 0) {
+        hashes.push(reader.hash256())
+      }
+      reader.validateEmpty()
+
+      return hashes
     }
   },
 
