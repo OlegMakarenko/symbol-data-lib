@@ -34,6 +34,64 @@ class TcpReader extends CatbufferReader {
   challenge() {
     return this.hexN(constants.challengeSize)
   }
+
+  empty() {
+    return {}
+  }
+
+  hashes() {
+    let hashes = []
+    while (this.data.length !== 0) {
+      hashes.push(this.hash256())
+    }
+
+    return hashes
+  }
+
+  node() {
+    // Skip the node size.
+    this.uint32()
+    let version = this.uint32()
+    let publicKey = this.key()
+    let roles = this.uint32()
+    let port = this.uint16()
+    let networkIdentifier = this.uint8()
+    let hostSize = this.uint8()
+    let friendlyNameSize = this.uint8()
+    let host = this.asciiN(hostSize)
+    let friendlyName = this.asciiN(friendlyNameSize)
+
+    return {
+      version,
+      publicKey,
+      roles,
+      port,
+      networkIdentifier,
+      host,
+      friendlyName
+    }
+  }
+
+  nodes() {
+    let nodes = []
+    while (this.data.length !== 0) {
+      nodes.push(this.node())
+    }
+
+    return nodes
+  }
+
+  timeSync() {
+    let sendTimestamp = this.uint64()
+    let receiveTimestamp = this.uint64()
+
+    return {
+      communicationTimestamps: {
+        sendTimestamp,
+        receiveTimestamp
+      }
+    }
+  }
 }
 
 // TODO(ahuszagh) Check catapult-meta/catapult-rest/demo/packet.py
@@ -62,15 +120,9 @@ const codec = {
   // Parse a server challenge.
   serverChallenge: {
     // Parse a server challenge request.
-    request: data => {
-      let reader = new TcpReader(data)
-      let challenge = reader.challenge()
-      reader.validateEmpty()
-
-      return {
-        challenge
-      }
-    },
+    request: data => ({
+      challenge: TcpReader.solitary(data, 'challenge')
+    }),
 
     // Parse a server challenge response.
     response: data => {
@@ -98,49 +150,26 @@ const codec = {
     },
 
     // Parse a client challenge response.
-    response: data => {
-      let reader = new TcpReader(data)
-      let challenge = reader.challenge()
-      reader.validateEmpty()
-
-      return {
-        challenge
-      }
-    }
+    response: data => ({
+      challenge: TcpReader.solitary(data, 'challenge')
+    })
   },
 
   // Parse pull block information.
   pullBlock: {
     // Parse a pull block request.
-    request: data => {
-      let reader = new TcpReader(data)
-      let height = reader.uint64()
-      reader.validateEmpty()
-
-      return {
-        height
-      }
-    },
+    request: data => ({
+      height: TcpReader.solitary(data, 'uint64')
+    }),
 
     // Parse a pull block response.
-    response: data => {
-      let reader = new TcpReader(data)
-      let block = reader.block()
-      reader.validateEmpty()
-
-      return block
-    }
+    response: data => TcpReader.solitary(data, 'block')
   },
 
   // Parse chain information
   chainInfo: {
     // Parse a chain info request.
-    request: data => {
-      let reader = new TcpReader(data)
-      reader.validateEmpty()
-
-      return {}
-    },
+    request: data => TcpReader.solitary(data, 'empty'),
 
     // Parse a chain info response.
     response: data => {
@@ -174,20 +203,7 @@ const codec = {
     },
 
     // Parse a block hashes response.
-    response: data => {
-      if (data.length % 32 !== 0) {
-        throw new Error('invalid block hashes response.');
-      }
-
-      let hashes = []
-      let reader = new TcpReader(data)
-      while (reader.data.length !== 0) {
-        hashes.push(reader.hash256())
-      }
-      reader.validateEmpty()
-
-      return hashes
-    }
+    response: data => TcpReader.solitary(data, 'hashes')
   },
 
   // Parse pull blocks information.
@@ -208,16 +224,7 @@ const codec = {
     },
 
     // Parse a pull blocks response.
-    response: data => {
-      let reader = new TcpReader(data)
-      let blocks = []
-      while (reader.data.length !== 0) {
-        blocks.push(reader.block())
-      }
-      reader.validateEmpty()
-
-      return blocks
-    }
+    response: data => TcpReader.solitary(data, 'blocks')
   },
 
   // Parse pull transactions information.
@@ -228,137 +235,39 @@ const codec = {
   // Parse sub cache merkle roots.
   subCacheMerkleRoots: {
     // Parse a sub cache merkle request.
-    request: data => {
-      let reader = new TcpReader(data)
-      let height = reader.uint64()
-      reader.validateEmpty()
-
-      return {
-        height
-      }
-    },
+    request: data => ({
+      height: TcpReader.solitary(data, 'uint64')
+    }),
 
     // Parse a sub cache merkle response.
-    response: data => {
-      if (data.length % 32 !== 0) {
-        throw new Error('invalid block hashes response.');
-      }
-
-      let hashes = []
-      let reader = new TcpReader(data)
-      while (reader.data.length !== 0) {
-        hashes.push(reader.hash256())
-      }
-      reader.validateEmpty()
-
-      return hashes
-    }
+    response: data => TcpReader.solitary(data, 'hashes')
   },
 
   // Parse local node information.
   pullNodeInfo: {
     // Parse a node info request.
-    request: data => {
-      let reader = new TcpReader(data)
-      reader.validateEmpty()
-
-      return {}
-    },
+    request: data => TcpReader.solitary(data, 'empty'),
 
     // Parse a node info response.
-    response: data => {
-      let reader = new TcpReader(data)
-      // Skip the node size.
-      reader.uint32()
-      let version = reader.uint32()
-      let publicKey = reader.key()
-      let roles = reader.uint32()
-      let port = reader.uint16()
-      let networkIdentifier = reader.uint8()
-      let hostSize = reader.uint8()
-      let friendlyNameSize = reader.uint8()
-      let host = reader.asciiN(hostSize)
-      let friendlyName = reader.asciiN(friendlyNameSize)
-      reader.validateEmpty()
-
-      return {
-        version,
-        publicKey,
-        roles,
-        port,
-        networkIdentifier,
-        host,
-        friendlyName
-      }
-    }
+    response: data => TcpReader.solitary(data, 'node')
   },
 
   // Parse node peers information.
   pullNodePeers: {
     // Parse a node peers request.
-    request: data => {
-      let reader = new TcpReader(data)
-      reader.validateEmpty()
-
-      return {}
-    },
+    request: data => TcpReader.solitary(data, 'empty'),
 
     // Parse a node peers response.
-    response: data => {
-      let reader = new TcpReader(data)
-      let peers = []
-      while (reader.data.length !== 0) {
-        // Skip the node size.
-        reader.uint32()
-        let version = reader.uint32()
-        let publicKey = reader.key()
-        let roles = reader.uint32()
-        let port = reader.uint16()
-        let networkIdentifier = reader.uint8()
-        let hostSize = reader.uint8()
-        let friendlyNameSize = reader.uint8()
-        let host = reader.asciiN(hostSize)
-        let friendlyName = reader.asciiN(friendlyNameSize)
-        peers.push({
-          version,
-          publicKey,
-          roles,
-          port,
-          networkIdentifier,
-          host,
-          friendlyName
-        })
-      }
-      reader.validateEmpty()
-
-      return peers
-    }
+    response: data => TcpReader.solitary(data, 'nodes')
   },
 
   // Parse time synchronization information.
   timeSync: {
     // Parse a time synchronization request.
-    request: data => {
-      let reader = new TcpReader(data)
-      reader.validateEmpty()
-
-      return {}
-    },
+    request: data => TcpReader.solitary(data, 'empty'),
 
     // Parse a time synchronization response.
-    response: data => {
-      let reader = new TcpReader(data)
-      let sendTimestamp = reader.uint64()
-      let receiveTimestamp = reader.uint64()
-      reader.validateEmpty()
-
-      return {
-        communicationTimestamps: {
-          sendTimestamp,
-          receiveTimestamp
-        }
-      }
-    }
+    response: data => TcpReader.solitary(data, 'timeSync')
   },
 
   // TODO(ahuszagh) Add in a lot more codecs.
