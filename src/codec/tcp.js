@@ -519,40 +519,34 @@ const codec = {
   // Parse namespace state path information.
   namespaceStatePath: {
     // Parse a namespace state path request.
-    request: data => {
-      throw new Error('not yet implemented')
-    },
+    request: data => ({
+      namespaceId: TcpReader.solitary(data, 'id')
+    }),
 
     // Parse a namespace state path response.
-    response: data => {
-      throw new Error('not yet implemented')
-    }
+    response: data => TcpReader.solitary(data, 'tree')
   },
 
   // Parse account restrictions state path information.
   accountRestrictionsStatePath: {
     // Parse an account restrictions state path request.
-    request: data => {
-      throw new Error('not yet implemented')
-    },
+    request: data => ({
+      address: TcpReader.solitary(data, 'address')
+    }),
 
     // Parse an account restrictions state path response.
-    response: data => {
-      throw new Error('not yet implemented')
-    }
+    response: data => TcpReader.solitary(data, 'tree')
   },
 
   // Parse mosaic restrictions state path information.
   mosaicRestrictionsStatePath: {
     // Parse a mosaic restrictions state path request.
-    request: data => {
-      throw new Error('not yet implemented')
-    },
+    request: data => ({
+      hash: TcpReader.solitary(data, 'hash256')
+    }),
 
     // Parse a mosaic restrictions state path response.
-    response: data => {
-      throw new Error('not yet implemented')
-    }
+    response: data => TcpReader.solitary(data, 'tree')
   },
 
   // Parse diagnostic counters information.
