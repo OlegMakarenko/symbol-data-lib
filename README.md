@@ -370,7 +370,7 @@ symbolData.audit.dump({
     })
 ```
 
-If we want finer-tuned control, we can use the low-level codec API:
+If we want finer-tuned control, we can use the low-level codec API. The low-level API primarily parses data fro
 
 ```javascript
 import symbolData = 'symbol-data-lib'

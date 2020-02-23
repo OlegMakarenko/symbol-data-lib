@@ -20,12 +20,12 @@
  *  Codec to transform models returned via TCP requests to JSON.
  */
 
+import CatbufferReader from './catbuffer'
 import constants from './constants'
-import Reader from './reader'
 
 // READERS
 
-class TcpReader extends Reader {
+class TcpReader extends CatbufferReader {
   static solitary(data, fn) {
     let reader = new TcpReader(data)
     return reader.solitary(fn)
@@ -109,8 +109,87 @@ const codec = {
     }
   },
 
+  // Parse pull block information.
+  pullBlock: {
+    // Parse a pull block request.
+    request: data => {
+      let reader = new TcpReader(data)
+      let height = reader.uint64()
+      reader.validateEmpty()
+
+      return {
+        height
+      }
+    },
+
+    // Parse a pull block response.
+    response: data => {
+      let reader = new TcpReader(data)
+      let block = reader.block()
+      reader.validateEmpty()
+
+      return block
+    }
+  },
+
+  // Parse chain information
+  chainInfo: {
+    // Parse a chain info request.
+    request: data => {
+      let reader = new TcpReader(data)
+      reader.validateEmpty()
+
+      return {}
+    },
+
+    // Parse a chain info response.
+    response: data => {
+      let reader = new TcpReader(data)
+      let height = reader.uint64()
+      let scoreHigh = reader.uint64()
+      let scoreLow = reader.uint64()
+      reader.validateEmpty()
+
+      return {
+        height,
+        scoreHigh,
+        scoreLow
+      }
+    }
+  },
+
+  // Parse pull block information.
+  pullBlocks: {
+    // Parse a pull block request.
+    request: data => {
+      let reader = new TcpReader(data)
+      let height = reader.uint64()
+      let blocks = reader.uint32()
+      let bytes = reader.uint32()
+      reader.validateEmpty()
+
+      return {
+        height,
+        blocks,
+        bytes
+      }
+    },
+
+    // Parse a pull block response.
+    response: data => {
+      let reader = new TcpReader(data)
+      let blocks = []
+      while (reader.data.length !== 0) {
+        blocks.push(reader.block())
+      }
+      reader.validateEmpty()
+
+      return blocks
+    }
+  },
+
   // Parse local node information.
-  nodeInfo: {
+  pullNodeInfo: {
     // Parse a node info request.
     request: data => {
       let reader = new TcpReader(data)
@@ -148,7 +227,7 @@ const codec = {
   },
 
   // Parse node peers information.
-  nodePeers: {
+  pullNodePeers: {
     // Parse a node peers request.
     request: data => {
       let reader = new TcpReader(data)
@@ -221,14 +300,16 @@ const codec = {
   packet: (data, codecName) => {
     let packet = codec.header(data)
     // TODO(ahuszagh) Add in a lot more packet types.
+    // May need to handle both push and pull
+    // TODO(ahuszagh) need to add the ones mising from above.
     if (packet.type === constants.serverChallenge) {
       return codec.serverChallenge[codecName](packet.payload)
     } else if (packet.type === constants.clientChallenge) {
       return codec.clientChallenge[codecName](packet.payload)
     } else if (packet.type === constants.nodeDiscoveryPullPing) {
-      return codec.nodeInfo[codecName](packet.payload)
+      return codec.pullNodeInfo[codecName](packet.payload)
     } else if (packet.type === constants.nodeDiscoveryPullPeers) {
-      return codec.nodePeers[codecName](packet.payload)
+      return codec.pullNodePeers[codecName](packet.payload)
     } else if (packet.type === constants.timeSyncNetworkTime) {
       return codec.timeSync[codecName](packet.payload)
     } else {

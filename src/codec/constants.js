@@ -20,6 +20,22 @@
  *  Shared constants from catapult enumerations.
  */
 
+// Facility code to differentiate packet types.
+const facilityCode = {
+  accountLink: 0x4C,
+  aggregate: 0x41,
+  core: 0x43,
+  lockHash: 0x48,
+  lockSecret: 0x52,
+  metadata: 0x44,
+  mosaic: 0x4D,
+  multisig: 0x55,
+  namespace: 0x4E,
+  restrictionAccount: 0x50,
+  restrictionMosaic: 0x51,
+  transfer: 0x54
+}
+
 export default {
   // Transaction type.
   transactionTransfer: 0x4154,
@@ -98,7 +114,44 @@ export default {
   challengeSize: 64,
   serverChallenge: 1,
   clientChallenge: 2,
+  pushBlock: 3,
+  pullBlock: 4,
+  chainInfo: 5,
+  blockHashes: 7,
+  pullBlocks: 8,
+  pushTransactions: 9,
+  pullTransactions: 10,
+  secureSigned: 11,
+  subCacheMerkleRoots: 12,
+  pushPartialTransactions: 500,
+  pushDetachedCosignatures: 501,
+  pullPartialTransactionInfos: 502,
+  nodeDiscoveryPushPing: 600,
   nodeDiscoveryPullPing: 601,
+  nodeDiscoveryPushPeers: 602,
   nodeDiscoveryPullPeers: 603,
-  timeSyncNetworkTime: 700
+  timeSyncNetworkTime: 700,
+  accountStatePath: 800 + facilityCode.core,
+  hashLockStatePath: 800 + facilityCode.lockHash,
+  secretLockStatePath: 800 + facilityCode.lockSecret,
+  metadataStatePath: 800 + facilityCode.metadata,
+  mosaicStatePath: 800 + facilityCode.mosaic,
+  multisigStatePath: 800 + facilityCode.multisig,
+  namespaceStatePath: 800 + facilityCode.namespace,
+  accountRestrictionsStatePath: 800 + facilityCode.restrictionAccount,
+  mosaicRestrictionsStatePath: 800 + facilityCode.restrictionMosaic,
+  diagnosticCounters: 1100,
+  confirmTimestampedHashes: 1101,
+  activeNodeInfos: 1102,
+  blockStatement: 1103,
+  unlockedAccounts: 1104,
+  accountInfos: 1200 + facilityCode.core,
+  hashLockInfos: 1200 + facilityCode.lockHash,
+  secretLockInfos: 1200 + facilityCode.lockSecret,
+  metadataInfos: 1200 + facilityCode.metadata,
+  mosaicInfos: 1200 + facilityCode.mosaic,
+  multisigInfos: 1200 + facilityCode.multisig,
+  namespaceInfos: 1200 + facilityCode.namespace,
+  accountRestrictionsInfos: 1200 + facilityCode.restrictionAccount,
+  mosaicRestrictionsInfos: 1200 + facilityCode.restrictionMosaic
 }
