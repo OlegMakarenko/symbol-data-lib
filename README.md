@@ -140,11 +140,49 @@ Connected to rocks at /data/statedb/AccountStateCache
 # Dump the time-sync configuration file.
 $ catapult-config-dump --collection time-sync --verbose
 Running catapult-config-dump with: 
-    data-dir     = /userconfig/resources
+    config-dir   = /userconfig/resources
     collection   = time-sync
     output       = stdout
 {
     "maxNodes": 20
+}
+
+# Dump the block audit data.
+$ catapult-audit-dump --collection block --limit 1 --verbose
+Running catapult-config-dump with: 
+    data-dir     = /data
+    collection   = block
+    limit        = 1
+    output       = stdout
+{
+    "8956342029": {
+        "2308": {
+            "source": 2,
+            "sourcePublicKey": "8D270FA5E8E30D01182E8A339A31818856E30ABD0249662CFBA43CE8610333D3",
+            "blocks": [
+                {
+                    "entity": {
+                        "signature": "8F16C9EBC4A4BF2782AE98203C50859B2876E24DAE2D1230637C862E61C8E6D8FD60588EC8B7616B31CC1C153D5E8206C15338A7EA0C597A22F2C65DF5E7E00B",
+                        "key": "C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787",
+                        "version": 1,
+                        "network": 152,
+                        "type": 33091
+                    },
+                    "block": {
+                        "height": "99085",
+                        "timestamp": "8997981668",
+                        "difficulty": "10000000000000",
+                        "previousBlockHash": "A242ADCDAA7154044E0A68742162725A5EF934945D166654F8139D124BA333DE",
+                        "transactionsHash": "0000000000000000000000000000000000000000000000000000000000000000",
+                        "receiptsHash": "2C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A9936409",
+                        "stateHash": "D5022EF8E3B4A6CC6D38008DB9AAF1B478CC5689BB8E02D84370A091E0033FDD",
+                        "beneficiaryPublicKey": "C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787",
+                        "feeMultiplier": 0
+                    }
+                }
+            ]
+        }
+    }
 }
 ```
 

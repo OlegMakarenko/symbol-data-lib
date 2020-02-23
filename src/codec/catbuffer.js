@@ -108,11 +108,11 @@ export default class CatbufferReader extends Reader {
   }
 
   mosaic() {
-    let mosaicId = this.id()
+    let id = this.id()
     let amount = this.uint64()
 
     return {
-      mosaicId,
+      id,
       amount
     }
   }

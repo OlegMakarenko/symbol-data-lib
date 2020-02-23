@@ -96,7 +96,7 @@ describe('spool', () => {
                 type: 8515,
                 version: 1,
                 mosaic: {
-                  mosaicId: '61F6EFB8D6BF2705',
+                  id: '61F6EFB8D6BF2705',
                   amount: '0'
                 },
                 targetPublicKey: 'B35833B6DDF147DEEE0F659335EE4331EEAE80670F45D29FF4EC02C46303866B'
@@ -332,11 +332,11 @@ describe('spool', () => {
                 receipientAddress: 'TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
-                    amount: '449949999900000'
+                      id: '85BBEA6CC462B244',
+                      amount: '449949999900000'
                   },
                   {
-                    mosaicId: '941299B2B7E1291C',
+                    id: '941299B2B7E1291C',
                     amount: '3750000'
                   }
                 ],
@@ -357,11 +357,11 @@ describe('spool', () => {
                 receipientAddress: 'TBRPVXDECCHY7HXLGBQVCZ7DWAISCM7HSJTDQWSM',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   },
                   {
-                    mosaicId: '941299B2B7E1291C',
+                    id: '941299B2B7E1291C',
                     amount: '3750000'
                   }
                 ],
@@ -382,11 +382,11 @@ describe('spool', () => {
                 receipientAddress: 'TD3XEX4ALMMB46PN242C5LPEYEVZSUXIQMXN5WJR',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   },
                   {
-                    mosaicId: '941299B2B7E1291C',
+                    id: '941299B2B7E1291C',
                     amount: '3750000'
                   }
                 ],
@@ -407,11 +407,11 @@ describe('spool', () => {
                 receipientAddress: 'TCCMDNGOXTGMM3BZQ3YZODLQ7DSUKEDGUHPOQTR4',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   },
                   {
-                    mosaicId: '941299B2B7E1291C',
+                    id: '941299B2B7E1291C',
                     amount: '3750000'
                   }
                 ],
@@ -432,7 +432,7 @@ describe('spool', () => {
                 receipientAddress: 'TBT5QFV4A5SG3AGIZMOREHXSVJQIJXIJD3U4A2KR',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -453,7 +453,7 @@ describe('spool', () => {
                 receipientAddress: 'TALZVLE4PHQ2CU2ZOBOLB5KSJJWPLIGDGOAJF56N',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -474,7 +474,7 @@ describe('spool', () => {
                 receipientAddress: 'TC3YJDLMGURXIWCSQ6X5INGTKD3BNZEGUV5VLW6J',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -495,7 +495,7 @@ describe('spool', () => {
                 receipientAddress: 'TACGT6SJGUJOCNVQ6U5B5NTULDXOIC3JSTHSUYDF',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -516,7 +516,7 @@ describe('spool', () => {
                 receipientAddress: 'TBWEKD2CAG2QSDHFIHI7A6N6XMT64CMMEYHI45VN',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -537,7 +537,7 @@ describe('spool', () => {
                 receipientAddress: 'TD6BXOCQ3TQOKEWKGO4EAV6DO4B7TSSDM7M6B76C',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -558,7 +558,7 @@ describe('spool', () => {
                 receipientAddress: 'TAZ6QTG7HHSWVISVACSNCRQMPGTZVMOLSKMONWZK',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -579,7 +579,7 @@ describe('spool', () => {
                 receipientAddress: 'TBQ3Q7WJ73QA5NS7ZECI2PWG6HYBDT5RD4ZVTPH4',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -600,7 +600,7 @@ describe('spool', () => {
                 receipientAddress: 'TDQWBTVGQR6V3RLQMTK2SGC2Y4TVDO7WP2SZHYMZ',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -621,7 +621,7 @@ describe('spool', () => {
                 receipientAddress: 'TDMRMXB3XCETCS45PTDLIMZ3CPGQS5LP2YCZBKSE',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -642,7 +642,7 @@ describe('spool', () => {
                 receipientAddress: 'TD5B4PYOIU7GAMDIA5WEDXAA6TX7OTO5DHT23NHP',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -663,7 +663,7 @@ describe('spool', () => {
                 receipientAddress: 'TDK7QN662CD7QWNBOTNKNEMCZ44FMR6DVEXKECWB',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -684,7 +684,7 @@ describe('spool', () => {
                 receipientAddress: 'TCSJ3DE3JSWQV5I6GUJM7CQJQS4ROPAB72MWHFQG',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -705,7 +705,7 @@ describe('spool', () => {
                 receipientAddress: 'TC774Y5FIV2NPVO7ORK62NZUVMJ5LNGGBVNQ227K',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -726,7 +726,7 @@ describe('spool', () => {
                 receipientAddress: 'TAQDYZOLS42DR3SU3RUU3YCDCIGM3MSC2JVBKGYJ',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -747,7 +747,7 @@ describe('spool', () => {
                 receipientAddress: 'TBT77TM7S2CI3MVFVEAESMRWUYCTVBWNT5WS4ERH',
                 mosaics: [
                   {
-                    mosaicId: '85BBEA6CC462B244',
+                    id: '85BBEA6CC462B244',
                     amount: '449949999900000'
                   }
                 ],
@@ -905,7 +905,7 @@ describe('spool', () => {
                 type: 8515,
                 version: 1,
                 mosaic: {
-                  mosaicId: '61F6EFB8D6BF2705',
+                  id: '61F6EFB8D6BF2705',
                   amount: '0'
                 },
                 targetPublicKey: 'F7E69E0A1E1D00459D6B1D315986A60B582BDEF8BB51EA6498A0ECA59AB7A2B4'
@@ -923,7 +923,7 @@ describe('spool', () => {
                   primaryId: 6,
                   secondaryId: 0
                 },
-                value:'61F6EFB8D6BF2705'
+                value: '61F6EFB8D6BF2705'
               }
             ]
           },
@@ -997,7 +997,7 @@ describe('spool', () => {
                 type: 8515,
                 version: 1,
                 mosaic: {
-                  mosaicId: '61F6EFB8D6BF2705',
+                  id: '61F6EFB8D6BF2705',
                   amount: '0'
                 },
                 targetPublicKey: 'B35833B6DDF147DEEE0F659335EE4331EEAE80670F45D29FF4EC02C46303866B'

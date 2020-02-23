@@ -26,19 +26,19 @@ import symbolData from '../src'
 
 const options = yargs
   .command(
-    'catapult-config-dump [OPTION...]',
-    'Dump config data to JSON'
+    'catapult-audit-dump [OPTION...]',
+    'Dump audit data to JSON'
   )
   // Example
   .example(
-    'catapult-config-dump --collection database',
-    'Dump the database configuration file as JSON.'
+    'catapult-config-dump --collection block --limit 10',
+    'Dump the block audit data as JSON.'
   )
   // Parameters.
-  .option('config-dir', {
+  .option('data-dir', {
     alias: 'd',
-    describe: 'Directory for the configuration files.',
-    default: '/userconfig/resources'
+    describe: 'Data directory for the audit store.',
+    default: '/data'
   })
   .option('collection', {
     alias: 'c',
@@ -46,8 +46,13 @@ const options = yargs
       'Name of collection(s) to dump.\n'
       + 'Multiple collections can be provided with comma separators.\n'
       + 'Valid collections names:\n- all\n- '
-      + symbolData.config.COLLECTIONS.join('\n- ')
+      + symbolData.audit.COLLECTIONS.join('\n- ')
     )
+  })
+  .option('limit', {
+    alias: 'l',
+    describe: 'Maximum number of items from collection to dump.',
+    default: 0
   })
   .option('output', {
     alias: 'o',
@@ -66,19 +71,20 @@ const options = yargs
 
 // Display verbose information.
 if (options.verbose) {
-  console.info('Running catapult-config-dump with: ')
-  console.info(`    config-dir   = ${options.configDir}`)
+  console.info('Running catapult-audit-dump with: ')
+  console.info(`    data-dir     = ${options.dataDir}`)
   console.info(`    collection   = ${options.collection}`)
+  console.info(`    limit        = ${options.limit}`)
   console.info(`    output       = ${options.output ? options.output : 'stdout'}`)
 }
 
 // Validate the collection name is supported.
-if (!symbolData.config.isValidCollection(options.collection)) {
+if (!symbolData.audit.isValidCollection(options.collection)) {
   throw new Error(`collection name ${options.collection} is not yet supported`)
 }
 
-// Dump the RocksDB data to JSON.
-symbolData.config.dump(options).then(result => {
+// Dump the audit data to JSON.
+symbolData.audit.dump(options).then(result => {
   let json = JSON.stringify(result, null, 4) + '\n'
   if (options.output !== undefined) {
     fs.writeFileSync(options.output, json)

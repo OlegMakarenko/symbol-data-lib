@@ -88,7 +88,7 @@ const dumpMany = async (options, collections) => {
  *  Dump config data to JSON.
  *
  *  @param options {Object}       - Options to specify dump parameters.
- *    @field configDir {String}     - Path to the catapult config directory.
+ *    @field configDir {String}   - Path to the catapult config directory.
  *    @field collection {String}  - Collection name(s).
  *    @field verbose {Boolean}    - Display debug information.
  */

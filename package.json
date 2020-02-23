@@ -5,6 +5,7 @@
   "description": "Library and scripts to access Catapult data",
   "main": "dist/src/index.js",
   "bin": {
+    "catapult-audit-dump": "dist/bin/catapult-audit-dump.js",
     "catapult-config-dump": "dist/bin/catapult-config-dump.js",
     "catapult-mongo-dump": "dist/bin/catapult-mongo-dump.js",
     "catapult-rocks-dump": "dist/bin/catapult-rocks-dump.js"

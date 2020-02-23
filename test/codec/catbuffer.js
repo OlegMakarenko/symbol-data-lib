@@ -74,7 +74,7 @@ describe('catbuffer', () => {
   it('should parse a mosaic', () => {
     let reader = new CatbufferReader(Buffer.from('99F2A8C5D2433FE4FEDCBA9876543210', 'hex'))
     expect(reader.mosaic()).to.eql({
-      mosaicId: 'E43F43D2C5A8F299',
+      id: 'E43F43D2C5A8F299',
       amount: '1167088121787636990'
     })
     expect(reader.data).to.have.length(0)
@@ -138,7 +138,7 @@ describe('catbuffer', () => {
       receipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
       mosaics: [
         {
-          mosaicId: '85BBEA6CC462B244',
+          id: '85BBEA6CC462B244',
           amount: '10'
         }
       ],
@@ -154,7 +154,7 @@ describe('catbuffer', () => {
       receipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
       mosaics: [
         {
-          mosaicId: '85BBEA6CC462B244',
+          id: '85BBEA6CC462B244',
           amount: '10'
         }
       ],
@@ -532,7 +532,7 @@ describe('catbuffer', () => {
     let reader = new CatbufferReader(Buffer.from(embeddedTransaction, 'hex'))
     expect(reader.lockTransaction(true)).to.eql({
       mosaic: {
-        mosaicId: 'A03F7CBEB7039EF8',
+        id: 'A03F7CBEB7039EF8',
         amount: '1000'
       },
       duration: '100000',
@@ -546,7 +546,7 @@ describe('catbuffer', () => {
       maxFee: '0',
       deadline: '1',
       mosaic: {
-        mosaicId: 'A03F7CBEB7039EF8',
+        id: 'A03F7CBEB7039EF8',
         amount: '1000'
       },
       duration: '100000',
@@ -577,7 +577,7 @@ describe('catbuffer', () => {
     expect(reader.secretLockTransaction(true)).to.eql({
       secret: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630',
       mosaic: {
-        mosaicId: 'A03F7CBEB7039EF8',
+        id: 'A03F7CBEB7039EF8',
         amount: '1000'
       },
       duration: '100000',
@@ -593,7 +593,7 @@ describe('catbuffer', () => {
       deadline: '1',
       secret: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630',
       mosaic: {
-        mosaicId: 'A03F7CBEB7039EF8',
+        id: 'A03F7CBEB7039EF8',
         amount: '1000'
       },
       duration: '100000',

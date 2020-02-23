@@ -20,6 +20,7 @@
  *  Utilities to process data from catapult's RocksDB store.
  */
 
+import path from 'path'
 import rocksCodec from './codec/rocks'
 import Level from './util/level'
 import name from './util/name'
@@ -58,10 +59,10 @@ const isValidCollection = collection => {
  */
 const dumpOne = async options => {
   // Create a new rocksdb, read-only handle.
-  let path = `${options.dataDir}/statedb/${options.collection}`
-  let level = new Level(path)
+  let directory = path.join(options.dataDir, 'statedb', options.collection)
+  let level = new Level(directory)
   if (options.verbose) {
-    console.info(`Connected to rocks at ${path}`)
+    console.info(`Connected to rocks at ${directory}`)
   }
 
   // Iterate up to limit values, and assign to result.
