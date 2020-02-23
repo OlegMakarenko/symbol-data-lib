@@ -1,7 +1,25 @@
 symbol-data-lib
 ===============
 
-Library and command-line scripts to facilitate debugging and accessing NEM Node data directly from stores. symbol-data-lib retreieves internal stores from:
+Library and command-line scripts to facilitate debugging and accessing NEM Node data directly from stores. 
+
+**Table Of Contents**
+
+- [Stores](#stores)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Scripts](#scripts)
+  - [Javascript API](#javascript-api)
+- [Detailed Setup](#detailed-setup)
+- [Compatibility Warning](#compatibility-warning)
+- [Roadmap](#roadmap)
+- [Testing](#testing)
+- [License](#license)
+- [Contributing](#contributing)
+
+# Stores
+
+symbol-data-lib supports the following catapult data stores:
 - MongoDB
 - RocksDB
 - Blocks
@@ -9,7 +27,14 @@ Library and command-line scripts to facilitate debugging and accessing NEM Node 
 - Audit
 - Configuration Files
 - TCP
-- And more.
+
+# Features
+
+- Access to each store is entirely independent of other stores.
+- Output data uses a JSON format similar to the REST API.
+- Use high-level scripts to easily dump store data.
+- Use the Javascript API to customize parsing data, files, or directories.
+- Dump multiple collections simultaneously using comma-separated names.
 
 # Getting Started
 
@@ -25,6 +50,8 @@ Then, build the library and link the scripts to allow them to be run globally:
 npm run build
 npm link
 ```
+
+## Scripts
 
 Next, you can run the data scripts globally:
 
@@ -323,11 +350,65 @@ Running catapult-block-dump with:
 }
 ```
 
-# Library Usage
+## Javascript API
 
-symbol-data-lib also exposes a library, simplifying data access from catapult data stores.
+For each store, there are 2 API levels: a high-level API similar to the scripting interface, and a low-level API to directly parse directories, files, or raw bytes.
 
-# Detailed Instructions
+The following uses the high-level API to dump the audit block data, almost identically to `catapult-audit-dump`:
+
+```javascript
+import symbolData = 'symbol-data-lib'
+
+symbolData.audit.dump({
+    dataDir: '/data',
+    collection: 'block',
+    limit: 0,
+    verbose: false
+})
+    .then(result => {
+        console.log(JSON.stringify(result, null, 4))
+    })
+```
+
+If we want finer-tuned control, we can use the low-level codec API:
+
+```javascript
+import symbolData = 'symbol-data-lib'
+
+// Use the audit codec.
+let codec = symbolData.codec.audit
+
+// Directly parse raw bytes using the audit block codec.
+let data = '02000000d878646441c8b8a9636c2db207ecc508' +
+    'af785b6329fd9cf1d47110ddd70f934930010000' +
+    '0000000075849dc343b1ee774d1ed009b821cc66' +
+    'a40f008d72a66ec0ba71a1c4ed46f9da52b52c16' +
+    'a5490a5269153d50dfb7cb30d09e9399170dede6' +
+    '49e791269d01b6094badbbb46f335534c8f2da93' +
+    'cdcea7c74452188d6a8e322720af30a6fb42dabf' +
+    '000000000198438136810100000000007061d317' +
+    '0200000000a0724e180900006913cb77d8bf83ff' +
+    'ed396d8beb935cde9dd884dff729bf3ff145b544' +
+    '07d6f4e900000000000000000000000000000000' +
+    '00000000000000000000000000000000089f0160' +
+    '0fdcd862676cbbd554ba795e2706d4a5d0ce8cd6' +
+    '4e7660d9ced01ce89cfddbf8ce098587371b0902' +
+    'cd239f055ea1859ec3bf30480751c40f4dab3a33' +
+    '3d7fd669db90879c3af7eea98ea8c24460e2f6c0' +
+    'aaf71111c61e5f303949004b0000000000000000'
+let buffer = Buffer.from(data, 'hex')
+let blocks = codec.block.data(buffer)
+
+// Parse a file using the audit block codec.
+let file '/data/audit/block dispatcher/8032460312/1'
+blocks = codec.block.file(file)
+
+// Read all files in the block dispatcher directory.
+let directory '/data/audit/block dispatcher'
+blocks = codec.block.directory(directory)
+````
+
+# Detailed Setup
 
 The following scripts use paths by default within the Docker container, however, it may be easier to run them from outside the docker container (to avoid having to install NPM, cloning the repository, and installing the dependencies). However, some issues arise when running these tools outside of a container.
 
@@ -375,6 +456,13 @@ Docker compose does not by default expose port 7900 and 7902, so we must expose 
     ports:
     - "7902:7902"
 ```
+
+# Roadmap
+
+Future goals include:
+- Support for other data storage formats.
+- Pre-built docker containers to facilitate use with docker compose.
+- Support to generate non-redundant time-series data.
 
 # Compatibility Warning
 
