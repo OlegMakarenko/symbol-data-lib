@@ -229,7 +229,18 @@ const codec = {
 
   // Parse pull transactions information.
   pullTransactions: {
-    // TODO(ahuszagh) Implement...
+
+// b'\x10\x00\x00\x00\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+// transactions = b'\x08\x00\x00\x00\n\x00\x00\x00'
+// Request
+//   using BlockFeeMultiplier = uint32_t;
+//   using ShortHash = uint32_t;
+//   using ShortHashRange = EntityRange<ShortHash>;
+//
+//    So:
+//      uint32_t minFeeMultiplier;
+//      uint32_t shortHashCount;
+//      uint32_t[shortHashCount] shortHashes;
   },
 
   // Parse sub cache merkle roots.
