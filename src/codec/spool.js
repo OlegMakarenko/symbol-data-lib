@@ -416,8 +416,6 @@ const readIndexedDirectory = (directory, codecName) => {
  *  Codec for the spool stores.
  */
 const codec = {
-  // TODO(ahuszagh) Change to use file, data, directory when possible.
-
   index: {
     // Stores a uint64 value containing the index of the next value.
     // This denotes the filenames stored, which may or may not be present.

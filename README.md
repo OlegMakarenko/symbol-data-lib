@@ -149,7 +149,7 @@ Running catapult-config-dump with:
 
 # Dump the block audit data.
 $ catapult-audit-dump --collection block --limit 1 --verbose
-Running catapult-config-dump with: 
+Running catapult-audit-dump with: 
     data-dir     = /data
     collection   = block
     limit        = 1
@@ -180,6 +180,143 @@ Running catapult-config-dump with:
                         "feeMultiplier": 0
                     }
                 }
+            ]
+        }
+    }
+}
+
+# Dump the block change spool data.
+$ catapult-spool-dump --collection block_change --limit 1 --verbose
+Running catapult-spool-dump with: 
+    data-dir     = /data
+    collection   = block_change
+    limit        = 1
+    output       = stdout
+{
+    "0000000000001141.dat": {
+        "type": 0,
+        "entity": {
+            "signature": "20931835AB26A2448963D94AB20F4DF8FA085A24BE5C74AA07E0DDBBE13653D7ED990CE916AEDC9BAACF7B0BBD705BA5CABA749250FECEE453B7860DB7F6B10A",
+            "key": "B35833B6DDF147DEEE0F659335EE4331EEAE80670F45D29FF4EC02C46303866B",
+            "version": 1,
+            "network": 152,
+            "type": 33091
+        },
+        "block": {
+            "height": "4418",
+            "timestamp": "8925016934",
+            "difficulty": "29130111651049",
+            "previousBlockHash": "6901340858C2D50BA5C932EBA7B11FF0CB8A37CB3F4737CC546ECD3D81B4E9C6",
+            "transactionsHash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "receiptsHash": "074211776A2CEBBB80F25FED1240B1E198726851049DAC3A53E64D8E2278C99F",
+            "stateHash": "9CDE58E25EDEDE785F18FD167F70FD209282C9774500FFE2F6FBA549F1FD3EB5",
+            "beneficiaryPublicKey": "B35833B6DDF147DEEE0F659335EE4331EEAE80670F45D29FF4EC02C46303866B",
+            "feeMultiplier": 0
+        },
+        "entityHash": "19E7D670763E6B1063842151AC6D788C8C4C9B3F7F02534E9A0A0DBD772C0E5E",
+        "generationHash": "DCAE35B5B292852C0C75ACA430251569FE4ED2C4C60830CA5D7A027CB5983C94",
+        "transactions": [],
+        "merkleRoots": [
+            "75323D5482A81D971ADB848DAF9E812EDBB06CD0727A59FC42CBB0D209D0091C",
+            "7ECA4CBCAAE5BB32BDEEF6772BE7F3BE2D763C48039A40C09BB215717C6B3A89",
+            "4013692D1BEEB8F511C8259D4CE8C012672385372D863064B6D520A016479AF1",
+            "0000000000000000000000000000000000000000000000000000000000000000",
+            "0000000000000000000000000000000000000000000000000000000000000000",
+            "0000000000000000000000000000000000000000000000000000000000000000",
+            "0000000000000000000000000000000000000000000000000000000000000000",
+            "0000000000000000000000000000000000000000000000000000000000000000",
+            "0000000000000000000000000000000000000000000000000000000000000000"
+        ],
+        "blockStatement": {
+            "transactionStatements": [
+                {
+                    "source": {
+                        "primaryId": 0,
+                        "secondaryId": 0
+                    },
+                    "receipts": [
+                        {
+                            "type": 8515,
+                            "version": 1,
+                            "mosaic": {
+                                "id": "61F6EFB8D6BF2705",
+                                "amount": "0"
+                            },
+                            "targetPublicKey": "B35833B6DDF147DEEE0F659335EE4331EEAE80670F45D29FF4EC02C46303866B"
+                        }
+                    ]
+                }
+            ],
+            "addressResolutionStatements": [],
+            "mosaicResolutionStatements": []
+        }
+    }
+}
+
+# Dump the block data.
+$ catapult-block-dump --limit 2 --verbose
+Running catapult-block-dump with: 
+    data-dir     = /data
+    collection   = block_change
+    limit        = 2
+    output       = stdout
+{
+    "00000": {
+        "04418.stmt": {
+            "transactionStatements": [
+                {
+                    "source": {
+                        "primaryId": 0,
+                        "secondaryId": 0
+                    },
+                    "receipts": [
+                        {
+                            "type": 8515,
+                            "version": 1,
+                            "mosaic": {
+                                "id": "61F6EFB8D6BF2705",
+                                "amount": "0"
+                            },
+                            "targetPublicKey": "B35833B6DDF147DEEE0F659335EE4331EEAE80670F45D29FF4EC02C46303866B"
+                        }
+                    ]
+                }
+            ],
+            "addressResolutionStatements": [],
+            "mosaicResolutionStatements": []
+        },
+        "04418.dat": {
+            "entity": {
+                "signature": "20931835AB26A2448963D94AB20F4DF8FA085A24BE5C74AA07E0DDBBE13653D7ED990CE916AEDC9BAACF7B0BBD705BA5CABA749250FECEE453B7860DB7F6B10A",
+                "key": "B35833B6DDF147DEEE0F659335EE4331EEAE80670F45D29FF4EC02C46303866B",
+                "version": 1,
+                "network": 152,
+                "type": 33091
+            },
+            "block": {
+                "height": "4418",
+                "timestamp": "8925016934",
+                "difficulty": "29130111651049",
+                "previousBlockHash": "6901340858C2D50BA5C932EBA7B11FF0CB8A37CB3F4737CC546ECD3D81B4E9C6",
+                "transactionsHash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "receiptsHash": "074211776A2CEBBB80F25FED1240B1E198726851049DAC3A53E64D8E2278C99F",
+                "stateHash": "9CDE58E25EDEDE785F18FD167F70FD209282C9774500FFE2F6FBA549F1FD3EB5",
+                "beneficiaryPublicKey": "B35833B6DDF147DEEE0F659335EE4331EEAE80670F45D29FF4EC02C46303866B",
+                "feeMultiplier": 0
+            },
+            "entityHash": "19E7D670763E6B1063842151AC6D788C8C4C9B3F7F02534E9A0A0DBD772C0E5E",
+            "generationHash": "DCAE35B5B292852C0C75ACA430251569FE4ED2C4C60830CA5D7A027CB5983C94",
+            "transactions": [],
+            "merkleRoots": [
+                "75323D5482A81D971ADB848DAF9E812EDBB06CD0727A59FC42CBB0D209D0091C",
+                "7ECA4CBCAAE5BB32BDEEF6772BE7F3BE2D763C48039A40C09BB215717C6B3A89",
+                "4013692D1BEEB8F511C8259D4CE8C012672385372D863064B6D520A016479AF1",
+                "0000000000000000000000000000000000000000000000000000000000000000",
+                "0000000000000000000000000000000000000000000000000000000000000000",
+                "0000000000000000000000000000000000000000000000000000000000000000",
+                "0000000000000000000000000000000000000000000000000000000000000000",
+                "0000000000000000000000000000000000000000000000000000000000000000",
+                "0000000000000000000000000000000000000000000000000000000000000000"
             ]
         }
     }

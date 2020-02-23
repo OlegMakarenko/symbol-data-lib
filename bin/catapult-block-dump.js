@@ -26,28 +26,19 @@ import symbolData from '../src'
 
 const options = yargs
   .command(
-    'catapult-audit-dump [OPTION...]',
-    'Dump audit data to JSON'
+    'catapult-block-dump [OPTION...]',
+    'Dump block data to JSON'
   )
   // Example
   .example(
-    'catapult-audit-dump --collection block --limit 10',
-    'Dump the block audit data as JSON.'
+    'catapult-block-dump --limit 10',
+    'Dump the block data as JSON.'
   )
   // Parameters.
   .option('data-dir', {
     alias: 'd',
-    describe: 'Data directory for the audit store.',
+    describe: 'Data directory for the spool store.',
     default: '/data'
-  })
-  .option('collection', {
-    alias: 'c',
-    describe: (
-      'Name of collection(s) to dump.\n'
-      + 'Multiple collections can be provided with comma separators.\n'
-      + 'Valid collections names:\n- all\n- '
-      + symbolData.audit.COLLECTIONS.join('\n- ')
-    )
   })
   .option('limit', {
     alias: 'l',
@@ -64,27 +55,19 @@ const options = yargs
     type: 'boolean',
     description: 'Run with verbose logging'
   })
-  // Validation.
-  .demandOption('collection', 'Please provide a collection name to dump.')
   // Parse arguments.
   .parse()
 
 // Display verbose information.
 if (options.verbose) {
-  console.info('Running catapult-audit-dump with: ')
+  console.info('Running catapult-block-dump with: ')
   console.info(`    data-dir     = ${options.dataDir}`)
-  console.info(`    collection   = ${options.collection}`)
   console.info(`    limit        = ${options.limit}`)
   console.info(`    output       = ${options.output ? options.output : 'stdout'}`)
 }
 
-// Validate the collection name is supported.
-if (!symbolData.audit.isValidCollection(options.collection)) {
-  throw new Error(`collection name ${options.collection} is not yet supported`)
-}
-
-// Dump the audit data to JSON.
-symbolData.audit.dump(options).then(result => {
+// Dump the block data to JSON.
+symbolData.block.dump(options).then(result => {
   let json = JSON.stringify(result, null, 4) + '\n'
   if (options.output !== undefined) {
     fs.writeFileSync(options.output, json)

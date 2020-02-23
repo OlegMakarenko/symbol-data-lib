@@ -26,18 +26,18 @@ import symbolData from '../src'
 
 const options = yargs
   .command(
-    'catapult-audit-dump [OPTION...]',
-    'Dump audit data to JSON'
+    'catapult-spool-dump [OPTION...]',
+    'Dump spool data to JSON'
   )
   // Example
   .example(
-    'catapult-audit-dump --collection block --limit 10',
-    'Dump the block audit data as JSON.'
+    'catapult-spool-dump --collection block_change --limit 10',
+    'Dump the block change spool data as JSON.'
   )
   // Parameters.
   .option('data-dir', {
     alias: 'd',
-    describe: 'Data directory for the audit store.',
+    describe: 'Data directory for the spool store.',
     default: '/data'
   })
   .option('collection', {
@@ -46,7 +46,7 @@ const options = yargs
       'Name of collection(s) to dump.\n'
       + 'Multiple collections can be provided with comma separators.\n'
       + 'Valid collections names:\n- all\n- '
-      + symbolData.audit.COLLECTIONS.join('\n- ')
+      + symbolData.spool.COLLECTIONS.join('\n- ')
     )
   })
   .option('limit', {
@@ -71,7 +71,7 @@ const options = yargs
 
 // Display verbose information.
 if (options.verbose) {
-  console.info('Running catapult-audit-dump with: ')
+  console.info('Running catapult-spool-dump with: ')
   console.info(`    data-dir     = ${options.dataDir}`)
   console.info(`    collection   = ${options.collection}`)
   console.info(`    limit        = ${options.limit}`)
@@ -79,12 +79,12 @@ if (options.verbose) {
 }
 
 // Validate the collection name is supported.
-if (!symbolData.audit.isValidCollection(options.collection)) {
+if (!symbolData.spool.isValidCollection(options.collection)) {
   throw new Error(`collection name ${options.collection} is not yet supported`)
 }
 
-// Dump the audit data to JSON.
-symbolData.audit.dump(options).then(result => {
+// Dump the spool data to JSON.
+symbolData.spool.dump(options).then(result => {
   let json = JSON.stringify(result, null, 4) + '\n'
   if (options.output !== undefined) {
     fs.writeFileSync(options.output, json)

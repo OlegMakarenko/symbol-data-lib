@@ -6,9 +6,11 @@
   "main": "dist/src/index.js",
   "bin": {
     "catapult-audit-dump": "dist/bin/catapult-audit-dump.js",
+    "catapult-block-dump": "dist/bin/catapult-block-dump.js",
     "catapult-config-dump": "dist/bin/catapult-config-dump.js",
     "catapult-mongo-dump": "dist/bin/catapult-mongo-dump.js",
-    "catapult-rocks-dump": "dist/bin/catapult-rocks-dump.js"
+    "catapult-rocks-dump": "dist/bin/catapult-rocks-dump.js",
+    "catapult-spool-dump": "dist/bin/catapult-spool-dump.js"
   },
   "scripts": {
     "build": "babel src -d dist/src && babel bin -d dist/bin",
