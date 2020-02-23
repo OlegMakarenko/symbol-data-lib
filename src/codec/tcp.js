@@ -497,27 +497,23 @@ const codec = {
   // Parse mosaic state path information.
   mosaicStatePath: {
     // Parse a mosaic state path request.
-    request: data => {
-      throw new Error('not yet implemented')
-    },
+    request: data => ({
+      mosaicId: TcpReader.solitary(data, 'id')
+    }),
 
     // Parse a mosaic state path response.
-    response: data => {
-      throw new Error('not yet implemented')
-    }
+    response: data => TcpReader.solitary(data, 'tree')
   },
 
   // Parse multisig state path information.
   multisigStatePath: {
     // Parse a multisig state path request.
-    request: data => {
-      throw new Error('not yet implemented')
-    },
+    request: data => ({
+      publicKey: TcpReader.solitary(data, 'key')
+    }),
 
     // Parse a multisig state path response.
-    response: data => {
-      throw new Error('not yet implemented')
-    }
+    response: data => TcpReader.solitary(data, 'tree')
   },
 
   // Parse namespace state path information.
