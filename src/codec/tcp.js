@@ -158,6 +158,38 @@ const codec = {
     }
   },
 
+  // Parse block hashes information.
+  blockHashes: {
+    // Parse a block hashes request.
+    request: data => {
+      let reader = new TcpReader(data)
+      let height = reader.uint64()
+      let hashes = reader.uint32()
+      reader.validateEmpty()
+
+      return {
+        height,
+        hashes
+      }
+    },
+
+    // Parse a block hashes response.
+    response: data => {
+      if (data.length % 32 !== 0) {
+        throw new Error('invalid block hashes response.');
+      }
+
+      let hashes = []
+      let reader = new TcpReader(data)
+      while (reader.data.length !== 0) {
+        hashes.push(reader.hash256())
+      }
+      reader.validateEmpty()
+
+      return hashes
+    }
+  },
+
   // Parse pull block information.
   pullBlocks: {
     // Parse a pull block request.

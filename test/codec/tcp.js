@@ -151,6 +151,24 @@ describe('tcp', () => {
     })
   })
 
+  describe('blockHashes', () => {
+    it('should parse a block hashes request', () => {
+      let buffer = Buffer.from('040000000000000002000000', 'hex')
+      expect(tcp.blockHashes.request(buffer)).to.eql({
+        height: '4',
+        hashes: 2
+      })
+    })
+
+    it('should parse a block hashes response', () => {
+      let buffer = Buffer.from('6D66277B048C6697530DB6E9DFEE8F468106ED21BC9B087B5327D4DF3027C6F0102B28117C238D208F96CE46B79834D94212DD7C5CC840E9ED1356720393A0BE', 'hex')
+      expect(tcp.blockHashes.response(buffer)).to.eql([
+        '6D66277B048C6697530DB6E9DFEE8F468106ED21BC9B087B5327D4DF3027C6F0',
+        '102B28117C238D208F96CE46B79834D94212DD7C5CC840E9ED1356720393A0BE'
+      ])
+    })
+  })
+
   describe('pullBlocks', () => {
     it('should parse a pull blocks request', () => {
       let buffer = Buffer.from('040000000000000002000000E8030000', 'hex')
