@@ -109,6 +109,9 @@ export default {
   receiptAddressResolution: 1,
   receiptMosaicResolution: 2,
 
+  // Path constants
+  pathMaxLinks: 16,
+
   // Packet information and types.
   packetHeaderSize: 8,
   challengeSize: 64,

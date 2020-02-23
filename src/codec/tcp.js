@@ -20,6 +20,7 @@
  *  Codec to transform models returned via TCP requests to JSON.
  */
 
+import assert from 'assert'
 import CatbufferReader from './catbuffer'
 import constants from './constants'
 
@@ -92,6 +93,68 @@ class TcpReader extends CatbufferReader {
       }
     }
   }
+
+  path() {
+    // The path consists of 16-bit nibbles, and is aligned to a full byte.
+    // Therefore, the number of bytes is `nibbles + 1 // 2`. If the number
+    // of nibbles is odd, the low nibble for the last index must be 0.
+    let nibbles = this.uint8()
+    let alignedPath = this.hexN(Math.floor((nibbles + 1) / 2))
+
+    // Verify filler nibble is 0.
+    if ((nibbles % 2) === 1) {
+      assert(alignedPath[alignedPath.length - 1] === '0', 'non-0 filler byte')
+    }
+
+    return alignedPath.slice(0, nibbles)
+  }
+
+  branch() {
+    let path = this.path()
+    let linkMask = this.uint16()
+    let links = {}
+    for (let index = 0; index < constants.pathMaxLinks; index++) {
+      let mask = 1 << index >>> 0
+      if ((linkMask & mask) !== 0) {
+        links[index] = this.hash256()
+      }
+    }
+
+    return {
+      path,
+      links
+    }
+  }
+
+  leaf() {
+    let path = this.path()
+    let value = this.hash256()
+
+    return {
+      path,
+      value
+    }
+  }
+
+  treeNode() {
+    let marker = this.uint8()
+    if (marker === 0x0) {
+      return this.branch()
+    } else if (marker === 0xFF) {
+      return this.leaf()
+    } else {
+      throw new Error(`invalid tree marker, got ${marker}`)
+    }
+  }
+
+  tree() {
+    // May need to know the value type.
+    let tree = []
+    while (this.data.length !== 0) {
+      tree.push(this.treeNode())
+    }
+    return tree
+  }
 }
 
 // TODO(ahuszagh) Check catapult-meta/catapult-rest/demo/packet.py
@@ -153,6 +216,16 @@ const codec = {
     response: data => ({
       challenge: TcpReader.solitary(data, 'challenge')
     })
+  },
+
+  // Parse push block information.
+  pushBlock: {
+    // Parse a push block request.
+    request: data => TcpReader.solitary(data, 'block'),
+
+    response: () => {
+      throw new Error('push block response does not exist.')
+    }
   },
 
   // Parse pull block information.
@@ -227,20 +300,51 @@ const codec = {
     response: data => TcpReader.solitary(data, 'blocks')
   },
 
+  // Parse push transactions information.
+  pushTransactions: {
+    // Parse a push transactions request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a push transactions response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
   // Parse pull transactions information.
   pullTransactions: {
+    // Parse a pull transactions request.
+    request: data => {
+      let reader = new TcpReader(data)
+      let minFeeMultiplier = reader.uint32()
+      let shortHashCount = reader.uint32()
+      let shortHashes = []
+      reader.n(shortHashes, shortHashCount, 'uint32')
+      reader.validateEmpty()
 
-// b'\x10\x00\x00\x00\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-// transactions = b'\x08\x00\x00\x00\n\x00\x00\x00'
-// Request
-//   using BlockFeeMultiplier = uint32_t;
-//   using ShortHash = uint32_t;
-//   using ShortHashRange = EntityRange<ShortHash>;
-//
-//    So:
-//      uint32_t minFeeMultiplier;
-//      uint32_t shortHashCount;
-//      uint32_t[shortHashCount] shortHashes;
+      return {
+        minFeeMultiplier,
+        shortHashes
+      }
+    },
+
+    // Parse a pull transactions response.
+    response: data => TcpReader.solitary(data, 'transactions')
+  },
+
+  // Parse secure signed information.
+  secureSigned: {
+    // Parse a secure signed request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a secure signed response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
   },
 
   // Parse sub cache merkle roots.
@@ -254,21 +358,86 @@ const codec = {
     response: data => TcpReader.solitary(data, 'hashes')
   },
 
-  // Parse local node information.
+  // Parse push partial transactions information.
+  pushPartialTransactions: {
+    // Parse a push partial transactions request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a push partial transactions response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse push detached cosignatures information.
+  pushDetachedCosignatures: {
+    // Parse a push detached cosignatures request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a push detached cosignatures response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse push partial transaction information.
+  pullPartialTransactionInfos: {
+    // Parse a push partial transaction info request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a push partial transaction info response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse push local node information.
+  pushNodeInfo: {
+    // Parse a push local node request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a push local node response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parsepull  local node information.
   pullNodeInfo: {
-    // Parse a node info request.
+    // Parse a pull node info request.
     request: data => TcpReader.solitary(data, 'empty'),
 
-    // Parse a node info response.
+    // Parse a pull node info response.
     response: data => TcpReader.solitary(data, 'node')
   },
 
-  // Parse node peers information.
+  // Parse push node peers information.
+  pushNodePeers: {
+    // Parse a push node peers request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a push node peers response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse pull node peers information.
   pullNodePeers: {
-    // Parse a node peers request.
+    // Parse a pull node peers request.
     request: data => TcpReader.solitary(data, 'empty'),
 
-    // Parse a node peers response.
+    // Parse a pull node peers response.
     response: data => TcpReader.solitary(data, 'nodes')
   },
 
@@ -281,24 +450,382 @@ const codec = {
     response: data => TcpReader.solitary(data, 'timeSync')
   },
 
-  // TODO(ahuszagh) Add in a lot more codecs.
+  // Parse account state path information.
+  accountStatePath: {
+    // Parse an account state path request.
+    request: data => ({
+      address: TcpReader.solitary(data, 'address')
+    }),
+
+    // Parse an account state path response.
+    response: data => TcpReader.solitary(data, 'tree')
+  },
+
+  // Parse hash lock state path information.
+  hashLockStatePath: {
+    // Parse a hash lock state path request.
+    request: data => ({
+      hash: TcpReader.solitary(data, 'hash256')
+    }),
+
+    // Parse a hash lock state path response.
+    response: data => TcpReader.solitary(data, 'tree')
+  },
+
+  // Parse secret lock state path information.
+  secretLockStatePath: {
+    // Parse a secret lock state path request.
+    request: data => ({
+      secret: TcpReader.solitary(data, 'hash256')
+    }),
+
+    // Parse a secret lock state path response.
+    response: data => TcpReader.solitary(data, 'tree')
+  },
+
+  // Parse metadata state path information.
+  metadataStatePath: {
+    // Parse a metadata state path request.
+    request: data => ({
+      hash: TcpReader.solitary(data, 'hash256')
+    }),
+
+    // Parse a metadata state path response.
+    response: data => TcpReader.solitary(data, 'tree')
+  },
+
+  // Parse mosaic state path information.
+  mosaicStatePath: {
+    // Parse a mosaic state path request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a mosaic state path response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse multisig state path information.
+  multisigStatePath: {
+    // Parse a multisig state path request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a multisig state path response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse namespace state path information.
+  namespaceStatePath: {
+    // Parse a namespace state path request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a namespace state path response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse account restrictions state path information.
+  accountRestrictionsStatePath: {
+    // Parse an account restrictions state path request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse an account restrictions state path response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse mosaic restrictions state path information.
+  mosaicRestrictionsStatePath: {
+    // Parse a mosaic restrictions state path request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a mosaic restrictions state path response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse diagnostic counters information.
+  diagnosticCounters: {
+    // Parse a diagnostic counters request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a diagnostic counters response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse confirm timestamp hashes information.
+  confirmTimestampedHashes: {
+    // Parse a confirm timestamp hashes request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a confirm timestamp hashes response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse active node information.
+  activeNodeInfos: {
+    // Parse a active node request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a active node response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse block statement information.
+  blockStatement: {
+    // Parse a block statement request.
+    request: data => ({
+      height: TcpReader.solitary(data, 'uint64')
+    }),
+
+    // Parse a block statement response.
+    response: data => TcpReader.solitary(data, 'blockStatement')
+  },
+
+  // Parse unlocked accounts information.
+  unlockedAccounts: {
+    // Parse an unlocked accounts request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse an unlocked accounts response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse account information.
+  accountInfos: {
+    // Parse an accounts request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse an accounts response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse hash lock information.
+  hashLockInfos: {
+    // Parse a hash lock request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a hash lock response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse secret lock information.
+  secretLockInfos: {
+    // Parse a secret lock request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a secret lock response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse metadata information.
+  metadataInfos: {
+    // Parse a metadata request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a metadata response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse mosaic information.
+  mosaicInfos: {
+    // Parse a mosaic request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a mosaic response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse multisig information.
+  multisigInfos: {
+    // Parse a multisig request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a multisig response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse namespace information.
+  namespaceInfos: {
+    // Parse a namespace request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a namespace response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse account restriction information.
+  accountRestrictionsInfos: {
+    // Parse an account restriction request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse an account restriction response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
+
+  // Parse mosaic restriction information.
+  mosaicRestrictionsInfos: {
+    // Parse a mosaic restriction request.
+    request: data => {
+      throw new Error('not yet implemented')
+    },
+
+    // Parse a mosaic restriction response.
+    response: data => {
+      throw new Error('not yet implemented')
+    }
+  },
 
   // Parse a generic request or response packet.
   packet: (data, codecName) => {
     let packet = codec.header(data)
-    // TODO(ahuszagh) Add in a lot more packet types.
-    // May need to handle both push and pull
-    // TODO(ahuszagh) need to add the ones mising from above.
     if (packet.type === constants.serverChallenge) {
       return codec.serverChallenge[codecName](packet.payload)
     } else if (packet.type === constants.clientChallenge) {
       return codec.clientChallenge[codecName](packet.payload)
+    } else if (packet.type === constants.pushBlock) {
+      return codec.pushBlock[codecName](packet.payload)
+    } else if (packet.type === constants.pullBlock) {
+      return codec.pullBlock[codecName](packet.payload)
+    } else if (packet.type === constants.chainInfo) {
+      return codec.chainInfo[codecName](packet.payload)
+    } else if (packet.type === constants.blockHashes) {
+      return codec.blockHashes[codecName](packet.payload)
+    } else if (packet.type === constants.pullBlocks) {
+      return codec.pullBlocks[codecName](packet.payload)
+    } else if (packet.type === constants.pushTransactions) {
+      return codec.pushTransactions[codecName](packet.payload)
+    } else if (packet.type === constants.pullTransactions) {
+      return codec.pullTransactions[codecName](packet.payload)
+    } else if (packet.type === constants.secureSigned) {
+      return codec.secureSigned[codecName](packet.payload)
+    } else if (packet.type === constants.subCacheMerkleRoots) {
+      return codec.subCacheMerkleRoots[codecName](packet.payload)
+    } else if (packet.type === constants.pushPartialTransactions) {
+      return codec.pushPartialTransactions[codecName](packet.payload)
+    } else if (packet.type === constants.pushDetachedCosignatures) {
+      return codec.pushDetachedCosignatures[codecName](packet.payload)
+    } else if (packet.type === constants.pullPartialTransactionInfos) {
+      return codec.pullPartialTransactionInfos[codecName](packet.payload)
+    } else if (packet.type === constants.nodeDiscoveryPushPing) {
+      return codec.pushNodeInfo[codecName](packet.payload)
     } else if (packet.type === constants.nodeDiscoveryPullPing) {
       return codec.pullNodeInfo[codecName](packet.payload)
+    } else if (packet.type === constants.nodeDiscoveryPushPeers) {
+      return codec.pushNodePeers[codecName](packet.payload)
     } else if (packet.type === constants.nodeDiscoveryPullPeers) {
       return codec.pullNodePeers[codecName](packet.payload)
     } else if (packet.type === constants.timeSyncNetworkTime) {
       return codec.timeSync[codecName](packet.payload)
+    } else if (packet.type === constants.accountStatePath) {
+      return codec.accountStatePath[codecName](packet.payload)
+    } else if (packet.type === constants.hashLockStatePath) {
+      return codec.hashLockStatePath[codecName](packet.payload)
+    } else if (packet.type === constants.secretLockStatePath) {
+      return codec.secretLockStatePath[codecName](packet.payload)
+    } else if (packet.type === constants.metadataStatePath) {
+      return codec.metadataStatePath[codecName](packet.payload)
+    } else if (packet.type === constants.mosaicStatePath) {
+      return codec.mosaicStatePath[codecName](packet.payload)
+    } else if (packet.type === constants.multisigStatePath) {
+      return codec.multisigStatePath[codecName](packet.payload)
+    } else if (packet.type === constants.namespaceStatePath) {
+      return codec.namespaceStatePath[codecName](packet.payload)
+    } else if (packet.type === constants.accountRestrictionsStatePath) {
+      return codec.accountRestrictionsStatePath[codecName](packet.payload)
+    } else if (packet.type === constants.mosaicRestrictionsStatePath) {
+      return codec.mosaicRestrictionsStatePath[codecName](packet.payload)
+    } else if (packet.type === constants.diagnosticCounters) {
+      return codec.diagnosticCounters[codecName](packet.payload)
+    } else if (packet.type === constants.confirmTimestampedHashes) {
+      return codec.confirmTimestampedHashes[codecName](packet.payload)
+    } else if (packet.type === constants.activeNodeInfos) {
+      return codec.activeNodeInfos[codecName](packet.payload)
+    } else if (packet.type === constants.blockStatement) {
+      return codec.blockStatement[codecName](packet.payload)
+    } else if (packet.type === constants.unlockedAccounts) {
+      return codec.unlockedAccounts[codecName](packet.payload)
+    } else if (packet.type === constants.accountInfos) {
+      return codec.accountInfos[codecName](packet.payload)
+    } else if (packet.type === constants.hashLockInfos) {
+      return codec.hashLockInfos[codecName](packet.payload)
+    } else if (packet.type === constants.secretLockInfos) {
+      return codec.secretLockInfos[codecName](packet.payload)
+    } else if (packet.type === constants.metadataInfos) {
+      return codec.metadataInfos[codecName](packet.payload)
+    } else if (packet.type === constants.mosaicInfos) {
+      return codec.mosaicInfos[codecName](packet.payload)
+    } else if (packet.type === constants.multisigInfos) {
+      return codec.multisigInfos[codecName](packet.payload)
+    } else if (packet.type === constants.namespaceInfos) {
+      return codec.namespaceInfos[codecName](packet.payload)
+    } else if (packet.type === constants.accountRestrictionsInfos) {
+      return codec.accountRestrictionsInfos[codecName](packet.payload)
+    } else if (packet.type === constants.mosaicRestrictionsInfos) {
+      return codec.mosaicRestrictionsInfos[codecName](packet.payload)
     } else {
       throw new Error(`invalid packet type, got ${packet.type}`)
     }
