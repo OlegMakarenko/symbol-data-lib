@@ -148,12 +148,29 @@ class TcpReader extends CatbufferReader {
   }
 
   tree() {
-    // May need to know the value type.
     let tree = []
     while (this.data.length !== 0) {
       tree.push(this.treeNode())
     }
     return tree
+  }
+
+  diagnosticCounter() {
+    let id = this.uint64()
+    let value = this.uint64()
+
+    return {
+      id,
+      value
+    }
+  }
+
+  diagnosticCounters() {
+    let counters = []
+    while (this.data.length !== 0) {
+      counters.push(this.diagnosticCounter())
+    }
+    return counters
   }
 }
 
@@ -552,14 +569,10 @@ const codec = {
   // Parse diagnostic counters information.
   diagnosticCounters: {
     // Parse a diagnostic counters request.
-    request: data => {
-      throw new Error('not yet implemented')
-    },
+    request: data => TcpReader.solitary(data, 'empty'),
 
     // Parse a diagnostic counters response.
-    response: data => {
-      throw new Error('not yet implemented')
-    }
+    response: data => TcpReader.solitary(data, 'diagnosticCounters')
   },
 
   // Parse confirm timestamp hashes information.

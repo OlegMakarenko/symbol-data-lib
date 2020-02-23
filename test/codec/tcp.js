@@ -256,6 +256,10 @@ describe('tcp', () => {
     })
   })
 
+  describe('pushTransactions', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
   describe('pullTransactions', () => {
     it('should parse a pull transactions request', () => {
       let buffer = Buffer.from('0000000000000000', 'hex')
@@ -269,6 +273,10 @@ describe('tcp', () => {
       let buffer = Buffer.from('', 'hex')
       expect(tcp.pullTransactions.response(buffer)).to.eql([])
     })
+  })
+
+  describe('secureSigned', () => {
+    // TODO(ahuszagh) Add unittests.
   })
 
   describe('subCacheMerkleRoots', () => {
@@ -295,6 +303,22 @@ describe('tcp', () => {
     })
   })
 
+  describe('pushPartialTransactions', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('pushDetachedCosignatures', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('pullPartialTransactionInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('pushNodeInfo', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
   describe('pullNodeInfo', () => {
     it('should parse a node info request', () => {
       let buffer = Buffer.from('', 'hex')
@@ -313,6 +337,10 @@ describe('tcp', () => {
         friendlyName: 'C1B4E25B'
       })
     })
+  })
+
+  describe('pushNodePeers', () => {
+    // TODO(ahuszagh) Add unittests.
   })
 
   describe('pullNodePeers', () => {
@@ -764,5 +792,65 @@ describe('tcp', () => {
         }
       ])
     })
+  })
+
+  describe('diagnosticCounters', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('confirmTimestampedHashes', () => {
+    // TODO(ahuszagh) use the ones in the cache and confirm this.
+    // The request and the response should be similar, I believe.
+    // The diagnostic methods don't seem to be working for me, likely don't have the plugin.
+    // TODO(ahuszagh) Add unittests.
+    // "9117292276@D96B0C392B253E118D6B105479CD8D55A879422BCAC551855E71C4E8DDB51FD3"
+  })
+
+  describe('activeNodeInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('blockStatement', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('unlockedAccounts', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('accountInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('hashLockInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('secretLockInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('metadataInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('mosaicInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('multisigInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('namespaceInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('accountRestrictionsInfos', () => {
+    // TODO(ahuszagh) Add unittests.
+  })
+
+  describe('mosaicRestrictionsInfos', () => {
+    // TODO(ahuszagh) Add unittests.
   })
 })
