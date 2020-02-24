@@ -20,7 +20,24 @@
  *  Codec to transform TCP models to JSON.
  */
 
-import net from 'net'
+import socket from './util/socket'
+
+// TODO(ahuszagh) Some of these are optional.
+/**
+ *  Get connection to MongoDB.
+ *
+ *  @param options {Object}       - Options to specify connection parameters.
+ *    @field host {String}        - Required. Host to connect to.
+ *    @field port {Number}        - Port to connect to. **Default** 'localhost'.
+ *    @field verbose {Boolean}    - Display debug information.
+ */
+const connect = async options => {
+  let socket = await Socket.connect(options)
+  await socket.close()
+  // TODO(ahuszagh) Here...
+}
+
+// TODO(ahuszagh) Really need a serial sockets API here...
 
 // TODO(ahuszagh) Going to need to have much a more complex API here.
 //   May need structured data to be passed to the request.

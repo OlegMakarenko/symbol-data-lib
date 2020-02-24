@@ -545,7 +545,7 @@ const M = (o, a, b) => {
   t0 += c - 1 + 37 * (c-1)
 
   // second car
-  c = 1;
+  c = 1
   v =  t0 + c + 65535
   c = Math.floor(v / 65536)
   t0 = v - c * 65536
@@ -821,8 +821,8 @@ const unpackneg = (r, p) => {
     M(r[0], r[0], I)
   }
 
-  S(chk, r[0]);
-  M(chk, chk, den);
+  S(chk, r[0])
+  M(chk, chk, den)
   if (neq25519(chk, num)) {
     return -1
   }

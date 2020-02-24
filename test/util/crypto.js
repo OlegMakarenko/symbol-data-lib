@@ -79,8 +79,6 @@ describe('crypto', () => {
       let signingKey = new crypto.SigningKey(key, crypto.keccak['512'])
       expect(signingKey.sign(message)).to.eql(signature)
     })
-
-    // TODO(ahuszagh) Need stuff to sign, etc.
   })
 
   describe('VerifyingKey', () => {
@@ -91,8 +89,5 @@ describe('crypto', () => {
       let verifyingKey = new crypto.VerifyingKey(key, crypto.keccak['512'])
       expect(verifyingKey.verify(signature, message)).to.equal(true)
     })
-
-    // TODO(ahuszagh) Need stuff to verify, etc.
-    // TODO(ahuszagh) Here...
   })
 })
