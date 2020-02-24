@@ -22,8 +22,11 @@
   "license": "Apache-2.0",
   "dependencies": {
     "encoding-down": "^6.3.0",
+    "install": "^0.13.0",
+    "js-sha3": "^0.8.0",
     "levelup": "^4.3.2",
     "mongodb": "^3.5.3",
+    "npm": "^6.13.7",
     "rocksdb": "^4.1.0",
     "yargs": "^15.1.0"
   },

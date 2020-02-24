@@ -319,8 +319,10 @@ const codec = {
 
   // Parse push transactions information.
   pushTransactions: {
+    // TODO(ahuszagh) Here...
     // Parse a push transactions request.
     request: data => {
+      // Needs to push transaction infos.
       throw new Error('not yet implemented')
     },
 

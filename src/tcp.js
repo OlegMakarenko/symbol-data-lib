@@ -16,3 +16,13 @@
  *
  */
 
+/**
+ *  Codec to transform TCP models to JSON.
+ */
+
+import net from 'net'
+
+// TODO(ahuszagh) Going to need to have much a more complex API here.
+//   May need structured data to be passed to the request.
+// But, at the very least, going to need to have a socket that works.
+// NTOD
