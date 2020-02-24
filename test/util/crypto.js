@@ -68,22 +68,30 @@ describe('crypto', () => {
     it('should generate a signing key from seed', () => {
       let seed = Buffer.from('3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770D', 'hex')
       let signingKey = new crypto.SigningKey(seed, crypto.keccak['512'])
-      expect(signingKey.seed.toString('hex')).to.equal('3bc0820d9b9552c0805a28c9e4314961c9ac415d580f13d330be88f82fe5770d')
-      expect(signingKey.buffer.toString('hex')).to.equal('3bc0820d9b9552c0805a28c9e4314961c9ac415d580f13d330be88f82fe5770dfaf429da9cec65953289365ac4dad59eb26f948110be125a52dfc0cf741b31dc')
+      expect(signingKey.seed).to.eql(Buffer.from('3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770D', 'hex'))
+      expect(signingKey.buffer).to.eql(Buffer.from('3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770DFAF429DA9CEC65953289365AC4DAD59EB26F948110BE125A52DFC0CF741B31DC', 'hex'))
     })
 
     it('should sign a message', () => {
       let key = Buffer.from('3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770DFAF429DA9CEC65953289365AC4DAD59EB26F948110BE125A52DFC0CF741B31DC', 'hex')
-      let signature = 'c6ca8f653034bd468219726dbd7c859ed172834a45d2f25248a536f413630d7678a329b17052425d9b68ea1ff61b31c9abf7ec5d64e9e47d91eb9c14dda6ce04'
+      let signature = Buffer.from('C6CA8F653034BD468219726DBD7C859ED172834A45D2F25248A536F413630D7678A329B17052425D9B68EA1FF61B31C9ABF7EC5D64E9E47D91EB9C14DDA6CE04', 'hex')
       let message = Buffer.from('hello world', 'ascii')
       let signingKey = new crypto.SigningKey(key, crypto.keccak['512'])
-      expect(signingKey.sign(message).toString('hex')).to.equal(signature)
+      expect(signingKey.sign(message)).to.eql(signature)
     })
 
     // TODO(ahuszagh) Need stuff to sign, etc.
   })
 
   describe('VerifyingKey', () => {
+    it('should verify a signed message', () => {
+      let key = Buffer.from('FAF429DA9CEC65953289365AC4DAD59EB26F948110BE125A52DFC0CF741B31DC', 'hex')
+      let signature = Buffer.from('C6CA8F653034BD468219726DBD7C859ED172834A45D2F25248A536F413630D7678A329B17052425D9B68EA1FF61B31C9ABF7EC5D64E9E47D91EB9C14DDA6CE04', 'hex')
+      let message = Buffer.from('hello world', 'ascii')
+      let verifyingKey = new crypto.VerifyingKey(key, crypto.keccak['512'])
+      expect(verifyingKey.verify(signature, message)).to.equal(true)
+    })
+
     // TODO(ahuszagh) Need stuff to verify, etc.
     // TODO(ahuszagh) Here...
   })

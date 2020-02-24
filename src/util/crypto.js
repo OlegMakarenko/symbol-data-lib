@@ -56,6 +56,30 @@ const extractPublicKey = (seed, hash512) => {
 }
 
 /**
+ *  Determine if the signature is reduced.
+ */
+const isReduced = signature => {
+  // Uint8Array.prototype.slice copies the contents, unlike Buffer.
+  let copy = new Uint8Array(SIGNATURE_SIZE)
+  for (let i = 0; i < HALF_SIGNATURE_SIZE; i++) {
+    copy[i] = signature[i]
+  }
+  nacl.reduce(copy)
+
+  let sbuf = Buffer.from(signature.subarray(0, HALF_SIGNATURE_SIZE))
+  let cbuf = Buffer.from(copy.subarray(0, HALF_SIGNATURE_SIZE))
+
+  return sbuf.equals(cbuf)
+}
+
+/**
+ *  Determine if the signature is canonical.
+ */
+const isCanonical = signature => {
+  return isReduced(signature.subarray(HALF_SIGNATURE_SIZE))
+}
+
+/**
  *  Sign message and generate digital signature.
  */
 const sign = (message, privateKey, publicKey, hash512) => {
@@ -95,9 +119,49 @@ const sign = (message, privateKey, publicKey, hash512) => {
     }
   }
 
+  // Generate the latter half of the signature, and valid the first half.
   nacl.modL(signature.subarray(HALF_SIGNATURE_SIZE), x)
+  if (isReduced(signature)) {
+    throw new Error('S part of signature is invalid')
+  }
 
   return Buffer.from(signature)
+}
+
+/**
+ *  Verify signature from message.
+ */
+const verify = (signature, message, publicKey, hash512) => {
+  if (!isCanonical(signature)) {
+    // Reject a non-canonical signature.
+    return false
+  } else if (publicKey.every(x => x === 0)) {
+    // Reject weak public key.
+    return false
+  }
+
+  let p = [nacl.gf(), nacl.gf(), nacl.gf(), nacl.gf()]
+  let q = [nacl.gf(), nacl.gf(), nacl.gf(), nacl.gf()]
+  if (nacl.unpackneg(q, publicKey)) {
+    return false
+  }
+
+  let length = HALF_SIGNATURE_SIZE + KEY_SIZE + message.length
+  let buffers = [
+    signature.subarray(0, HALF_SIGNATURE_SIZE),
+    publicKey,
+    message
+  ]
+  let h = hash512(Buffer.concat(buffers, length))
+  nacl.reduce(h)
+  nacl.scalarmult(p, q, h)
+
+  let t = new Uint8Array(SIGNATURE_SIZE)
+  nacl.scalarbase(q, signature.subarray(HALF_SIGNATURE_SIZE))
+  nacl.add(p, q)
+  nacl.pack(t, p)
+
+  return nacl.verify32(signature, 0, t, 0) === 0
 }
 
 // API
@@ -224,12 +288,10 @@ class VerifyingKey {
    *  @param message {Buffer}   - Message as buffer to sign.
    */
   verify(signature, message) {
-    // TODO(ahuszagh) Implement...
+    let publicKey = this.buffer
+    return verify(signature, message, publicKey, this.hash512)
   }
 }
-
-// TODO(ahuszagh) Need an ed25519 digital signature algorithm here...
-
 
 export default {
   keccak,
