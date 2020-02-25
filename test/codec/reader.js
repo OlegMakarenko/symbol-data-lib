@@ -66,9 +66,9 @@ describe('reader', () => {
     expect(reader.data).to.have.length(4)
   })
 
-  it('should read an raw uint64 value', () => {
+  it('should read an uint64 value', () => {
     let reader = new Reader(Buffer.from('FEDCBA9876543210', 'hex'))
-    expect(reader.rawUint64()).to.eql([2562383102, 271733878])
+    expect(reader.uint64()).to.eql([2562383102, 271733878])
     expect(reader.data).to.have.length(0)
   })
 
@@ -78,27 +78,27 @@ describe('reader', () => {
     expect(reader.data).to.have.length(0)
   })
 
-  it('should read an uint64 value', () => {
+  it('should read an uint64 string value', () => {
     let reader = new Reader(Buffer.from('FEDCBA9876543210', 'hex'))
-    expect(reader.uint64()).to.equal('1167088121787636990')
+    expect(reader.uint64String()).to.equal('1167088121787636990')
     expect(reader.data).to.have.length(0)
   })
 
   it('should read an ascii value', () => {
     let reader = new Reader(Buffer.from('hello world', 'ascii'))
-    expect(reader.asciiN(5)).to.equal('hello')
+    expect(reader.ascii(5)).to.equal('hello')
     expect(reader.data).to.have.length(6)
   })
 
   it('should read an base32 value', () => {
     let reader = new Reader(Buffer.from('989D619A4C32CCDABE2B498AC1034B3FC8C30E56F183AF2F72', 'hex'))
-    expect(reader.base32N(25)).to.equal('TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S')
+    expect(reader.base32(25)).to.equal('TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S')
     expect(reader.data).to.have.length(0)
   })
 
   it('should read an hex value', () => {
     let reader = new Reader(Buffer.from('989D619A4C32CCDABE2B498AC1034B3FC8C30E56F183AF2F72', 'hex'))
-    expect(reader.hexN(20)).to.equal('989D619A4C32CCDABE2B498AC1034B3FC8C30E56')
+    expect(reader.hex(20)).to.equal('989D619A4C32CCDABE2B498AC1034B3FC8C30E56')
     expect(reader.data).to.have.length(5)
   })
 

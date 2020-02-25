@@ -24,8 +24,8 @@ import os from 'os'
 import base32 from './base32'
 
 // Endian-dependent deserialization.
-let readInt8 = (data, offset) => data.readInt8(offset)
-let readUint8 = (data, offset) => data.readUInt8(offset)
+let readInt8 = (data, offset = 0) => data.readInt8(offset)
+let readUint8 = (data, offset = 0) => data.readUInt8(offset)
 let readInt16
 let readInt32
 let readUint16
@@ -33,104 +33,39 @@ let readUint32
 let readUint64
 if (os.endianness() == 'LE') {
   // Little-endian
-  readInt16 = (data, offset) => data.readInt16LE(offset)
-  readInt32 = (data, offset) => data.readInt32LE(offset)
-  readUint16 = (data, offset) => data.readUInt16LE(offset)
-  readUint32 = (data, offset) => data.readUInt32LE(offset)
-  readUint64 = (data, offset) => [readUint32(data, offset), readUint32(data, offset+4)]
+  readInt16 = (data, offset = 0) => data.readInt16LE(offset)
+  readInt32 = (data, offset = 0) => data.readInt32LE(offset)
+  readUint16 = (data, offset = 0) => data.readUInt16LE(offset)
+  readUint32 = (data, offset = 0) => data.readUInt32LE(offset)
+  readUint64 = (data, offset = 0) => [readUint32(data, offset), readUint32(data, offset+4)]
 } else {
   // Big-endian
-  readInt16 = (data, offset) => data.readInt16BE(offset)
-  readInt32 = (data, offset) => data.readInt32BE(offset)
-  readUint16 = (data, offset) => data.readUInt16BE(offset)
-  readUint32 = (data, offset) => data.readUInt32BE(offset)
-  readUint64 = (data, offset) => [readUint32(data, offset+4), readUint32(data, offset)]
+  readInt16 = (data, offset = 0) => data.readInt16BE(offset)
+  readInt32 = (data, offset = 0) => data.readInt32BE(offset)
+  readUint16 = (data, offset = 0) => data.readUInt16BE(offset)
+  readUint32 = (data, offset = 0) => data.readUInt32BE(offset)
+  readUint64 = (data, offset = 0) => [readUint32(data, offset+4), readUint32(data, offset)]
 }
+
+/**
+ *  Read binary data as hex.
+ */
+const readHex = data => data.toString('hex').toUpperCase()
+
+/**
+ *  Read binary data as ASCII.
+ */
+const readAscii = data => data.toString('ascii')
+
+/**
+ *  Read binary data as base32.
+ */
+const readBase32 = data => base32.encode(data)
 
 /**
  *  Pad value with zeros until desired length.
  */
 const pad0 = (str, length) => str.padStart(length, '0')
-
-/**
- *  Convert 64-bit, unsigned integer to an ID.
- */
-const idToHex = id => {
-  let part1 = id[1].toString(16)
-  let part2 = id[0].toString(16)
-
-  return (pad0(part1, 8) + pad0(part2, 8)).toUpperCase()
-}
-
-/**
- *  Convert binary data to int8.
- */
-const binaryToInt8 = data => {
-  if (data.length !== 1) {
-    throw Error(`encoded size must be equal to 1`)
-  }
-  return readInt8(data, 0)
-}
-
-/**
- *  Convert binary data to int16.
- */
-const binaryToInt16 = data => {
-  if (data.length !== 2) {
-    throw Error(`encoded size must be equal to 2`)
-  }
-  return readInt16(data, 0)
-}
-
-/**
- *  Convert binary data to int32.
- */
-const binaryToInt32 = data => {
-  if (data.length !== 4) {
-    throw Error(`encoded size must be equal to 4`)
-  }
-  return readInt32(data, 0)
-}
-
-/**
- *  Convert binary data to uint8.
- */
-const binaryToUint8 = data => {
-  if (data.length !== 1) {
-    throw Error(`encoded size must be equal to 1`)
-  }
-  return readUint8(data, 0)
-}
-
-/**
- *  Convert binary data to uint16.
- */
-const binaryToUint16 = data => {
-  if (data.length !== 2) {
-    throw Error(`encoded size must be equal to 2`)
-  }
-  return readUint16(data, 0)
-}
-
-/**
- *  Convert binary data to uint32.
- */
-const binaryToUint32 = data => {
-  if (data.length !== 4) {
-    throw Error(`encoded size must be equal to 4`)
-  }
-  return readUint32(data, 0)
-}
-
-/**
- *  Convert binary data to uint64.
- */
-const binaryToUint64 = data => {
-  if (data.length !== 8) {
-    throw Error(`encoded size must be equal to 8`)
-  }
-  return readUint64(data, 0)
-}
 
 /**
  *  Serialize 64-bit integer to string, with radix.
@@ -152,31 +87,50 @@ const uint64ToString = uint64 => {
 }
 
 /**
- *  Convert binary data to hex.
+ *  Convert MongoDB long to uint64.
  */
-const binaryToHex = data => data.toString('hex').toUpperCase()
+const longToUint64 = long => {
+  return [long.getLowBitsUnsigned(), long.getHighBits() >>> 0]
+}
 
 /**
- *  Convert binary data to ASCII.
+ *  Convert MongoDB long to string.
  */
-const binaryToAscii = data => data.toString('ascii')
+const longToString = long => {
+  return uint64ToString(longToUint64(long))
+}
 
 /**
- *  Convert binary data to base32.
+ *  Convert 64-bit, unsigned integer to an ID.
  */
-const binaryToBase32 = data => base32.encode(data)
+const uint64ToId = id => {
+  let part1 = id[1].toString(16)
+  let part2 = id[0].toString(16)
+
+  return (pad0(part1, 8) + pad0(part2, 8)).toUpperCase()
+}
+
+/**
+ *  Convert MongoDB long to an ID.
+ */
+const longToId = long => {
+  return uint64ToId(longToUint64(long))
+}
 
 export default {
-  idToHex,
-  binaryToInt8,
-  binaryToInt16,
-  binaryToInt32,
-  binaryToUint8,
-  binaryToUint16,
-  binaryToUint32,
-  binaryToUint64,
-  binaryToHex,
-  binaryToAscii,
-  binaryToBase32,
-  uint64ToString
+  readInt8,
+  readUint8,
+  readInt16,
+  readInt32,
+  readUint16,
+  readUint32,
+  readUint64,
+  readHex,
+  readAscii,
+  readBase32,
+  longToUint64,
+  uint64ToString,
+  longToString,
+  uint64ToId,
+  longToId
 }

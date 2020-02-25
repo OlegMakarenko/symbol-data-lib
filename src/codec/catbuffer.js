@@ -22,7 +22,8 @@
 
 import assert from 'assert'
 import constants from './constants'
-import Reader from './reader'
+import BaseReader from './reader'
+import BaseWriter from './writer'
 import shared from '../util/shared'
 
 // HELPERS
@@ -35,11 +36,11 @@ const align = (size, alignment) => {
 
 // READERS
 
-export default class CatbufferReader extends Reader {
+class Reader extends BaseReader {
   // Size-prefix for an entity
   sizePrefix() {
     let size = this.uint32()
-    if (this.data.length < size - 4) {
+    if (this._data.length < size - 4) {
       throw new Error('invalid sized-prefixed entity: data is too short')
     }
     return size
@@ -109,7 +110,7 @@ export default class CatbufferReader extends Reader {
 
   mosaic() {
     let id = this.id()
-    let amount = this.uint64()
+    let amount = this.uint64String()
 
     return {
       id,
@@ -128,12 +129,12 @@ export default class CatbufferReader extends Reader {
   }
 
   cosignatures() {
-    if ((this.data.length % 96) !== 0) {
+    if ((this._data.length % 96) !== 0) {
       throw new Error('invalid trailing data after cosignatures.')
     }
 
     let cosignatures = []
-    while (this.data.length !== 0) {
+    while (this._data.length !== 0) {
       cosignatures.push(this.cosignature())
     }
 
@@ -143,8 +144,8 @@ export default class CatbufferReader extends Reader {
   baseTransaction(embedded) {
     let transaction = {}
     if (!embedded) {
-      transaction.maxFee = this.uint64()
-      transaction.deadline = this.uint64()
+      transaction.maxFee = this.uint64String()
+      transaction.deadline = this.uint64String()
     }
 
     return transaction
@@ -164,7 +165,7 @@ export default class CatbufferReader extends Reader {
     this.n(transaction.mosaics, mosaicsCount, 'mosaic')
 
     // Parse the message
-    transaction.message = this.hexN(messageSize)
+    transaction.message = this.hex(messageSize)
 
     this.validateEmpty()
 
@@ -174,17 +175,17 @@ export default class CatbufferReader extends Reader {
   registerNamespaceTransaction(embedded) {
     // Parse the fixed data.
     let transaction = this.baseTransaction(embedded)
-    let union = this.rawUint64()
+    let union = this.uint64()
     transaction.namespaceId = this.id()
     transaction.namespaceType = this.uint8()
     let nameSize = this.uint8()
-    transaction.name = this.asciiN(nameSize)
+    transaction.name = this.ascii(nameSize)
 
     // Parse the union data
     if (transaction.namespaceType === constants.namespaceRoot) {
       transaction.duration = shared.uint64ToString(union)
     } else if (transaction.namespaceType === constants.namespaceChild) {
-      transaction.parentId = shared.idToHex(union)
+      transaction.parentId = shared.uint64ToId(union)
     } else {
       throw new Error(`invalid namespace type, got ${transaction.namespaceType}`)
     }
@@ -216,7 +217,7 @@ export default class CatbufferReader extends Reader {
   mosaicDefinitionTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
-    transaction.duration = this.uint64()
+    transaction.duration = this.uint64String()
     transaction.nonce = this.uint32()
     transaction.flags = this.uint8()
     transaction.divisibility = this.uint8()
@@ -228,7 +229,7 @@ export default class CatbufferReader extends Reader {
   mosaicSupplyChangeTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
-    transaction.delta = this.uint64()
+    transaction.delta = this.uint64String()
     transaction.action = this.uint8()
     this.validateEmpty()
 
@@ -269,9 +270,9 @@ export default class CatbufferReader extends Reader {
 
     // Read the transactions.
     // May not be present, but `transactions` handles empty data.
-    let transactionData = this.data.slice(0, transactionsSize)
-    this.data = this.data.slice(transactionsSize)
-    let transactionReader = new CatbufferReader(transactionData)
+    let transactionData = this._data.slice(0, transactionsSize)
+    this._data = this._data.slice(transactionsSize)
+    let transactionReader = new Reader(transactionData)
     transaction.innerTransactions = transactionReader.transactions(true)
 
     // Read the remaining data as cosignatures.
@@ -294,7 +295,7 @@ export default class CatbufferReader extends Reader {
   lockTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaic = this.mosaic()
-    transaction.duration = this.uint64()
+    transaction.duration = this.uint64String()
     transaction.hash = this.hash256()
     this.validateEmpty()
 
@@ -305,7 +306,7 @@ export default class CatbufferReader extends Reader {
     let transaction = this.baseTransaction(embedded)
     transaction.secret = this.hash256()
     transaction.mosaic = this.mosaic()
-    transaction.duration = this.uint64()
+    transaction.duration = this.uint64String()
     transaction.hashAlgorithm = this.uint8()
     transaction.recipientAddress = this.address()
     this.validateEmpty()
@@ -319,7 +320,7 @@ export default class CatbufferReader extends Reader {
     let proofSize = this.uint16()
     transaction.hashAlgorithm = this.uint8()
     transaction.recipientAddress = this.address()
-    transaction.proof = this.hexN(proofSize)
+    transaction.proof = this.hex(proofSize)
     this.validateEmpty()
 
     return transaction
@@ -370,9 +371,9 @@ export default class CatbufferReader extends Reader {
   mosaicAddressRestrictionTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
-    transaction.restrictionKey = this.uint64()
-    transaction.previousRestrictionValue = this.uint64()
-    transaction.newRestrictionValue = this.uint64()
+    transaction.restrictionKey = this.uint64String()
+    transaction.previousRestrictionValue = this.uint64String()
+    transaction.newRestrictionValue = this.uint64String()
     transaction.targetAddress = this.address()
     this.validateEmpty()
 
@@ -383,9 +384,9 @@ export default class CatbufferReader extends Reader {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.referenceMosaicId = this.id()
-    transaction.restrictionKey = this.uint64()
-    transaction.previousRestrictionValue = this.uint64()
-    transaction.newRestrictionValue = this.uint64()
+    transaction.restrictionKey = this.uint64String()
+    transaction.previousRestrictionValue = this.uint64String()
+    transaction.newRestrictionValue = this.uint64String()
     transaction.previousRestrictionType = this.uint8()
     transaction.newRestrictionType = this.uint8()
     this.validateEmpty()
@@ -396,10 +397,10 @@ export default class CatbufferReader extends Reader {
   accountMetadataTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
-    transaction.scopedMetadataKey = this.uint64()
+    transaction.scopedMetadataKey = this.uint64String()
     transaction.valueSizeDelta = this.int16()
     let valueSize = this.uint16()
-    transaction.value = this.hexN(valueSize)
+    transaction.value = this.hex(valueSize)
     this.validateEmpty()
 
     return transaction
@@ -408,11 +409,11 @@ export default class CatbufferReader extends Reader {
   mosaicMetadataTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
-    transaction.scopedMetadataKey = this.uint64()
+    transaction.scopedMetadataKey = this.uint64String()
     transaction.targetMosaicId = this.id()
     transaction.valueSizeDelta = this.int16()
     let valueSize = this.uint16()
-    transaction.value = this.hexN(valueSize)
+    transaction.value = this.hex(valueSize)
     this.validateEmpty()
 
     return transaction
@@ -421,11 +422,11 @@ export default class CatbufferReader extends Reader {
   namespaceMetadataTransaction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
-    transaction.scopedMetadataKey = this.uint64()
+    transaction.scopedMetadataKey = this.uint64String()
     transaction.targetNamespaceId = this.id()
     transaction.valueSizeDelta = this.int16()
     let valueSize = this.uint16()
-    transaction.value = this.hexN(valueSize)
+    transaction.value = this.hex(valueSize)
     this.validateEmpty()
 
     return transaction
@@ -481,14 +482,14 @@ export default class CatbufferReader extends Reader {
 
   transaction(embedded) {
     // First, get our entity data so we can parse the verifiable entity and block.
-    let size = shared.binaryToUint32(this.data.slice(0, 4))
+    let size = shared.readUint32(this._data.slice(0, 4))
     let alignedSize = align(size, 8)
-    let entityData = this.data.slice(0, size)
-    this.data = this.data.slice(alignedSize)
+    let entityData = this._data.slice(0, size)
+    this._data = this._data.slice(alignedSize)
 
     // Create a reader for the transaction entity.
     let entity
-    let entityReader = new CatbufferReader(entityData)
+    let entityReader = new Reader(entityData)
     if (embedded) {
       entity = entityReader.embeddedEntity()
     } else {
@@ -506,7 +507,7 @@ export default class CatbufferReader extends Reader {
     // Read transaction data while we still have remaining data.
     // It will either completely parse or throw an error.
     let transactions = []
-    while (this.data.length !== 0) {
+    while (this._data.length !== 0) {
       transactions.push(this.transaction(embedded))
     }
 
@@ -514,9 +515,9 @@ export default class CatbufferReader extends Reader {
   }
 
   blockHeader() {
-    let height = this.uint64()
-    let timestamp = this.uint64()
-    let difficulty = this.uint64()
+    let height = this.uint64String()
+    let timestamp = this.uint64String()
+    let difficulty = this.uint64String()
     let previousBlockHash = this.hash256()
     let transactionsHash = this.hash256()
     let receiptsHash = this.hash256()
@@ -541,12 +542,12 @@ export default class CatbufferReader extends Reader {
 
   block() {
     // First, get our entity data so we can parse the verifiable entity and block.
-    let size = shared.binaryToUint32(this.data.slice(0, 4))
-    let entityData = this.data.slice(0, size)
-    this.data = this.data.slice(size)
+    let size = shared.readUint32(this._data.slice(0, 4))
+    let entityData = this._data.slice(0, size)
+    this._data = this._data.slice(size)
 
     // Create a dependent reader.
-    let entityReader = new CatbufferReader(entityData)
+    let entityReader = new Reader(entityData)
     let entity = entityReader.verifiableEntity()
     let block = entityReader.blockHeader()
     if (entityReader.data.length !== 0) {
@@ -565,10 +566,21 @@ export default class CatbufferReader extends Reader {
     // Read transaction data while we still have remaining data.
     // It will either completely parse or throw an error.
     let blocks = []
-    while (this.data.length !== 0) {
+    while (this._data.length !== 0) {
       blocks.push(this.block())
     }
 
     return blocks
   }
+}
+
+// WRITERS
+
+class Writer extends BaseWriter {
+  // TODO(ahuszagh) Implement...
+}
+
+export default {
+  Reader,
+  Writer
 }

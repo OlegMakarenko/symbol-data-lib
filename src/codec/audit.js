@@ -22,11 +22,11 @@
 
 import fs from 'fs'
 import path from 'path'
-import CatbufferReader from './catbuffer'
+import catbuffer from './catbuffer'
 
 // READERS
 
-class AuditReader extends CatbufferReader {
+class AuditReader extends catbuffer.Reader {
   static solitary(data, fn) {
     let reader = new AuditReader(data)
     return reader.solitary(fn)

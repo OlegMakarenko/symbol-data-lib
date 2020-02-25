@@ -20,6 +20,7 @@
  *  Cryptographic hash and signature functions.
  */
 
+import crypto from 'crypto'
 import hashlib from 'js-sha3'
 import nacl from './nacl'
 
@@ -167,6 +168,13 @@ const verify = (signature, message, publicKey, hash512) => {
 // API
 
 /**
+ *  Generate cryptographically strong pseudo-random data.
+ */
+const randomBytes = length => {
+  return crypto.randomBytes(length)
+}
+
+/**
  *  Calculate the Keccak family of hash functions.
  */
 const keccak = {
@@ -296,6 +304,7 @@ class VerifyingKey {
 export default {
   keccak,
   sha3,
+  randomBytes,
   SigningKey,
   VerifyingKey
 }

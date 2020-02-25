@@ -16,15 +16,9 @@
  *
  */
 
-describe('codec', () => {
-  require('./audit'),
-  require('./block'),
-  require('./catbuffer'),
-  require('./config'),
-  require('./mongo'),
-  require('./reader'),
-  require('./rocks'),
-  require('./spool'),
-  require('./tcp'),
-  require('./writer')
+import expect from 'expect.js'
+import Writer from '../../src/codec/writer'
+
+describe('writer', () => {
+  // TODO(ahuszagh) Implement...
 })

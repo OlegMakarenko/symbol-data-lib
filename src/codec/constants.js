@@ -112,9 +112,14 @@ export default {
   // Path constants
   pathMaxLinks: 16,
 
+  // Security modes.
+  connectionSecurityNone: 1,
+  connectionSecuritySigned: 2,
+
   // Packet information and types.
   packetHeaderSize: 8,
   challengeSize: 64,
+  signatureSize: 64,
   serverChallenge: 1,
   clientChallenge: 2,
   pushBlock: 3,

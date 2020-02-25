@@ -147,7 +147,7 @@ export default class Level {
     if (value === undefined) {
       return [0, 0]
     }
-    return shared.binaryToUint64(value)
+    return shared.readUint64(value)
   }
 
   /**

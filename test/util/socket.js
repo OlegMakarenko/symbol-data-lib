@@ -22,8 +22,8 @@ import Socket from '../../src/util/socket'
 
 describe('socket', () => {
   it('should properly handle an echo server', async () => {
-    // Config options
-    let port = 44934
+    // Config options (use an ephemeral port)
+    let port = 52487
 
     // Create the server
     let server = net.createServer(connection => {
@@ -42,6 +42,12 @@ describe('socket', () => {
     await socket.send(payload)
     let data = await socket.receive()
     expect(data).to.eql(payload)
+
+    // Check the address works
+    let address = socket.address()
+    expect(address.address).to.be.a('string')
+    expect(address.family).to.be.a('string')
+    expect(address.port).to.be.a('number')
 
     // Close our connections.
     await socket.close()

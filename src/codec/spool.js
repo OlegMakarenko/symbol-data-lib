@@ -23,12 +23,12 @@
 import MongoDb from 'mongodb'
 import fs from 'fs'
 import path from 'path'
+import catbuffer from './catbuffer'
 import constants from './constants'
-import CatbufferReader from './catbuffer'
 
 // READERS
 
-class SpoolReader extends CatbufferReader {
+class SpoolReader extends catbuffer.Reader {
   static solitary(data, fn) {
     let reader = new SpoolReader(data)
     return reader.solitary(fn)
@@ -92,7 +92,7 @@ class SpoolReader extends CatbufferReader {
     let receiptSize = this.uint32()
     let version = this.uint16()
     let type = this.uint16()
-    let receiptBuffer = this.binaryN(receiptSize - 8)
+    let receiptBuffer = this.binary(receiptSize - 8)
     let basicType = (type >> 12) & 0xF
     let code = (type >> 8) & 0xF
     let receipt = {type, version}
@@ -103,7 +103,7 @@ class SpoolReader extends CatbufferReader {
     let receiptReader = new SpoolReader(receiptBuffer)
     if (basicType === constants.receiptOther) {
       // Unknown basic type, just return the hex data.
-      receipt.data = receiptReader.hexN(receiptSize - 8)
+      receipt.data = receiptReader.hex(receiptSize - 8)
     } else if (basicType === constants.receiptBalanceTransfer) {
       receipt.mosaic = receiptReader.mosaic()
       receipt.senderPublicKey = receiptReader.key()
@@ -114,7 +114,7 @@ class SpoolReader extends CatbufferReader {
     } else if (basicType === constants.receiptBalanceDebit) {
       // Currently not used: shouldn't contained anything.
     } else if (basicType === constants.receiptArtifactExpiry) {
-      receipt.artifactId = receiptReader.hexN(receiptSize - 8)
+      receipt.artifactId = receiptReader.hex(receiptSize - 8)
     } else if (basicType === constants.receiptInflation) {
       receipt.mosaic = receiptReader.mosaic()
     } else if (basicType === constants.receiptAggregate) {
@@ -268,8 +268,8 @@ class SpoolReader extends CatbufferReader {
   }
 
   chainScore() {
-    let scoreHigh = this.uint64()
-    let scoreLow = this.uint64()
+    let scoreHigh = this.uint64String()
+    let scoreLow = this.uint64String()
 
     return {
       scoreHigh,
@@ -334,11 +334,11 @@ class SpoolReader extends CatbufferReader {
   cacheChanges() {
     let cacheChanges = []
     let zero = MongoDb.Long.fromInt(0)  // TODO(ahuszagh) Remove
-    while (this.data.length > 0) {
+    while (this._data.length > 0) {
       let count = this.long()
       console.log(count)
       if (count.notEquals(zero)) {
-        console.log(this.data.toString('hex'))
+        console.log(this._data.toString('hex'))
         // TODO(ahuszagh) Need to consider here..
         break
       }
@@ -504,7 +504,7 @@ const codec = {
         Object.assign(value, reader.blockElement())
         value.blockStatement = reader.optionalBlockStatement()
       } else if (type === constants.blocksDropped) {
-        value.height = reader.uint64()
+        value.height = reader.uint64String()
       } else {
         throw new Error(`invalid block change operation type, got ${type}`)
       }
@@ -619,7 +619,7 @@ const codec = {
         value.chainScore = reader.chainScore()
       } else if (type === constants.stateChange) {
         value.chainScore = reader.chainScore()
-        value.height = reader.uint64()
+        value.height = reader.uint64String()
         value.cacheChanges = reader.cacheChanges()
       } else {
         throw new Error(`invalid state change operation type, got ${type}`)

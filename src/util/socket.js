@@ -90,7 +90,7 @@ export default class Socket {
         // calculate it.
         buffer = Buffer.concat([buffer, data], buffer.length + data.length)
         if (size === undefined && buffer.length >= 4) {
-          size = shared.binaryToUint32(buffer.slice(0, 4))
+          size = shared.readUint32(buffer.slice(0, 4))
         }
 
         // We've extracted the full packet.
@@ -125,6 +125,14 @@ export default class Socket {
         resolve()
       })
     })
+  }
+
+  /**
+   *  Get the address the socket is connected to.
+   */
+  address() {
+    assert(this.isOpen, 'socket must be open')
+    return this.connection.address()
   }
 
   /**

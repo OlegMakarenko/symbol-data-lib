@@ -25,18 +25,25 @@ import shared from '../util/shared'
 
 export default class Reader {
   constructor(data) {
-    this.data = data
+    this._data = data
+  }
+
+  /**
+   *  Get access to the remaining data.
+   */
+  get data() {
+    return this._data
   }
 
   // EMPTY
 
   validateEmpty() {
-    if (this.data.length !== 0) {
+    if (this._data.length !== 0) {
       throw new Error('invalid trailing data')
     }
   }
 
-  // READERS
+  // HELPERS
 
   callback(fn) {
     if (typeof fn === 'string') {
@@ -48,10 +55,12 @@ export default class Reader {
 
   solitary(fn) {
     let callback = this.callback(fn)
-    let value = callback()
+    let value = callback.call()
     this.validateEmpty()
     return value
   }
+
+  // ARRAYS
 
   n(array, count, fn) {
     let callback = this.callback(fn)
@@ -70,96 +79,100 @@ export default class Reader {
     }
   }
 
+  // PRIMITIVES
+
   int8() {
-    let value = shared.binaryToInt8(this.data.slice(0, 1))
-    this.data = this.data.slice(1)
+    let value = shared.readInt8(this._data)
+    this._data = this._data.slice(1)
     return value
   }
 
   int16() {
-    let value = shared.binaryToInt16(this.data.slice(0, 2))
-    this.data = this.data.slice(2)
+    let value = shared.readInt16(this._data)
+    this._data = this._data.slice(2)
     return value
   }
 
   int32() {
-    let value = shared.binaryToInt32(this.data.slice(0, 4))
-    this.data = this.data.slice(4)
+    let value = shared.readInt32(this._data)
+    this._data = this._data.slice(4)
     return value
   }
 
   uint8() {
-    let value = shared.binaryToUint8(this.data.slice(0, 1))
-    this.data = this.data.slice(1)
+    let value = shared.readUint8(this._data)
+    this._data = this._data.slice(1)
     return value
   }
 
   uint16() {
-    let value = shared.binaryToUint16(this.data.slice(0, 2))
-    this.data = this.data.slice(2)
+    let value = shared.readUint16(this._data)
+    this._data = this._data.slice(2)
     return value
   }
 
   uint32() {
-    let value = shared.binaryToUint32(this.data.slice(0, 4))
-    this.data = this.data.slice(4)
+    let value = shared.readUint32(this._data)
+    this._data = this._data.slice(4)
     return value
   }
 
-  rawUint64() {
-    let value = shared.binaryToUint64(this.data.slice(0, 8))
-    this.data = this.data.slice(8)
+  uint64() {
+    let value = shared.readUint64(this._data)
+    this._data = this._data.slice(8)
     return value
   }
 
   long() {
-    let uint64 = this.rawUint64()
+    let uint64 = this.uint64()
     return new MongoDb.Long(uint64[0], uint64[1])
   }
 
-  uint64() {
-    return shared.uint64ToString(this.rawUint64())
+  uint64String() {
+    return shared.uint64ToString(this.uint64())
   }
 
-  binaryN(n) {
-    if (this.data.length < n) {
-      throw new Error(`cannot extract ${n} bytes, buffer only contains ${this.data.length}`)
+  // CATAPULT TYPES
+
+  binary(n) {
+    if (this._data.length < n) {
+      throw new Error(`cannot extract ${n} bytes, buffer only contains ${this._data.length}`)
     }
-    let value = this.data.slice(0, n)
-    this.data = this.data.slice(n)
+    let value = this._data.slice(0, n)
+    this._data = this._data.slice(n)
     return value
   }
 
-  asciiN(n) {
-    return shared.binaryToAscii(this.binaryN(n))
+  ascii(n) {
+    return shared.readAscii(this.binary(n))
   }
 
-  base32N(n) {
-    return shared.binaryToBase32(this.binaryN(n))
+  base32(n) {
+    return shared.readBase32(this.binary(n))
   }
 
-  hexN(n) {
-    return shared.binaryToHex(this.binaryN(n))
+  hex(n) {
+    return shared.readHex(this.binary(n))
   }
 
   address() {
-    return this.base32N(25)
+    return this.base32(25)
   }
 
   hash256() {
-    return this.hexN(32)
+    return this.hex(32)
   }
 
   key() {
-    return this.hexN(32)
+    return this.hex(32)
   }
 
   signature() {
-    return this.hexN(64)
+    return this.hex(64)
   }
 
   id() {
-    return shared.idToHex(this.rawUint64())
+    return shared.uint64ToId(this.uint64())
   }
 
   entityType() {

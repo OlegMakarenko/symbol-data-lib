@@ -98,7 +98,7 @@ class RocksReader extends Reader {
 
   mosaic() {
     let id = this.id()
-    let amount = this.uint64()
+    let amount = this.uint64String()
 
     return {
       id,
@@ -107,8 +107,8 @@ class RocksReader extends Reader {
   }
 
   importance() {
-    let value = this.uint64()
-    let height = this.uint64()
+    let value = this.uint64String()
+    let height = this.uint64String()
 
     return {
       value,
@@ -117,10 +117,10 @@ class RocksReader extends Reader {
   }
 
   activityBucket() {
-    let startHeight = this.uint64()
-    let totalFeesPaid = this.uint64()
+    let startHeight = this.uint64String()
+    let totalFeesPaid = this.uint64String()
     let beneficiaryCount = this.uint32()
-    let rawScore = this.uint64()
+    let rawScore = this.uint64String()
 
     return {
       startHeight,
@@ -131,7 +131,7 @@ class RocksReader extends Reader {
   }
 
   timestampedHash() {
-    let time = this.uint64()
+    let time = this.uint64String()
     let hash = this.hash256()
     return `${time}@${hash}`
   }
@@ -144,7 +144,7 @@ class RocksReader extends Reader {
     // Create the generic callback for all restriction types.
     let valueCallback = this.callback(valueFn)
     let callback = () => {
-      let key = this.uint64()
+      let key = this.uint64String()
       let value = valueCallback()
       return {
         key,
@@ -160,7 +160,7 @@ class RocksReader extends Reader {
   }
 
   mosaicAddressRestrictionValue() {
-    return this.uint64()
+    return this.uint64String()
   }
 
   mosaicAddressRestriction() {
@@ -179,7 +179,7 @@ class RocksReader extends Reader {
 
   mosaicGlobalRestrictionValue() {
     let referenceMosaicId = this.id()
-    let restrictionValue = this.uint64()
+    let restrictionValue = this.uint64String()
     let restrictionType = this.uint8()
 
     return {
@@ -233,8 +233,8 @@ class RocksReader extends Reader {
 
   rootNamespace(rootId) {
     let owner = this.key()
-    let lifetimeStart = this.uint64()
-    let lifetimeEnd = this.uint64()
+    let lifetimeStart = this.uint64String()
+    let lifetimeEnd = this.uint64String()
     let alias = this.alias()
     let childrenCount = this.long()
     let children = []
@@ -288,7 +288,7 @@ export default {
       let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let address = reader.address()
-      let restrictionsCount = reader.uint64()
+      let restrictionsCount = reader.uint64String()
       let restrictions = []
       reader.n(restrictions, restrictionsCount, 'accountRestriction')
       reader.validateEmpty()
@@ -326,9 +326,9 @@ export default {
       let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let address = reader.address()
-      let addressHeight = reader.uint64()
+      let addressHeight = reader.uint64String()
       let publicKey = reader.key()
-      let publicKeyHeight = reader.uint64()
+      let publicKeyHeight = reader.uint64String()
       let accountType = reader.uint8()
       let linkedAccountKey = reader.key()
       let format = reader.uint8()
@@ -398,8 +398,8 @@ export default {
       reader.validateStateVersion(1)
       let senderPublicKey = reader.key()
       let mosaicId = reader.id()
-      let amount = reader.uint64()
-      let endHeight = reader.uint64()
+      let amount = reader.uint64String()
+      let endHeight = reader.uint64String()
       let status = reader.uint8()
       let hash = reader.hash256()
       reader.validateEmpty()
@@ -436,11 +436,11 @@ export default {
       reader.validateStateVersion(1)
       let senderPublicKey = reader.key()
       let targetPublicKey = reader.key()
-      let scopedMetadataKey = reader.uint64()
+      let scopedMetadataKey = reader.uint64String()
       let targetId = reader.id()
       let metadataType = reader.uint8()
       let valueSize = reader.uint16()
-      let value = reader.hexN(valueSize)
+      let value = reader.hex(valueSize)
       reader.validateEmpty()
 
       return {
@@ -474,13 +474,13 @@ export default {
       let reader = new RocksReader(data)
       reader.validateStateVersion(1)
       let id = reader.id()
-      let supply = reader.uint64()
-      let startHeight = reader.uint64()
+      let supply = reader.uint64String()
+      let startHeight = reader.uint64String()
       let ownerPublicKey = reader.key()
       let revision = reader.uint32()
       let flags = reader.uint8()
       let divisibility = reader.uint8()
-      let duration = reader.uint64()
+      let duration = reader.uint64String()
       reader.validateEmpty()
 
       return {
@@ -668,8 +668,8 @@ export default {
       reader.validateStateVersion(1)
       let senderPublicKey = reader.key()
       let mosaicId = reader.id()
-      let amount = reader.uint64()
-      let endHeight = reader.uint64()
+      let amount = reader.uint64String()
+      let endHeight = reader.uint64String()
       let status = reader.uint8()
       let hashAlgorithm = reader.uint8()
       let secret = reader.hash256()

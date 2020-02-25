@@ -23,43 +23,37 @@
 import constants from './constants'
 import shared from '../util/shared'
 
-const longToUint64 = long => [long.getLowBitsUnsigned(), long.getHighBits() >>> 0]
-const longToString = long => shared.uint64ToString(longToUint64(long))
-const idToHex = id => shared.idToHex(longToUint64(id))
-const binaryToAscii = data => shared.binaryToAscii(data)
-const binaryToHex = data => shared.binaryToHex(data)
-const binaryToBase32 = data => shared.binaryToBase32(data.buffer)
-const binaryToId = data => shared.idToHex(shared.binaryToUint64(data))
+const readBase32 = data => shared.readBase32(data.buffer)
 const objectIdToHex = id => id.toHexString().toUpperCase()
 
 const balanceChangeReceipt = entry => ({
   version: entry.version,
   type: entry.type,
-  targetPublicKey : binaryToHex(entry.targetPublicKey),
-  mosaicId : idToHex(entry.mosaicId),
-  amount : longToString(entry.amount)
+  targetPublicKey : shared.readHex(entry.targetPublicKey),
+  mosaicId : shared.longToId(entry.mosaicId),
+  amount : shared.longToString(entry.amount)
 })
 
 const balanceTransferReceipt = entry => ({
   version: entry.version,
   type: entry.type,
-  senderPublicKey : binaryToHex(entry.senderPublicKey),
-  recipientAddress : binaryToBase32(entry.recipientAddress),
-  mosaicId : idToHex(entry.mosaicId),
-  amount : longToString(entry.amount)
+  senderPublicKey : shared.readHex(entry.senderPublicKey),
+  recipientAddress : readBase32(entry.recipientAddress),
+  mosaicId : shared.longToId(entry.mosaicId),
+  amount : shared.longToString(entry.amount)
 })
 
 const artifactExpiryReceipt = entry => ({
   version: entry.version,
   type: entry.type,
-  artifactId : idToHex(entry.artifactId)
+  artifactId : shared.longToId(entry.artifactId)
 })
 
 const inflationReceipt = entry => ({
   version: entry.version,
   type: entry.type,
-  mosaicId : idToHex(entry.mosaicId),
-  amount : longToString(entry.amount)
+  mosaicId : shared.longToId(entry.mosaicId),
+  amount : shared.longToString(entry.amount)
 })
 
 const unknownReceipt = entry => ({
@@ -84,13 +78,13 @@ const accountRestriction = restriction => {
   let buffer = restriction.buffer
   if (buffer.length === 25) {
     // Address
-    return shared.binaryToBase32(buffer)
+    return shared.readBase32(buffer)
   } else if (buffer.length === 8) {
     // Mosaic ID
-    return binaryToId(buffer)
+    return shared.uint64ToId(shared.readUint64(buffer))
   } else if (buffer.length === 2) {
     // Entity type
-    return shared.binaryToUint16(buffer)
+    return shared.readUint16(buffer)
   } else {
     throw new Error(`invalid account restriction, got ${buffer.toString('hex')}`)
   }
@@ -99,21 +93,21 @@ const accountRestriction = restriction => {
 const isEmbedded = transaction => transaction.meta.aggregateHash !== undefined
 
 const transactionMetaShared = meta => ({
-  height: longToString(meta.height),
+  height: shared.longToString(meta.height),
   index: meta.index
 })
 
 const transactionMetaAggregate = meta => ({
   ...transactionMetaShared(meta),
-  aggregateHash: binaryToHex(meta.aggregateHash),
+  aggregateHash: shared.readHex(meta.aggregateHash),
   aggregateId: objectIdToHex(meta.aggregateId)
 })
 
 const transactionMetaStandalone = meta => ({
   ...transactionMetaShared(meta),
-  hash: binaryToHex(meta.hash),
-  merkleComponentHash: binaryToHex(meta.merkleComponentHash),
-  addresses: meta.addresses.map(binaryToBase32)
+  hash: shared.readHex(meta.hash),
+  merkleComponentHash: shared.readHex(meta.merkleComponentHash),
+  addresses: meta.addresses.map(readBase32)
 })
 
 const transactionMeta = (meta, embedded) => {
@@ -125,7 +119,7 @@ const transactionMeta = (meta, embedded) => {
 }
 
 const basicEntity = entity => ({
-  signerPublicKey: binaryToHex(entity.signerPublicKey),
+  signerPublicKey: shared.readHex(entity.signerPublicKey),
   version: entity.version,
   network: entity.network,
   type: entity.type
@@ -133,7 +127,7 @@ const basicEntity = entity => ({
 
 const verifiableEntity = entity => ({
   ...basicEntity(entity),
-  signature: binaryToHex(entity.signature)
+  signature: shared.readHex(entity.signature)
 })
 
 const transactionBaseAggregate = transaction => ({
@@ -142,8 +136,8 @@ const transactionBaseAggregate = transaction => ({
 
 const transactionBaseStandalone = transaction => ({
   ...verifiableEntity(transaction),
-  maxFee: longToString(transaction.maxFee),
-  deadline: longToString(transaction.deadline)
+  maxFee: shared.longToString(transaction.maxFee),
+  deadline: shared.longToString(transaction.deadline)
 })
 
 const transactionBase = (transaction, embedded) => {
@@ -155,19 +149,19 @@ const transactionBase = (transaction, embedded) => {
 }
 
 const mosaic = mosaic => ({
-  id: idToHex(mosaic.id),
-  amount: longToString(mosaic.amount)
+  id: shared.longToId(mosaic.id),
+  amount: shared.longToString(mosaic.amount)
 })
 
 const transferTransaction = transaction => {
   let result = {
-    recipientAddress: binaryToBase32(transaction.recipientAddress),
+    recipientAddress: readBase32(transaction.recipientAddress),
     mosaics: transaction.mosaics.map(mosaic)
   }
   if (transaction.message !== undefined) {
     result.message = {
       type: transaction.message.type,
-      payload: binaryToHex(transaction.message.payload)
+      payload: shared.readHex(transaction.message.payload)
     }
   }
 
@@ -177,14 +171,14 @@ const transferTransaction = transaction => {
 const registerNamespaceTransaction = transaction => {
   let result = {
     namespaceType: transaction.registrationType,
-    namespaceId: idToHex(transaction.id),
-    name: binaryToAscii(transaction.name)
+    namespaceId: shared.longToId(transaction.id),
+    name: shared.readAscii(transaction.name)
   }
 
   if (result.namespaceType === constants.namespaceRoot) {
-    result.duration = longToString(transaction.duration)
+    result.duration = shared.longToString(transaction.duration)
   } else if (transaction.namespaceType === constants.namespaceChild) {
-    result.parentId = idToHex(transaction.parentId)
+    result.parentId = shared.longToId(transaction.parentId)
   } else {
     throw new Error(`invalid namespace type, got ${result.namespaceType}`)
   }
@@ -193,43 +187,43 @@ const registerNamespaceTransaction = transaction => {
 }
 
 const addressAliasTransaction = transaction => ({
-  namespaceId: idToHex(transaction.namespaceId),
-  address: binaryToBase32(transaction.address),
+  namespaceId: shared.longToId(transaction.namespaceId),
+  address: readBase32(transaction.address),
   aliasAction: transaction.aliasAction
 })
 
 const mosaicAliasTransaction = transaction => ({
-  namespaceId: idToHex(transaction.namespaceId),
-  mosaicId: idToHex(transaction.mosaicId),
+  namespaceId: shared.longToId(transaction.namespaceId),
+  mosaicId: shared.longToId(transaction.mosaicId),
   aliasAction: transaction.aliasAction
 })
 
 const mosaicDefinitionTransaction = transaction => ({
-  mosaicId: idToHex(transaction.id),
-  duration: longToString(transaction.duration),
+  mosaicId: shared.longToId(transaction.id),
+  duration: shared.longToString(transaction.duration),
   nonce: transaction.nonce,
   flags: transaction.flags,
   divisibility: transaction.divisibility
 })
 
 const mosaicSupplyChangeTransaction = transaction => ({
-  mosaicId: idToHex(transaction.mosaicId),
-  delta: longToString(transaction.delta),
+  mosaicId: shared.longToId(transaction.mosaicId),
+  delta: shared.longToString(transaction.delta),
   action: transaction.action
 })
 
 const modifyMultisigTransaction = transaction => ({
   minRemovalDelta: transaction.minRemovalDelta,
   minApprovalDelta: transaction.minApprovalDelta,
-  publicKeyAdditions: transaction.publicKeyAdditions.map(binaryToHex),
-  publicKeyDeletions: transaction.publicKeyDeletions.map(binaryToHex)
+  publicKeyAdditions: transaction.publicKeyAdditions.map(shared.readHex),
+  publicKeyDeletions: transaction.publicKeyDeletions.map(shared.readHex)
 })
 
 const aggregateTransaction = transaction => ({
-  transactionsHash: binaryToHex(transaction.transactionsHash),
+  transactionsHash: shared.readHex(transaction.transactionsHash),
   cosignatures: transaction.cosignatures.map(cosignature => ({
-    signerPublicKey: binaryToHex(cosignature.signerPublicKey),
-    signature: binaryToHex(cosignature.signature)
+    signerPublicKey: shared.readHex(cosignature.signerPublicKey),
+    signature: shared.readHex(cosignature.signature)
   }))
 })
 
@@ -239,81 +233,81 @@ const aggregateBondedTransaction = transaction => aggregateTransaction(transacti
 
 const lockTransaction = transaction => ({
   mosaic: {
-    mosaicId: idToHex(transaction.mosaicId),
-    amount: longToString(transaction.amount)
+    mosaicId: shared.longToId(transaction.mosaicId),
+    amount: shared.longToString(transaction.amount)
   },
-  duration: longToString(transaction.duration),
-  hash: binaryToHex(transaction.hash)
+  duration: shared.longToString(transaction.duration),
+  hash: shared.readHex(transaction.hash)
 })
 
 const secretLockTransaction = transaction => ({
   mosaic: {
-    mosaicId: idToHex(transaction.mosaicId),
-    amount: longToString(transaction.amount)
+    mosaicId: shared.longToId(transaction.mosaicId),
+    amount: shared.longToString(transaction.amount)
   },
-  duration: longToString(transaction.duration),
-  secret: binaryToHex(transaction.secret),
+  duration: shared.longToString(transaction.duration),
+  secret: shared.readHex(transaction.secret),
   hashAlgorithm: transaction.hashAlgorithm,
-  recipientAddress: binaryToBase32(transaction.recipientAddress)
+  recipientAddress: readBase32(transaction.recipientAddress)
 })
 
 const secretProofTransaction = transaction => ({
-  secret: binaryToHex(transaction.secret),
+  secret: shared.readHex(transaction.secret),
   hashAlgorithm: transaction.hashAlgorithm,
-  recipientAddress: binaryToBase32(transaction.recipientAddress),
-  proof: binaryToHex(transaction.proof)
+  recipientAddress: readBase32(transaction.recipientAddress),
+  proof: shared.readHex(transaction.proof)
 })
 
 const accountRestrictionAddressTransaction = transaction => ({
   restrictionFlags: transaction.restrictionFlags,
-  restrictionAdditions: transaction.restrictionAdditions.map(binaryToBase32),
-  restrictionDeletions: transaction.restrictionDeletions.map(binaryToBase32)
+  restrictionAdditions: transaction.restrictionAdditions.map(readBase32),
+  restrictionDeletions: transaction.restrictionDeletions.map(readBase32)
 })
 
 const accountRestrictionMosaicTransaction = transaction => ({
   restrictionFlags: transaction.restrictionFlags,
-  restrictionAdditions: transaction.restrictionAdditions.map(data => binaryToId(data.buffer)),
-  restrictionDeletions: transaction.restrictionDeletions.map(data => binaryToId(data.buffer))
+  restrictionAdditions: transaction.restrictionAdditions.map(data => shared.uint64ToId(shared.readUint64(data.buffer))),
+  restrictionDeletions: transaction.restrictionDeletions.map(data => shared.uint64ToId(shared.readUint64(data.buffer)))
 })
 
 const accountRestrictionOperationTransaction = transaction => ({
   restrictionFlags: transaction.restrictionFlags,
-  restrictionAdditions: transaction.restrictionAdditions.map(data => shared.binaryToUint16(data.buffer)),
-  restrictionDeletions: transaction.restrictionDeletions.map(data => shared.binaryToUint16(data.buffer))
+  restrictionAdditions: transaction.restrictionAdditions.map(data => shared.readUint16(data.buffer)),
+  restrictionDeletions: transaction.restrictionDeletions.map(data => shared.readUint16(data.buffer))
 })
 
 const linkAccountTransaction = transaction => ({
-  remotePublicKey: binaryToHex(transaction.remotePublicKey),
+  remotePublicKey: shared.readHex(transaction.remotePublicKey),
   linkAction: transaction.linkAction
 })
 
 const mosaicAddressRestrictionTransaction = transaction => ({
-  mosaicId: idToHex(transaction.mosaicId),
-  restrictionKey: longToString(transaction.restrictionKey),
-  targetAddress: binaryToBase32(transaction.targetAddress),
-  previousRestrictionValue: longToString(transaction.previousRestrictionValue),
-  newRestrictionValue: longToString(transaction.newRestrictionValue)
+  mosaicId: shared.longToId(transaction.mosaicId),
+  restrictionKey: shared.longToString(transaction.restrictionKey),
+  targetAddress: readBase32(transaction.targetAddress),
+  previousRestrictionValue: shared.longToString(transaction.previousRestrictionValue),
+  newRestrictionValue: shared.longToString(transaction.newRestrictionValue)
 })
 
 const mosaicGlobalRestrictionTransaction = transaction => ({
-  mosaicId: idToHex(transaction.mosaicId),
-  referenceMosaicId: idToHex(transaction.referenceMosaicId),
-  restrictionKey: longToString(transaction.restrictionKey),
-  previousRestrictionValue: longToString(transaction.previousRestrictionValue),
+  mosaicId: shared.longToId(transaction.mosaicId),
+  referenceMosaicId: shared.longToId(transaction.referenceMosaicId),
+  restrictionKey: shared.longToString(transaction.restrictionKey),
+  previousRestrictionValue: shared.longToString(transaction.previousRestrictionValue),
   previousRestrictionType: transaction.previousRestrictionType,
-  newRestrictionValue: longToString(transaction.newRestrictionValue),
+  newRestrictionValue: shared.longToString(transaction.newRestrictionValue),
   newRestrictionType: transaction.newRestrictionType
 })
 
 const accountMetadataTransaction = transaction => {
   let result = {
-    targetPublicKey: binaryToHex(transaction.targetPublicKey),
-    scopedMetadataKey: longToString(transaction.scopedMetadataKey),
+    targetPublicKey: shared.readHex(transaction.targetPublicKey),
+    scopedMetadataKey: shared.longToString(transaction.scopedMetadataKey),
     valueSizeDelta: transaction.valueSizeDelta,
     valueSize: transaction.valueSize,
   }
   if (transaction.value !== undefined) {
-    result.value = binaryToHex(transaction.value)
+    result.value = shared.readHex(transaction.value)
   }
 
   return result
@@ -321,14 +315,14 @@ const accountMetadataTransaction = transaction => {
 
 const mosaicMetadataTransaction = transaction => {
   let result = {
-    targetPublicKey: binaryToHex(transaction.targetPublicKey),
-    scopedMetadataKey: longToString(transaction.scopedMetadataKey),
-    targetMosaicId: idToHex(transaction.targetMosaicId),
+    targetPublicKey: shared.readHex(transaction.targetPublicKey),
+    scopedMetadataKey: shared.longToString(transaction.scopedMetadataKey),
+    targetMosaicId: shared.longToId(transaction.targetMosaicId),
     valueSizeDelta: transaction.valueSizeDelta,
     valueSize: transaction.valueSize,
   }
   if (transaction.value !== undefined) {
-    result.value = binaryToHex(transaction.value)
+    result.value = shared.readHex(transaction.value)
   }
 
   return result
@@ -336,14 +330,14 @@ const mosaicMetadataTransaction = transaction => {
 
 const namespaceMetadataTransaction = transaction => {
   let result = {
-    targetPublicKey: binaryToHex(transaction.targetPublicKey),
-    scopedMetadataKey: longToString(transaction.scopedMetadataKey),
-    targetNamespaceId: idToHex(transaction.targetNamespaceId),
+    targetPublicKey: shared.readHex(transaction.targetPublicKey),
+    scopedMetadataKey: shared.longToString(transaction.scopedMetadataKey),
+    targetNamespaceId: shared.longToId(transaction.targetNamespaceId),
     valueSizeDelta: transaction.valueSizeDelta,
     valueSize: transaction.valueSize,
   }
   if (transaction.value !== undefined) {
-    result.value = binaryToHex(transaction.value)
+    result.value = shared.readHex(transaction.value)
   }
 
   return result
@@ -355,7 +349,7 @@ const namespaceMetadataTransaction = transaction => {
 const codec = {
   accountRestrictions: item => ({
     accountRestrictions: {
-      address: binaryToBase32(item.accountRestrictions.address),
+      address: readBase32(item.accountRestrictions.address),
       restrictions: item.accountRestrictions.restrictions.map(restriction => ({
         restrictionFlags: restriction.restrictionFlags,
         values: restriction.values.map(accountRestriction)
@@ -365,21 +359,21 @@ const codec = {
 
   accounts: item => ({
     account: {
-      address: binaryToBase32(item.account.address),
-      addressHeight: longToString(item.account.addressHeight),
-      publicKey: binaryToHex(item.account.publicKey),
-      publicKeyHeight: longToString(item.account.publicKeyHeight),
+      address: readBase32(item.account.address),
+      addressHeight: shared.longToString(item.account.addressHeight),
+      publicKey: shared.readHex(item.account.publicKey),
+      publicKeyHeight: shared.longToString(item.account.publicKeyHeight),
       accountType: item.account.accountType,
-      linkedAccountKey: binaryToHex(item.account.linkedAccountKey),
+      linkedAccountKey: shared.readHex(item.account.linkedAccountKey),
       importances: item.account.importances.map(importance => ({
-        value: longToString(importance.value),
-        height: longToString(importance.height)
+        value: shared.longToString(importance.value),
+        height: shared.longToString(importance.height)
       })),
       activityBuckets: item.account.activityBuckets.map(bucket => ({
-        startHeight: longToString(bucket.startHeight),
-        totalFeesPaid: longToString(bucket.totalFeesPaid),
+        startHeight: shared.longToString(bucket.startHeight),
+        totalFeesPaid: shared.longToString(bucket.totalFeesPaid),
         beneficiaryCount: bucket.beneficiaryCount,
-        rawScore: longToString(bucket.rawScore)
+        rawScore: shared.longToString(bucket.rawScore)
       })),
       mosaics: item.account.mosaics.map(mosaic)
     }
@@ -387,49 +381,49 @@ const codec = {
 
   addressResolutionStatements: item => ({
     statement: {
-      height: longToString(item.statement.height),
-      unresolved: binaryToBase32(item.statement.unresolved),
+      height: shared.longToString(item.statement.height),
+      unresolved: readBase32(item.statement.unresolved),
       resolutionEntries: item.statement.resolutionEntries.map(entry => ({
         source: entry.source,
-        resolved: binaryToBase32(entry.resolved)
+        resolved: readBase32(entry.resolved)
       }))
     }
   }),
 
   blocks: item => ({
     meta: {
-      hash: binaryToHex(item.meta.hash),
-      generationHash: binaryToHex(item.meta.generationHash),
-      totalFee: longToString(item.meta.totalFee),
-      stateHashSubCacheMerkleRoots: item.meta.stateHashSubCacheMerkleRoots.map(hash => binaryToHex(hash)),
+      hash: shared.readHex(item.meta.hash),
+      generationHash: shared.readHex(item.meta.generationHash),
+      totalFee: shared.longToString(item.meta.totalFee),
+      stateHashSubCacheMerkleRoots: item.meta.stateHashSubCacheMerkleRoots.map(hash => shared.readHex(hash)),
       numTransactions: item.meta.numTransactions,
-      transactionMerkleTree: item.meta.transactionMerkleTree.map(hash => binaryToHex(hash)),
+      transactionMerkleTree: item.meta.transactionMerkleTree.map(hash => shared.readHex(hash)),
       numStatements: item.meta.numStatements,
-      statementMerkleTree: item.meta.statementMerkleTree.map(hash => binaryToHex(hash))
+      statementMerkleTree: item.meta.statementMerkleTree.map(hash => shared.readHex(hash))
     },
     block: {
-      signature: binaryToHex(item.block.signature),
-      signerPublicKey: binaryToHex(item.block.signerPublicKey),
+      signature: shared.readHex(item.block.signature),
+      signerPublicKey: shared.readHex(item.block.signerPublicKey),
       version: item.block.version,
       network: item.block.network,
       type: item.block.type,
-      height: longToString(item.block.height),
-      timestamp: longToString(item.block.timestamp),
-      difficulty: longToString(item.block.difficulty),
+      height: shared.longToString(item.block.height),
+      timestamp: shared.longToString(item.block.timestamp),
+      difficulty: shared.longToString(item.block.difficulty),
       feeMultiplier: item.block.feeMultiplier,
-      previousBlockHash: binaryToHex(item.block.previousBlockHash),
-      transactionsHash: binaryToHex(item.block.transactionsHash),
-      receiptsHash: binaryToHex(item.block.receiptsHash),
-      stateHash: binaryToHex(item.block.stateHash),
-      beneficiaryPublicKey: binaryToHex(item.block.beneficiaryPublicKey)
+      previousBlockHash: shared.readHex(item.block.previousBlockHash),
+      transactionsHash: shared.readHex(item.block.transactionsHash),
+      receiptsHash: shared.readHex(item.block.receiptsHash),
+      stateHash: shared.readHex(item.block.stateHash),
+      beneficiaryPublicKey: shared.readHex(item.block.beneficiaryPublicKey)
     }
   }),
 
   chainStatistic: item => ({
     current: {
-      height: longToString(item.current.height),
-      scoreLow: longToString(item.current.scoreLow),
-      scoreHigh: longToString(item.current.scoreHigh)
+      height: shared.longToString(item.current.height),
+      scoreLow: shared.longToString(item.current.scoreLow),
+      scoreHigh: shared.longToString(item.current.scoreHigh)
     }
   }),
 
@@ -439,25 +433,25 @@ const codec = {
     },
     lock: {
       sender: {
-        publicKey: binaryToHex(item.lock.senderPublicKey),
-        address: binaryToBase32(item.lock.senderAddress)
+        publicKey: shared.readHex(item.lock.senderPublicKey),
+        address: readBase32(item.lock.senderAddress)
       },
-      mosaicId: idToHex(item.lock.mosaicId),
-      amount: longToString(item.lock.amount),
-      endHeight: longToString(item.lock.endHeight),
+      mosaicId: shared.longToId(item.lock.mosaicId),
+      amount: shared.longToString(item.lock.amount),
+      endHeight: shared.longToString(item.lock.endHeight),
       status: item.lock.status,
-      hash: binaryToHex(item.lock.hash),
+      hash: shared.readHex(item.lock.hash),
     }
   }),
 
   metadata: item => {
     let result = {
       metadataEntry: {
-        compositeHash: binaryToHex(item.metadataEntry.compositeHash),
-        senderPublicKey: binaryToHex(item.metadataEntry.senderPublicKey),
-        targetPublicKey: binaryToHex(item.metadataEntry.targetPublicKey),
-        scopedMetadataKey: longToString(item.metadataEntry.scopedMetadataKey),
-        targetId: idToHex(item.metadataEntry.targetId),
+        compositeHash: shared.readHex(item.metadataEntry.compositeHash),
+        senderPublicKey: shared.readHex(item.metadataEntry.senderPublicKey),
+        targetPublicKey: shared.readHex(item.metadataEntry.targetPublicKey),
+        scopedMetadataKey: shared.longToString(item.metadataEntry.scopedMetadataKey),
+        targetId: shared.longToId(item.metadataEntry.targetId),
         metadataType: item.metadataEntry.metadataType,
         valueSize: item.metadataEntry.valueSize
       }
@@ -465,7 +459,7 @@ const codec = {
 
     // Value is optional if empty.
     if (item.metadataEntry.value !== undefined) {
-      result.metadataEntry.value = binaryToHex(item.metadataEntry.value)
+      result.metadataEntry.value = shared.readHex(item.metadataEntry.value)
     }
 
     return result
@@ -473,11 +467,11 @@ const codec = {
 
   mosaicResolutionStatements: item => ({
     statement: {
-      height: longToString(item.statement.height),
-      unresolved: idToHex(item.statement.unresolved),
+      height: shared.longToString(item.statement.height),
+      unresolved: shared.longToId(item.statement.unresolved),
       resolutionEntries: item.statement.resolutionEntries.map(entry => ({
         source: entry.source,
-        resolved: idToHex(entry.resolved)
+        resolved: shared.longToId(entry.resolved)
       }))
     }
   }),
@@ -486,27 +480,27 @@ const codec = {
     let entryType = item.mosaicRestrictionEntry.entryType
     let result = {
       mosaicRestrictionEntry: {
-        compositeHash: binaryToHex(item.mosaicRestrictionEntry.compositeHash),
+        compositeHash: shared.readHex(item.mosaicRestrictionEntry.compositeHash),
         entryType: entryType,
-        mosaicId: idToHex(item.mosaicRestrictionEntry.mosaicId)
+        mosaicId: shared.longToId(item.mosaicRestrictionEntry.mosaicId)
       }
     }
 
     // Specialize for the address or global
     if (entryType === 0) {
       // Address
-      result.mosaicRestrictionEntry.targetAddress = binaryToBase32(item.mosaicRestrictionEntry.targetAddress)
+      result.mosaicRestrictionEntry.targetAddress = readBase32(item.mosaicRestrictionEntry.targetAddress)
       result.mosaicRestrictionEntry.restrictions = item.mosaicRestrictionEntry.restrictions.map(restriction => ({
-        key: idToHex(restriction.key),
-        value: idToHex(restriction.value)
+        key: shared.longToId(restriction.key),
+        value: shared.longToId(restriction.value)
       }))
     } else if (entryType === 1) {
       // Global
       result.mosaicRestrictionEntry.restrictions = item.mosaicRestrictionEntry.restrictions.map(subitem => ({
-        key: idToHex(subitem.key),
+        key: shared.longToId(subitem.key),
         restriction: {
-          referenceMosaicId: idToHex(subitem.restriction.referenceMosaicId),
-          restrictionValue: longToString(subitem.restriction.restrictionValue),
+          referenceMosaicId: shared.longToId(subitem.restriction.referenceMosaicId),
+          restrictionValue: shared.longToString(subitem.restriction.restrictionValue),
           restrictionType: subitem.restriction.restrictionType
         }
       }))
@@ -519,30 +513,30 @@ const codec = {
 
   mosaics: item => ({
     mosaic: {
-      id: idToHex(item.mosaic.id),
-      supply: longToString(item.mosaic.supply),
-      startHeight: longToString(item.mosaic.startHeight),
+      id: shared.longToId(item.mosaic.id),
+      supply: shared.longToString(item.mosaic.supply),
+      startHeight: shared.longToString(item.mosaic.startHeight),
       owner: {
-        publicKey: binaryToHex(item.mosaic.ownerPublicKey),
-        address: binaryToBase32(item.mosaic.ownerAddress)
+        publicKey: shared.readHex(item.mosaic.ownerPublicKey),
+        address: readBase32(item.mosaic.ownerAddress)
       },
       revision: item.mosaic.revision,
       flags: item.mosaic.flags,
       divisibility: item.mosaic.divisibility,
-      duration: longToString(item.mosaic.duration)
+      duration: shared.longToString(item.mosaic.duration)
     }
   }),
 
   multisigs: item => ({
     multisig: {
       account: {
-        publicKey: binaryToHex(item.multisig.accountPublicKey),
-        address: binaryToBase32(item.multisig.accountAddress)
+        publicKey: shared.readHex(item.multisig.accountPublicKey),
+        address: readBase32(item.multisig.accountAddress)
       },
       minApproval: item.multisig.minApproval,
       minRemoval: item.multisig.minRemoval,
-      cosignatoryPublicKeys: item.multisig.cosignatoryPublicKeys.map(binaryToHex),
-      multisigPublicKeys: item.multisig.multisigPublicKeys.map(binaryToHex)
+      cosignatoryPublicKeys: item.multisig.cosignatoryPublicKeys.map(shared.readHex),
+      multisigPublicKeys: item.multisig.multisigPublicKeys.map(shared.readHex)
     }
   }),
 
@@ -563,19 +557,19 @@ const codec = {
         alias: {
           type: item.namespace.alias.type
         },
-        parentId: idToHex(item.namespace.parentId),
+        parentId: shared.longToId(item.namespace.parentId),
         owner: {
-          publicKey: binaryToHex(item.namespace.ownerPublicKey),
-          address: binaryToBase32(item.namespace.ownerAddress)
+          publicKey: shared.readHex(item.namespace.ownerPublicKey),
+          address: readBase32(item.namespace.ownerAddress)
         },
-        startHeight: longToString(item.namespace.startHeight),
-        endHeight: longToString(item.namespace.endHeight)
+        startHeight: shared.longToString(item.namespace.startHeight),
+        endHeight: shared.longToString(item.namespace.endHeight)
       }
     }
 
     // Add the levels.
     for (let index = 0; index < item.namespace.depth; index++) {
-      result.namespace.levels.push(idToHex(item.namespace['level' + index.toString()]))
+      result.namespace.levels.push(shared.longToId(item.namespace['level' + index.toString()]))
     }
 
     // Add the alias.
@@ -583,9 +577,9 @@ const codec = {
     if (aliasType === aliasNone) {
       // No-op
     } else if (aliasType === aliasMosaic) {
-      result.namespace.alias.mosaicId = idToHex(item.namespace.alias.mosaicId)
+      result.namespace.alias.mosaicId = shared.longToId(item.namespace.alias.mosaicId)
     } else if (aliasType === aliasAddress) {
-      result.namespace.alias.address = binaryToBase32(item.namespace.alias.address)
+      result.namespace.alias.address = readBase32(item.namespace.alias.address)
     } else {
       throw new Error(`invalid AliasType, got ${aliasType}`)
     }
@@ -602,23 +596,23 @@ const codec = {
     },
     lock: {
       sender: {
-        publicKey: binaryToHex(item.lock.senderPublicKey),
-        address: binaryToBase32(item.lock.senderAddress)
+        publicKey: shared.readHex(item.lock.senderPublicKey),
+        address: readBase32(item.lock.senderAddress)
       },
-      mosaicId: idToHex(item.lock.mosaicId),
-      amount: longToString(item.lock.amount),
-      endHeight: longToString(item.lock.endHeight),
+      mosaicId: shared.longToId(item.lock.mosaicId),
+      amount: shared.longToString(item.lock.amount),
+      endHeight: shared.longToString(item.lock.endHeight),
       status: item.lock.status,
       hashAlgorithm: item.lock.hashAlgorithm,
-      secret: binaryToHex(item.lock.secret),
-      recipientAddress: binaryToBase32(item.lock.recipientAddress),
-      compositeHash: binaryToHex(item.lock.compositeHash)
+      secret: shared.readHex(item.lock.secret),
+      recipientAddress: readBase32(item.lock.recipientAddress),
+      compositeHash: shared.readHex(item.lock.compositeHash)
     }
   }),
 
   transactionStatements: item => ({
     statement: {
-      height: longToString(item.statement.height),
+      height: shared.longToString(item.statement.height),
       source: item.statement.source,
       receipts: item.statement.receipts.map(basicReceipt)
     }
@@ -626,9 +620,9 @@ const codec = {
 
   transactionStatuses: item => ({
     status: {
-      hash: binaryToHex(item.status.hash),
+      hash: shared.readHex(item.status.hash),
       code: item.status.code,
-      deadline: longToString(item.status.deadline)
+      deadline: shared.longToString(item.status.deadline)
     }
   }),
 

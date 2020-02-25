@@ -21,19 +21,19 @@
  */
 
 import assert from 'assert'
-import CatbufferReader from './catbuffer'
+import catbuffer from './catbuffer'
 import constants from './constants'
 
 // READERS
 
-class TcpReader extends CatbufferReader {
+class TcpReader extends catbuffer.Reader {
   static solitary(data, fn) {
     let reader = new TcpReader(data)
     return reader.solitary(fn)
   }
 
   challenge() {
-    return this.hexN(constants.challengeSize)
+    return this.hex(constants.challengeSize)
   }
 
   empty() {
@@ -42,7 +42,7 @@ class TcpReader extends CatbufferReader {
 
   hashes() {
     let hashes = []
-    while (this.data.length !== 0) {
+    while (this._data.length !== 0) {
       hashes.push(this.hash256())
     }
 
@@ -59,8 +59,8 @@ class TcpReader extends CatbufferReader {
     let networkIdentifier = this.uint8()
     let hostSize = this.uint8()
     let friendlyNameSize = this.uint8()
-    let host = this.asciiN(hostSize)
-    let friendlyName = this.asciiN(friendlyNameSize)
+    let host = this.ascii(hostSize)
+    let friendlyName = this.ascii(friendlyNameSize)
 
     return {
       version,
@@ -75,7 +75,7 @@ class TcpReader extends CatbufferReader {
 
   nodes() {
     let nodes = []
-    while (this.data.length !== 0) {
+    while (this._data.length !== 0) {
       nodes.push(this.node())
     }
 
@@ -83,8 +83,8 @@ class TcpReader extends CatbufferReader {
   }
 
   timeSync() {
-    let sendTimestamp = this.uint64()
-    let receiveTimestamp = this.uint64()
+    let sendTimestamp = this.uint64String()
+    let receiveTimestamp = this.uint64String()
 
     return {
       communicationTimestamps: {
@@ -99,7 +99,7 @@ class TcpReader extends CatbufferReader {
     // Therefore, the number of bytes is `nibbles + 1 // 2`. If the number
     // of nibbles is odd, the low nibble for the last index must be 0.
     let nibbles = this.uint8()
-    let alignedPath = this.hexN(Math.floor((nibbles + 1) / 2))
+    let alignedPath = this.hex(Math.floor((nibbles + 1) / 2))
 
     // Verify filler nibble is 0.
     if ((nibbles % 2) === 1) {
@@ -149,15 +149,15 @@ class TcpReader extends CatbufferReader {
 
   tree() {
     let tree = []
-    while (this.data.length !== 0) {
+    while (this._data.length !== 0) {
       tree.push(this.treeNode())
     }
     return tree
   }
 
   diagnosticCounter() {
-    let id = this.uint64()
-    let value = this.uint64()
+    let id = this.uint64String()
+    let value = this.uint64String()
 
     return {
       id,
@@ -167,7 +167,7 @@ class TcpReader extends CatbufferReader {
 
   diagnosticCounters() {
     let counters = []
-    while (this.data.length !== 0) {
+    while (this._data.length !== 0) {
       counters.push(this.diagnosticCounter())
     }
     return counters
@@ -183,28 +183,40 @@ class TcpReader extends CatbufferReader {
  *  Codec for TCP models.
  */
 const codec = {
-  // Parse a general packet header.
-  header: data => {
-    let reader = new TcpReader(data)
-    let size = reader.uint32()
-    let type = reader.uint32()
-    let payload = reader.binaryN(size - constants.packetHeaderSize)
-    reader.validateEmpty()
+  // Unlike the  other codecs, this has both serialize and deserialize
+  // support. This is because we need to serialize data to the binary
+  // format in order to communicate with the TCP protocol.
 
-    return {
-      type,
-      payload
+  // Process a general packet header.
+  header: {
+    serialize: packet => {
+      let size = constants.packetHeaderSize + packet.payload.length
+      // TODO(ahuszagh) Here.
+      // Need to add the size and the type
+    },
+
+    deserialize: data => {
+      let reader = new TcpReader(data)
+      let size = reader.uint32()
+      let type = reader.uint32()
+      let payload = reader.binary(size - constants.packetHeaderSize)
+      reader.validateEmpty()
+
+      return {
+        type,
+        payload
+      }
     }
   },
 
+  // TODO(ahuszagh) Change all the use serialize/deserialize
+
   // Parse a server challenge.
   serverChallenge: {
-    // Parse a server challenge request.
     request: data => ({
       challenge: TcpReader.solitary(data, 'challenge')
     }),
 
-    // Parse a server challenge response.
     response: data => {
       let reader = new TcpReader(data)
       let challenge = reader.challenge()
@@ -249,7 +261,7 @@ const codec = {
   pullBlock: {
     // Parse a pull block request.
     request: data => ({
-      height: TcpReader.solitary(data, 'uint64')
+      height: TcpReader.solitary(data, 'uint64String')
     }),
 
     // Parse a pull block response.
@@ -264,9 +276,9 @@ const codec = {
     // Parse a chain info response.
     response: data => {
       let reader = new TcpReader(data)
-      let height = reader.uint64()
-      let scoreHigh = reader.uint64()
-      let scoreLow = reader.uint64()
+      let height = reader.uint64String()
+      let scoreHigh = reader.uint64String()
+      let scoreLow = reader.uint64String()
       reader.validateEmpty()
 
       return {
@@ -282,7 +294,7 @@ const codec = {
     // Parse a block hashes request.
     request: data => {
       let reader = new TcpReader(data)
-      let height = reader.uint64()
+      let height = reader.uint64String()
       let hashes = reader.uint32()
       reader.validateEmpty()
 
@@ -301,7 +313,7 @@ const codec = {
     // Parse a pull blocks request.
     request: data => {
       let reader = new TcpReader(data)
-      let height = reader.uint64()
+      let height = reader.uint64String()
       let blocks = reader.uint32()
       let bytes = reader.uint32()
       reader.validateEmpty()
@@ -370,7 +382,7 @@ const codec = {
   subCacheMerkleRoots: {
     // Parse a sub cache merkle request.
     request: data => ({
-      height: TcpReader.solitary(data, 'uint64')
+      height: TcpReader.solitary(data, 'uint64String')
     }),
 
     // Parse a sub cache merkle response.
@@ -429,7 +441,7 @@ const codec = {
     }
   },
 
-  // Parsepull  local node information.
+  // Parse pull  local node information.
   pullNodeInfo: {
     // Parse a pull node info request.
     request: data => TcpReader.solitary(data, 'empty'),
@@ -607,7 +619,7 @@ const codec = {
   blockStatement: {
     // Parse a block statement request.
     request: data => ({
-      height: TcpReader.solitary(data, 'uint64')
+      height: TcpReader.solitary(data, 'uint64String')
     }),
 
     // Parse a block statement response.
@@ -742,108 +754,6 @@ const codec = {
     response: data => {
       throw new Error('not yet implemented')
     }
-  },
-
-  // Parse a generic request or response packet.
-  packet: (data, codecName) => {
-    let packet = codec.header(data)
-    if (packet.type === constants.serverChallenge) {
-      return codec.serverChallenge[codecName](packet.payload)
-    } else if (packet.type === constants.clientChallenge) {
-      return codec.clientChallenge[codecName](packet.payload)
-    } else if (packet.type === constants.pushBlock) {
-      return codec.pushBlock[codecName](packet.payload)
-    } else if (packet.type === constants.pullBlock) {
-      return codec.pullBlock[codecName](packet.payload)
-    } else if (packet.type === constants.chainInfo) {
-      return codec.chainInfo[codecName](packet.payload)
-    } else if (packet.type === constants.blockHashes) {
-      return codec.blockHashes[codecName](packet.payload)
-    } else if (packet.type === constants.pullBlocks) {
-      return codec.pullBlocks[codecName](packet.payload)
-    } else if (packet.type === constants.pushTransactions) {
-      return codec.pushTransactions[codecName](packet.payload)
-    } else if (packet.type === constants.pullTransactions) {
-      return codec.pullTransactions[codecName](packet.payload)
-    } else if (packet.type === constants.secureSigned) {
-      return codec.secureSigned[codecName](packet.payload)
-    } else if (packet.type === constants.subCacheMerkleRoots) {
-      return codec.subCacheMerkleRoots[codecName](packet.payload)
-    } else if (packet.type === constants.pushPartialTransactions) {
-      return codec.pushPartialTransactions[codecName](packet.payload)
-    } else if (packet.type === constants.pushDetachedCosignatures) {
-      return codec.pushDetachedCosignatures[codecName](packet.payload)
-    } else if (packet.type === constants.pullPartialTransactionInfos) {
-      return codec.pullPartialTransactionInfos[codecName](packet.payload)
-    } else if (packet.type === constants.nodeDiscoveryPushPing) {
-      return codec.pushNodeInfo[codecName](packet.payload)
-    } else if (packet.type === constants.nodeDiscoveryPullPing) {
-      return codec.pullNodeInfo[codecName](packet.payload)
-    } else if (packet.type === constants.nodeDiscoveryPushPeers) {
-      return codec.pushNodePeers[codecName](packet.payload)
-    } else if (packet.type === constants.nodeDiscoveryPullPeers) {
-      return codec.pullNodePeers[codecName](packet.payload)
-    } else if (packet.type === constants.timeSyncNetworkTime) {
-      return codec.timeSync[codecName](packet.payload)
-    } else if (packet.type === constants.accountStatePath) {
-      return codec.accountStatePath[codecName](packet.payload)
-    } else if (packet.type === constants.hashLockStatePath) {
-      return codec.hashLockStatePath[codecName](packet.payload)
-    } else if (packet.type === constants.secretLockStatePath) {
-      return codec.secretLockStatePath[codecName](packet.payload)
-    } else if (packet.type === constants.metadataStatePath) {
-      return codec.metadataStatePath[codecName](packet.payload)
-    } else if (packet.type === constants.mosaicStatePath) {
-      return codec.mosaicStatePath[codecName](packet.payload)
-    } else if (packet.type === constants.multisigStatePath) {
-      return codec.multisigStatePath[codecName](packet.payload)
-    } else if (packet.type === constants.namespaceStatePath) {
-      return codec.namespaceStatePath[codecName](packet.payload)
-    } else if (packet.type === constants.accountRestrictionsStatePath) {
-      return codec.accountRestrictionsStatePath[codecName](packet.payload)
-    } else if (packet.type === constants.mosaicRestrictionsStatePath) {
-      return codec.mosaicRestrictionsStatePath[codecName](packet.payload)
-    } else if (packet.type === constants.diagnosticCounters) {
-      return codec.diagnosticCounters[codecName](packet.payload)
-    } else if (packet.type === constants.confirmTimestampedHashes) {
-      return codec.confirmTimestampedHashes[codecName](packet.payload)
-    } else if (packet.type === constants.activeNodeInfos) {
-      return codec.activeNodeInfos[codecName](packet.payload)
-    } else if (packet.type === constants.blockStatement) {
-      return codec.blockStatement[codecName](packet.payload)
-    } else if (packet.type === constants.unlockedAccounts) {
-      return codec.unlockedAccounts[codecName](packet.payload)
-    } else if (packet.type === constants.accountInfos) {
-      return codec.accountInfos[codecName](packet.payload)
-    } else if (packet.type === constants.hashLockInfos) {
-      return codec.hashLockInfos[codecName](packet.payload)
-    } else if (packet.type === constants.secretLockInfos) {
-      return codec.secretLockInfos[codecName](packet.payload)
-    } else if (packet.type === constants.metadataInfos) {
-      return codec.metadataInfos[codecName](packet.payload)
-    } else if (packet.type === constants.mosaicInfos) {
-      return codec.mosaicInfos[codecName](packet.payload)
-    } else if (packet.type === constants.multisigInfos) {
-      return codec.multisigInfos[codecName](packet.payload)
-    } else if (packet.type === constants.namespaceInfos) {
-      return codec.namespaceInfos[codecName](packet.payload)
-    } else if (packet.type === constants.accountRestrictionsInfos) {
-      return codec.accountRestrictionsInfos[codecName](packet.payload)
-    } else if (packet.type === constants.mosaicRestrictionsInfos) {
-      return codec.mosaicRestrictionsInfos[codecName](packet.payload)
-    } else {
-      throw new Error(`invalid packet type, got ${packet.type}`)
-    }
-  },
-
-  // Parse a generic request packet.
-  request: data => {
-    return codec.packet(data, 'request')
-  },
-
-  // Parse a generic response packet.
-  response: data => {
-    return codec.packet(data, 'response')
   }
 }
 

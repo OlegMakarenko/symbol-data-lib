@@ -86,7 +86,7 @@ const parseHexInteger = value => {
   let high = parseInt(digits.slice(0, 8), 16)
   let low = parseInt(digits.slice(8), 16)
 
-  return shared.idToHex([low, high])
+  return shared.uint64ToId([low, high])
 }
 
 /**
