@@ -107,7 +107,7 @@ class SpoolReader extends catbuffer.Reader {
     } else if (basicType === constants.receiptBalanceTransfer) {
       receipt.mosaic = receiptReader.mosaic()
       receipt.senderPublicKey = receiptReader.key()
-      receipt.receipientAddress = receiptReader.address()
+      receipt.recipientAddress = receiptReader.address()
     } else if (basicType === constants.receiptBalanceCredit) {
       receipt.mosaic = receiptReader.mosaic()
       receipt.targetPublicKey = receiptReader.key()

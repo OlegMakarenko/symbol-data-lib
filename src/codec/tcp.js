@@ -174,8 +174,19 @@ class TcpReader extends catbuffer.Reader {
   }
 }
 
-// TODO(ahuszagh) Check catapult-meta/catapult-rest/demo/packet.py
-//    Shows how to connect, etc.
+// WRITERS
+
+class TcpWriter extends catbuffer.Writer {
+  static solitary(value, fn) {
+    let writer = new TcpWriter()
+    return writer.solitary(value, fn)
+  }
+
+  challenge(challenge) {
+    assert(challenge.length === 2 * constants.challengeSize, 'invalid challenge size')
+    this.hex(challenge)
+  }
+}
 
 // CODEC
 
@@ -191,8 +202,12 @@ const codec = {
   header: {
     serialize: packet => {
       let size = constants.packetHeaderSize + packet.payload.length
-      // TODO(ahuszagh) Here.
-      // Need to add the size and the type
+      let writer = new TcpWriter(size)
+      writer.uint32(size)
+      writer.uint32(packet.type)
+      writer.binary(packet.payload)
+
+      return writer.data
     },
 
     deserialize: data => {
@@ -209,53 +224,86 @@ const codec = {
     }
   },
 
-  // TODO(ahuszagh) Change all the use serialize/deserialize
-
-  // Parse a server challenge.
+  // Process a server challenge.
   serverChallenge: {
-    request: data => ({
-      challenge: TcpReader.solitary(data, 'challenge')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.challenge, 'challenge'),
 
-    response: data => {
-      let reader = new TcpReader(data)
-      let challenge = reader.challenge()
-      let signature = reader.signature()
-      let publicKey = reader.key()
-      let securityMode = reader.uint8()
-      reader.validateEmpty()
+      deserialize: data => ({
+        challenge: TcpReader.solitary(data, 'challenge')
+      })
+    },
 
-      return {
-        challenge,
-        signature,
-        publicKey,
-        securityMode
+    response: {
+      serialize: data => {
+        let writer = new TcpWriter(200)
+        writer.challenge(data.challenge)
+        writer.signature(data.signature)
+        writer.key(data.publicKey)
+        writer.uint8(data.securityMode)
+
+        return writer.data
+      },
+
+      deserialize: data => {
+        let reader = new TcpReader(data)
+        let challenge = reader.challenge()
+        let signature = reader.signature()
+        let publicKey = reader.key()
+        let securityMode = reader.uint8()
+        reader.validateEmpty()
+
+        return {
+          challenge,
+          signature,
+          publicKey,
+          securityMode
+        }
       }
     }
   },
 
-  // Parse a client challenge.
+  // Process a client challenge.
   clientChallenge: {
-    // Parse a client challenge request.
-    request: () => {
-      throw new Error('client challenge request does not exist.')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a client challenge response.
-    response: data => ({
-      challenge: TcpReader.solitary(data, 'challenge')
-    })
-  },
+    response: {
+      serialize: data => TcpWriter.solitary(data.challenge, 'challenge'),
 
-  // Parse push block information.
-  pushBlock: {
-    // Parse a push block request.
-    request: data => TcpReader.solitary(data, 'block'),
-
-    response: () => {
-      throw new Error('push block response does not exist.')
+      deserialize: data => ({
+        challenge: TcpReader.solitary(data, 'challenge')
+      })
     }
   },
+
+  // Process push block information.
+  pushBlock: {
+    request: {
+      serialize: data => TcpWriter.solitary(data, 'block'),
+
+      deserialize: data => TcpReader.solitary(data, 'block')
+    },
+
+    response: {
+      serialize: () => {
+        throw new Error('push block response does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('push block response does not exist.')
+      }
+    }
+  },
+
+  // TODO(ahuszagh) Change all the use serialize/deserialize
 
   // Parse pull block information.
   pullBlock: {

@@ -55,7 +55,7 @@ export default class Reader {
 
   solitary(fn) {
     let callback = this.callback(fn)
-    let value = callback.call()
+    let value = callback.call(this)
     this.validateEmpty()
     return value
   }
@@ -65,7 +65,7 @@ export default class Reader {
   n(array, count, fn) {
     let callback = this.callback(fn)
     for (let index = 0; index < count; index++) {
-      array.push(callback.call())
+      array.push(callback.call(this))
     }
   }
 
@@ -75,7 +75,7 @@ export default class Reader {
     let start = MongoDb.Long.fromInt(0)
     let increment = MongoDb.Long.fromInt(1)
     for (let index = start; index.lessThan(count); index = index.add(increment)) {
-      array.push(callback.call())
+      array.push(callback.call(this))
     }
   }
 

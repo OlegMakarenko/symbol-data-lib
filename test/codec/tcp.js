@@ -22,83 +22,103 @@ import tcp from '../../src/codec/tcp'
 
 describe('tcp', () => {
   describe('header', () => {
-    it('should deserialize a server challenge request', () => {
-      let buffer = Buffer.from('4800000001000000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
-      expect(tcp.header.deserialize(buffer)).to.eql({
+    it('should process a server challenge request', () => {
+      let serialized = Buffer.from('4800000001000000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
+      let deserialized = {
         type: constants.serverChallenge,
         payload: Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
-      })
+      }
+      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
+      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
     })
 
-    it('should deserialize a server challenge response', () => {
-      let buffer = Buffer.from('A900000001000000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE01', 'hex')
-      expect(tcp.header.deserialize(buffer)).to.eql({
+    it('should process a server challenge response', () => {
+      let serialized = Buffer.from('A900000001000000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE01', 'hex')
+      let deserialized = {
         type: constants.serverChallenge,
         payload: Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE01', 'hex')
-      })
+      }
+      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
+      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
     })
 
-    it('should deserialize a client challenge request', () => {
-      let buffer = Buffer.from('4800000002000000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
-      expect(tcp.header.deserialize(buffer)).to.eql({
+    it('should process a client challenge request', () => {
+      let serialized = Buffer.from('4800000002000000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
+      let deserialized = {
         type: constants.clientChallenge,
         payload: Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
-      })
+      }
+      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
+      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
     })
 
-    it('should deserialize a node info request', () => {
-      let buffer = Buffer.from('0800000059020000', 'hex')
-      expect(tcp.header.deserialize(buffer)).to.eql({
+    it('should process a node info request', () => {
+      let serialized = Buffer.from('0800000059020000', 'hex')
+      let deserialized = {
         type: constants.nodeDiscoveryPullPing,
         payload: Buffer.from('', 'hex')
-      })
+      }
+      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
+      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
     })
 
-    it('should deserialize a node info response', () => {
-      let buffer = Buffer.from('41000000590200003900000000000000C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F76303000000DC1E9800084331423445323542', 'hex')
-      expect(tcp.header.deserialize(buffer)).to.eql({
+    it('should process a node info response', () => {
+      let serialized = Buffer.from('41000000590200003900000000000000C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F76303000000DC1E9800084331423445323542', 'hex')
+      let deserialized = {
         type: constants.nodeDiscoveryPullPing,
         payload: Buffer.from('3900000000000000C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F76303000000DC1E9800084331423445323542', 'hex')
-      })
+      }
+      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
+      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
     })
   })
 
   describe('serverChallenge', () => {
-    it('should deserialize a server challenge request', () => {
-      let buffer = Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
-      expect(tcp.serverChallenge.request(buffer)).to.eql({
+    it('should process a server challenge request', () => {
+      let serialized = Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
+      let deserialized = {
         challenge: 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'
-      })
+      }
+      expect(tcp.serverChallenge.request.serialize(deserialized)).to.eql(serialized)
+      expect(tcp.serverChallenge.request.deserialize(serialized)).to.eql(deserialized)
     })
 
-    it('should deserialize a server challenge response', () => {
-      let buffer = Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE01', 'hex')
-      expect(tcp.serverChallenge.response(buffer)).to.eql({
+    it('should process a server challenge response', () => {
+      let serialized = Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE01', 'hex')
+      let deserialized = {
         challenge: 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
         signature: 'DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD',
         publicKey: 'EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE',
         securityMode: 1
-      })
+      }
+      expect(tcp.serverChallenge.response.serialize(deserialized)).to.eql(serialized)
+      expect(tcp.serverChallenge.response.deserialize(serialized)).to.eql(deserialized)
     })
   })
 
   describe('clientChallenge', () => {
-    it('should deserialize a client challenge request', () => {
-      expect(() => tcp.clientChallenge.request(undefined)).to.throwException()
+    it('should process a client challenge request', () => {
+      expect(() => tcp.clientChallenge.request.serialize(undefined)).to.throwException()
+      expect(() => tcp.clientChallenge.request.deserialize(undefined)).to.throwException()
     })
 
-    it('should deserialize a client challenge response', () => {
-      let buffer = Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
-      expect(tcp.clientChallenge.response(buffer)).to.eql({
+    it('should process a client challenge response', () => {
+      let serialized = Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
+      let deserialized = {
         challenge: 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'
-      })
+      }
+      expect(tcp.clientChallenge.response.serialize(deserialized)).to.eql(serialized)
+      expect(tcp.clientChallenge.response.deserialize(serialized)).to.eql(deserialized)
     })
   })
 
+  // TODO(ahuszagh) Make them round-trip here...
+
   describe('pushBlock', () => {
     it('should deserialize a push block request', () => {
+      // TODO(ahuszagh) Needs to be round-trip.
       let buffer = Buffer.from('300100000000000067B4D79E8AE271DD7C3F0A8E8EE34E1AC08659FB200ED79D7A5B24CB0F97894A3FEA8FCEE12876B634284F2BADC2FF9A4C302D806FAABD7777B3E07D9713B201C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787000000000198438102000000000000000CD430B00100000000407A10F35A00006E5DC4D3B6027AA2CF77CCD0222DE9E85536385829C72D77189F214C1AC8109800000000000000000000000000000000000000000000000000000000000000002C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A993640989360E6E1B87FB725DE8A57E98E106C1CB10950BCA29FB3D6D31B7AF025FD8E8C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B7870000000000000000', 'hex')
-      expect(tcp.pushBlock.request(buffer)).to.eql({
+      expect(tcp.pushBlock.request.deserialize(buffer)).to.eql({
         entity: {
           signature: '67B4D79E8AE271DD7C3F0A8E8EE34E1AC08659FB200ED79D7A5B24CB0F97894A3FEA8FCEE12876B634284F2BADC2FF9A4C302D806FAABD7777B3E07D9713B201',
           key: 'C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787',
@@ -120,8 +140,9 @@ describe('tcp', () => {
       })
     })
 
-    it('should deserialize a push block response', () => {
-      expect(() => tcp.pushBlock.response(undefined)).to.throwException()
+    it('should process a push block response', () => {
+      expect(() => tcp.pushBlock.response.serialize(undefined)).to.throwException()
+      expect(() => tcp.pushBlock.response.deserialize(undefined)).to.throwException()
     })
   })
 

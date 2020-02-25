@@ -110,7 +110,7 @@ describe('audit', () => {
         transaction: {
           maxFee: '50000',
           deadline: '8881424363',
-          receipientAddress: 'TAZ6T2XEBBKAIPKYHZ3DYW67N6ORN46CEV46JFNL',
+          recipientAddress: 'TAZ6T2XEBBKAIPKYHZ3DYW67N6ORN46CEV46JFNL',
           mosaics: [
             {
               id: '51A99028058245A8',

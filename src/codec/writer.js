@@ -66,7 +66,7 @@ export default class Writer {
 
   callback(fn) {
     if (typeof fn === 'string') {
-      return () => this[fn]()
+      return value => this[fn](value)
     } else {
       return fn
     }
@@ -74,7 +74,7 @@ export default class Writer {
 
   solitary(value, fn) {
     let callback = this.callback(fn)
-    callback.call(value)
+    callback.call(this, value)
     return this.data
   }
 
@@ -83,7 +83,7 @@ export default class Writer {
   n(array, fn) {
     let callback = this.callback(fn)
     for (let value of array) {
-      callback.call(value)
+      callback.call(this, value)
     }
   }
 

@@ -68,7 +68,9 @@ class Reader extends BaseReader {
     // Skip reserved value.
     this.uint32()
 
-    return this.signature()
+    return {
+      signature: this.signature()
+    }
   }
 
   // Verifiable entity with a signature and signer key.
@@ -86,7 +88,7 @@ class Reader extends BaseReader {
     //    EntityType type;
     //  }
     this.sizePrefix()
-    let signature = this.entityVerification()
+    let {signature} = this.entityVerification()
     let {key, version, network, type} = this.entityBody()
 
     return {
@@ -106,6 +108,15 @@ class Reader extends BaseReader {
     this.uint32()
 
     return this.entityBody()
+  }
+
+  // General entity
+  entity(embedded) {
+    if (embedded) {
+      return this.embeddedEntity()
+    } else {
+      return this.verifiableEntity()
+    }
   }
 
   mosaic() {
@@ -154,7 +165,7 @@ class Reader extends BaseReader {
   transferTransaction(embedded) {
     // Parse the fixed data.
     let transaction = this.baseTransaction(embedded)
-    transaction.receipientAddress = this.address()
+    transaction.recipientAddress = this.address()
     let mosaicsCount = this.uint8()
     let messageSize = this.uint16()
     // Skip reserved value.
@@ -488,13 +499,8 @@ class Reader extends BaseReader {
     this._data = this._data.slice(alignedSize)
 
     // Create a reader for the transaction entity.
-    let entity
     let entityReader = new Reader(entityData)
-    if (embedded) {
-      entity = entityReader.embeddedEntity()
-    } else {
-      entity = entityReader.verifiableEntity()
-    }
+    let entity = entityReader.entity(embedded)
     let transaction = entityReader.transactionHeader(entity.type, embedded)
 
     return {
@@ -577,7 +583,394 @@ class Reader extends BaseReader {
 // WRITERS
 
 class Writer extends BaseWriter {
-  // TODO(ahuszagh) Implement...
+  // Size-prefix for an entity
+  sizePrefix(value) {
+    this.uint32(value)
+  }
+
+  // Body of an entity.
+  entityBody(value) {
+    this.key(value.key)
+    // Write the reserved value
+    this.uint32(0)
+    this.uint8(value.version)
+    this.uint8(value.network)
+    this.uint16(value.type)
+  }
+
+  // Verification of an entity
+  entityVerification(value) {
+    // Write the reserved value
+    this.uint32(0)
+    this.signature(value.signature)
+  }
+
+  // Verifiable entity with a signature and signer key.
+  // Used for transactions and blocks.
+  verifiableEntity(value) {
+    // Model:
+    //  struct VerifiableEntity {
+    //    uint32_t size;
+    //    uint32_t reserved;
+    //    Signature Signature;
+    //    Key key;
+    //    uint32_t reserved;
+    //    uint8_t version;
+    //    NetworkIdentifier network;
+    //    EntityType type;
+    //  }
+    // Write a dummy size, we need to fix it after.
+    this.sizePrefix(0)
+    let signature = this.entityVerification(value)
+    this.entityBody(value)
+  }
+
+  // Size-prefixed entity.
+  // Used for embedded transactions.
+  embeddedEntity(value) {
+    // Write a dummy size, we need to fix it after.
+    this.sizePrefix(0)
+    // Write the reserved value
+    this.uint32(0)
+    this.entityBody(value)
+  }
+
+  entity(value, embedded) {
+    if (embedded) {
+      this.embeddedEntity(value)
+    } else {
+      this.verifiableEntity(value)
+    }
+  }
+
+  mosaic(value) {
+    this.id(value.id)
+    this.uint64String(value.amount)
+  }
+
+  cosignature(value) {
+    this.key(value.signerPublicKey)
+    this.signature(value.signature)
+  }
+
+  cosignatures(value) {
+    this.n(value, 'cosignature')
+  }
+
+  baseTransaction(value, embedded) {
+    if (!embedded) {
+      this.uint64String(value.maxFee)
+      this.uint64String(value.deadline)
+    }
+  }
+
+  transferTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.address(value.recipientAddress)
+    this.uint8(value.mosaics.length)
+    this.uint16(Math.floor(value.message.length / 2))
+    // Write the reserved value.
+    this.uint32(0)
+    this.n(value.mosaics, 'mosaic')
+    this.hex(value.message)
+  }
+
+  registerNamespaceTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    if (value.namespaceType === constants.namespaceRoot) {
+      this.uint64String(value.duration)
+    } else if (transaction.namespaceType === constants.namespaceChild) {
+      this.id(value.parentId)
+    } else {
+      throw new Error(`invalid namespace type, got ${value.namespaceType}`)
+    }
+    this.id(value.namespaceId)
+    this.uint8(value.namespaceType)
+    this.uint8(value.name.length)
+    this.ascii(value.name)
+  }
+
+  addressAliasTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.id(value.namespaceId)
+    this.address(value.address)
+    this.uint8(value.aliasAction)
+  }
+
+  mosaicAliasTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.id(value.namespaceId)
+    this.id(value.mosaicId)
+    this.uint8(value.aliasAction)
+  }
+
+  mosaicDefinitionTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.id(value.mosaicId)
+    this.uint64String(value.duration)
+    this.uint32(value.nonce)
+    this.uint8(value.flags)
+    this.uint8(value.divisibility)
+  }
+
+  mosaicSupplyChangeTransaction(embedded) {
+    this.baseTransaction(value, embedded)
+    this.id(value.mosaicId)
+    this.uint64String(value.delta)
+    this.uint8(value.action)
+  }
+
+  modifyMultisigTransaction(embedded) {
+    this.baseTransaction(value, embedded)
+    this.int8(value.minRemovalDelta)
+    this.int8(value.minApprovalDelta)
+    this.int8(value.publicKeyAdditions.length)
+    this.int8(value.publicKeyDeletions.length)
+    // Write reserved value.
+    this.uint32(0)
+    this.n(value.publicKeyAdditions, 'key')
+    this.n(value.publicKeyDeletions, 'key')
+  }
+
+  // Both aggregate transactions have the same layout.
+  aggregateTransaction(value, embedded) {
+    assert(!embedded, 'aggregate transaction cannot be embedded')
+
+    this.baseTransaction(value, embedded)
+    this.hash256(value.aggregateHash)
+
+    // Create an embedded writer
+    let writer = new Writer()
+    // Write a dummy transactions size and re-write it later.
+    writer.uint32(0)
+    // Write the reserved value
+    write.uint32(0)
+
+    // Write the embedded transactions, and re-write the size, and then
+    // copy the data over.
+    writer.transactions(value.innerTransactions, true)
+    shared.writeUint32(writer._data, writer.size, 0)
+    this.binary(writer.data)
+
+    // Now, write the remaining cosignatures.
+    this.cosignatures(value.cosignatures)
+  }
+
+  aggregateCompleteTransaction(value, embedded) {
+    return this.aggregateTransaction(value, embedded)
+  }
+
+  aggregateBondedTransaction(value, embedded) {
+    return this.aggregateTransaction(value, embedded)
+  }
+
+  lockTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.mosaic(value.mosaic)
+    this.uint64String(value.duration)
+    this.hash256(value.hash)
+  }
+
+  secretLockTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.hash256(value.secret)
+    this.mosaic(value.mosaic)
+    this.uint64String(value.duration)
+    this.uint8(value.hashAlgorithm)
+    this.address(value.recipientAddress)
+  }
+
+  secretProofTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.hash256(value.secret)
+    this.uint16(Math.floor(value.proof.length / 2))
+    this.uint8(value.hashAlgorithm)
+    this.address(value.recipientAddress)
+    this.hex(value.proof)
+  }
+
+  accountRestrictionTransaction(value, restriction, embedded) {
+    this.baseTransaction(value, embedded)
+    this.uint16(value.restrictionFlags)
+    this.uint8(value.restrictionAdditions.length)
+    this.uint8(value.restrictionDeletions.length)
+    // Write the reserved value
+    write.uint32(0)
+    this.n(value.restrictionAdditions, restriction)
+    this.n(value.restrictionDeletions, restriction)
+  }
+
+  accountRestrictionAddressTransaction(value, embedded) {
+    return this.accountRestrictionTransaction(value, 'address', embedded)
+  }
+
+  accountRestrictionMosaicTransaction(value, embedded) {
+    return this.accountRestrictionTransaction(value, 'id', embedded)
+  }
+
+  accountRestrictionOperationTransaction(value, embedded) {
+    return this.accountRestrictionTransaction(value, 'entityType', embedded)
+  }
+
+  linkAccountTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.key(value.remotePublicKey)
+    this.uint8(value.linkAction)
+  }
+
+  mosaicAddressRestrictionTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.id(value.mosaicId)
+    this.uint64String(value.restrictionKey)
+    this.uint64String(value.previousRestrictionValue)
+    this.uint64String(value.newRestrictionValue)
+    this.address(value.targetAddress)
+  }
+
+  mosaicGlobalRestrictionTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.id(value.mosaicId)
+    this.id(value.referenceMosaicId)
+    this.uint64String(value.restrictionKey)
+    this.uint64String(value.previousRestrictionValue)
+    this.uint64String(value.newRestrictionValue)
+    this.uint8(value.previousRestrictionType)
+    this.uint8(value.newRestrictionType)
+  }
+
+  accountMetadataTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.key(value.targetPublicKey)
+    this.uint64String(value.scopedMetadataKey)
+    this.int16(value.valueSizeDelta)
+    this.uint16(Math.floor(value.value.length / 2))
+    this.hex(value.value)
+  }
+
+  mosaicMetadataTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.key(value.targetPublicKey)
+    this.uint64String(value.scopedMetadataKey)
+    this.id(value.targetMosaicId)
+    this.int16(value.valueSizeDelta)
+    this.uint16(Math.floor(value.value.length / 2))
+    this.hex(value.value)
+  }
+
+  namespaceMetadataTransaction(value, embedded) {
+    this.baseTransaction(value, embedded)
+    this.key(value.targetPublicKey)
+    this.uint64String(value.scopedMetadataKey)
+    this.id(value.targetNamespaceId)
+    this.int16(value.valueSizeDelta)
+    this.uint16(Math.floor(value.value.length / 2))
+    this.hex(value.value)
+  }
+
+  transactionHeader(value, type, embedded) {
+    if (type === constants.transactionTransfer) {
+      this.transferTransaction(value, embedded)
+    } else if (type === constants.transactionRegisterNamespace) {
+      this.registerNamespaceTransaction(value, embedded)
+    } else if (type === constants.transactionAddressAlias) {
+      this.addressAliasTransaction(value, embedded)
+    } else if (type === constants.transactionMosaicAlias) {
+      this.mosaicAliasTransaction(value, embedded)
+    } else if (type === constants.transactionMosaicDefinition) {
+      this.mosaicDefinitionTransaction(value, embedded)
+    } else if (type === constants.transactionMosaicSupplyChange) {
+      this.mosaicSupplyChangeTransaction(value, embedded)
+    } else if (type === constants.transactionModifyMultisigAccount) {
+      this.modifyMultisigTransaction(value, embedded)
+    } else if (type === constants.transactionAggregateComplete) {
+      this.aggregateCompleteTransaction(value, embedded)
+    } else if (type === constants.transactionAggregateBonded) {
+      this.aggregateBondedTransaction(value, embedded)
+    } else if (type === constants.transactionLock) {
+      this.lockTransaction(value, embedded)
+    } else if (type === constants.transactionSecretLock) {
+      this.secretLockTransaction(value, embedded)
+    } else if (type === constants.transactionSecretProof) {
+      this.secretProofTransaction(value, embedded)
+    } else if (type === constants.transactionAccountRestrictionAddress) {
+      this.accountRestrictionAddressTransaction(value, embedded)
+    } else if (type === constants.transactionAccountRestrictionMosaic) {
+      this.accountRestrictionMosaicTransaction(value, embedded)
+    } else if (type === constants.transactionAccountRestrictionOperation) {
+      this.accountRestrictionOperationTransaction(value, embedded)
+    } else if (type === constants.transactionLinkAccount) {
+      this.linkAccountTransaction(value, embedded)
+    } else if (type === constants.transactionMosaicAddressRestriction) {
+      this.mosaicAddressRestrictionTransaction(value, embedded)
+    } else if (type === constants.transactionMosaicGlobalRestriction) {
+      this.mosaicGlobalRestrictionTransaction(value, embedded)
+    } else if (type === constants.transactionAccountMetadataTransaction) {
+      this.accountMetadataTransaction(value, embedded)
+    } else if (type === constants.transactionMosaicMetadataTransaction) {
+      this.mosaicMetadataTransaction(value, embedded)
+    } else if (type === constants.transactionNamespaceMetadataTransaction) {
+      this.namespaceMetadataTransaction(value, embedded)
+    } else {
+      throw new Error(`invalid transaction type, got ${type}`)
+    }
+  }
+
+  transaction(value, embedded) {
+    // Store a cursor to the index prior, so we can re-write the size later.
+    let initial = this.size
+
+    // Write the entity.
+    if (embedded) {
+      this.verifiableEntity(value.entity)
+    } else {
+      this.embeddedEntity(value.entity)
+    }
+
+    // Write the remaining data.
+    this.transactionHeader(value.transaction, value.entity.type, embedded)
+
+    // Now, re-write the size.
+    let length = this.size - initial
+    shared.writeUint32(this._data, length, initial)
+  }
+
+  transactions(value, embedded) {
+    this.n(value, transaction => this.transaction(transaction, embedded))
+  }
+
+  blockHeader(value) {
+    this.uint64String(value.height)
+    this.uint64String(value.timestamp)
+    this.uint64String(value.difficulty)
+    this.hash256(value.previousBlockHash)
+    this.hash256(value.transactionsHash)
+    this.hash256(value.receiptsHash)
+    this.hash256(value.stateHash)
+    this.key(value.beneficiaryPublicKey)
+    this.uint32(value.feeMultiplier)
+    // Write the reserved value
+    this.uint32(0)
+  }
+
+  block(value) {
+    // Store a cursor to the index prior, so we can re-write the size later.
+    let initial = this.size
+
+    // Write the data, with a verifiable entity using a size of 0.
+    this.verifiableEntity(value.entity)
+    this.blockHeader(value.block)
+    if (value.block.transactions !== undefined) {
+      this.transactions(value.block.transactions)
+    }
+
+    // Now, re-write the size.
+    let length = this.size - initial
+    shared.writeUint32(this._data, length, initial)
+  }
+
+  blocks(value) {
+    this.n(value, 'block')
+  }
 }
 
 export default {

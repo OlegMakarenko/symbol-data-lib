@@ -22,102 +22,169 @@ import catbuffer from '../../src/codec/catbuffer'
 
 describe('catbuffer', () => {
   describe('reader', () => {
-    it('should parse a size prefix', () => {
+    it('should process a size prefix', () => {
+      let serialized = Buffer.from('04000000', 'hex')
+      let deserialized = 4
       // Works when the size >= the prefix.
-      let reader = new catbuffer.Reader(Buffer.from('04000000', 'hex'))
-      expect(reader.sizePrefix()).to.equal(4)
+      let reader = new catbuffer.Reader(serialized)
+      expect(reader.sizePrefix()).to.equal(deserialized)
+
+      // Test the reverse, serialization.
+      let writer = new catbuffer.Writer()
+      writer.sizePrefix(deserialized)
+      expect(writer.data).to.eql(serialized)
 
       // Throws on exception otherwise.
       reader = new catbuffer.Reader(Buffer.from('08000000', 'hex'))
       expect(() => reader.sizePrefix()).to.throwException()
     })
 
-    it('should parse an entity body', () => {
-      let reader = new catbuffer.Reader(Buffer.from('B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF0000000001904E41', 'hex'))
-      expect(reader.entityBody()).to.eql({
+    it('should process an entity body', () => {
+      let serialized = Buffer.from('B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF0000000001904E41', 'hex')
+      let deserialized = {
         key: 'B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF',
         version: 1,
         network: 0x90,
         type: 0x414E
-      })
+      }
+      let reader = new catbuffer.Reader(serialized)
+      expect(reader.entityBody()).to.eql(deserialized)
       expect(reader.data).to.have.length(0)
+
+      let writer = new catbuffer.Writer()
+      writer.entityBody(deserialized)
+      expect(writer.data).to.eql(serialized)
     })
 
-    it('should parse an entity verification', () => {
-      let reader = new catbuffer.Reader(Buffer.from('00000000939673209A13FF82397578D22CC96EB8516A6760C894D9B7535E3A1E068007B9255CFA9A914C97142A7AE18533E381C846B69D2AE0D60D1DC8A55AD120E2B606', 'hex'))
-      expect(reader.entityVerification()).to.equal('939673209A13FF82397578D22CC96EB8516A6760C894D9B7535E3A1E068007B9255CFA9A914C97142A7AE18533E381C846B69D2AE0D60D1DC8A55AD120E2B606')
+    it('should process an entity verification', () => {
+      let serialized = Buffer.from('00000000939673209A13FF82397578D22CC96EB8516A6760C894D9B7535E3A1E068007B9255CFA9A914C97142A7AE18533E381C846B69D2AE0D60D1DC8A55AD120E2B606', 'hex')
+      let deserialized = {
+        signature: '939673209A13FF82397578D22CC96EB8516A6760C894D9B7535E3A1E068007B9255CFA9A914C97142A7AE18533E381C846B69D2AE0D60D1DC8A55AD120E2B606'
+      }
+      let reader = new catbuffer.Reader(serialized)
+      expect(reader.entityVerification()).to.eql(deserialized)
       expect(reader.data).to.have.length(0)
+
+      let writer = new catbuffer.Writer()
+      writer.entityVerification(deserialized)
+      expect(writer.data).to.eql(serialized)
     })
 
-    it('should parse a verifiable entity', () => {
-      let reader = new catbuffer.Reader(Buffer.from('7000000000000000939673209A13FF82397578D22CC96EB8516A6760C894D9B7535E3A1E068007B9255CFA9A914C97142A7AE18533E381C846B69D2AE0D60D1DC8A55AD120E2B606B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF0000000001904E41', 'hex'))
-      expect(reader.verifiableEntity()).to.eql({
+    it('should process a verifiable entity', () => {
+      let serialized = Buffer.from('7000000000000000939673209A13FF82397578D22CC96EB8516A6760C894D9B7535E3A1E068007B9255CFA9A914C97142A7AE18533E381C846B69D2AE0D60D1DC8A55AD120E2B606B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF0000000001904E41', 'hex')
+      let deserialized = {
         signature: '939673209A13FF82397578D22CC96EB8516A6760C894D9B7535E3A1E068007B9255CFA9A914C97142A7AE18533E381C846B69D2AE0D60D1DC8A55AD120E2B606',
         key: 'B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF',
         version: 1,
         network: 0x90,
         type: 0x414E
-      })
+      }
+      let reader = new catbuffer.Reader(serialized)
+      expect(reader.verifiableEntity()).to.eql(deserialized)
       expect(reader.data).to.have.length(0)
+
+      // The size won't be correct, since it writes a 0.
+      // Skip the first 4 bytes.
+      let writer = new catbuffer.Writer()
+      writer.verifiableEntity(deserialized)
+      expect(writer.data.slice(4)).to.eql(serialized.slice(4))
     })
 
-    it('should parse an embedded entity', () => {
-      let reader = new catbuffer.Reader(Buffer.from('3000000000000000B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF0000000001904E41', 'hex'))
-      expect(reader.embeddedEntity()).to.eql({
+    it('should process an embedded entity', () => {
+      let serialized = Buffer.from('3000000000000000B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF0000000001904E41', 'hex')
+      let deserialized = {
         key: 'B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF',
         version: 1,
         network: 0x90,
         type: 0x414E
-      })
+      }
+      let reader = new catbuffer.Reader(serialized)
+      expect(reader.embeddedEntity()).to.eql(deserialized)
       expect(reader.data).to.have.length(0)
+
+      // The size won't be correct, since it writes a 0.
+      // Skip the first 4 bytes.
+      let writer = new catbuffer.Writer()
+      writer.embeddedEntity(deserialized)
+      expect(writer.data.slice(4)).to.eql(serialized.slice(4))
     })
 
-    it('should parse a mosaic', () => {
-      let reader = new catbuffer.Reader(Buffer.from('99F2A8C5D2433FE4FEDCBA9876543210', 'hex'))
-      expect(reader.mosaic()).to.eql({
+    it('should process a mosaic', () => {
+      let serialized = Buffer.from('99F2A8C5D2433FE4FEDCBA9876543210', 'hex')
+      let deserialized = {
         id: 'E43F43D2C5A8F299',
         amount: '1167088121787636990'
-      })
+      }
+      let reader = new catbuffer.Reader(serialized)
+      expect(reader.mosaic()).to.eql(deserialized)
       expect(reader.data).to.have.length(0)
+
+      let writer = new catbuffer.Writer()
+      writer.mosaic(deserialized)
+      expect(writer.data).to.eql(serialized)
     })
 
 
-    it('should parse a cosignature', () => {
-      let reader = new catbuffer.Reader(Buffer.from('A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF6305780C8DF9D46BA2BCF029DCC5D3BF55FE1CB5BE7ABCF30387C4637DDEDFC2152703CA0AD95F21BB9B942F3CC52FCFC2064C7B84CF60D1A9E69195F1943156C07', 'hex'))
-      expect(reader.cosignature()).to.eql({
+    it('should process a cosignature', () => {
+      let serialized = Buffer.from('A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF6305780C8DF9D46BA2BCF029DCC5D3BF55FE1CB5BE7ABCF30387C4637DDEDFC2152703CA0AD95F21BB9B942F3CC52FCFC2064C7B84CF60D1A9E69195F1943156C07', 'hex')
+      let deserialized = {
         signerPublicKey: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630',
         signature: '5780C8DF9D46BA2BCF029DCC5D3BF55FE1CB5BE7ABCF30387C4637DDEDFC2152703CA0AD95F21BB9B942F3CC52FCFC2064C7B84CF60D1A9E69195F1943156C07'
-      })
+      }
+      let reader = new catbuffer.Reader(serialized)
+      expect(reader.cosignature()).to.eql(deserialized)
       expect(reader.data).to.have.length(0)
+
+      let writer = new catbuffer.Writer()
+      writer.cosignature(deserialized)
+      expect(writer.data).to.eql(serialized)
     })
 
-    it('should parse a cosignature list', () => {
-      let reader = new catbuffer.Reader(Buffer.from('A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF6305780C8DF9D46BA2BCF029DCC5D3BF55FE1CB5BE7ABCF30387C4637DDEDFC2152703CA0AD95F21BB9B942F3CC52FCFC2064C7B84CF60D1A9E69195F1943156C07', 'hex'))
-      expect(reader.cosignatures()).to.eql([
+    it('should process a cosignature list', () => {
+      let serialized = Buffer.from('A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF6305780C8DF9D46BA2BCF029DCC5D3BF55FE1CB5BE7ABCF30387C4637DDEDFC2152703CA0AD95F21BB9B942F3CC52FCFC2064C7B84CF60D1A9E69195F1943156C07', 'hex')
+      let deserialized = [
         {
           signerPublicKey: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630',
           signature: '5780C8DF9D46BA2BCF029DCC5D3BF55FE1CB5BE7ABCF30387C4637DDEDFC2152703CA0AD95F21BB9B942F3CC52FCFC2064C7B84CF60D1A9E69195F1943156C07'
         }
-      ])
+      ]
+      let reader = new catbuffer.Reader(serialized)
+      expect(reader.cosignatures()).to.eql(deserialized)
       expect(reader.data).to.have.length(0)
+
+      let writer = new catbuffer.Writer()
+      writer.cosignatures(deserialized)
+      expect(writer.data).to.eql(serialized)
     })
 
-    it('should parse a base transaction', () => {
+    it('should process a base transaction', () => {
       // Non-embedded
-      let reader = new catbuffer.Reader(Buffer.from('00000000000000000100000000000000', 'hex'))
-      expect(reader.baseTransaction()).to.eql({
+      let serialized = Buffer.from('00000000000000000100000000000000', 'hex')
+      let deserialized = {
         maxFee: '0',
         deadline: '1'
-      })
+      }
+      let reader = new catbuffer.Reader(serialized)
+      expect(reader.baseTransaction()).to.eql(deserialized)
       expect(reader.data).to.have.length(0)
 
+      let writer = new catbuffer.Writer()
+      writer.baseTransaction(deserialized)
+      expect(writer.data).to.eql(serialized)
+
       // Embedded
-      reader = new catbuffer.Reader(Buffer.from('00000000000000000100000000000000', 'hex'))
-      expect(reader.baseTransaction(true)).to.eql({})
-      expect(reader.data).to.have.length(16)
+      serialized = Buffer.from('', 'hex')
+      deserialized = {}
+      reader = new catbuffer.Reader(serialized)
+      expect(reader.baseTransaction(true)).to.eql(deserialized)
+      expect(reader.data).to.have.length(0)
+
+      writer = new catbuffer.Writer()
+      writer.baseTransaction(deserialized, true)
+      expect(writer.data).to.eql(serialized)
     })
 
-    it('should parse a transfer transaction', () => {
+    it('should process a transfer transaction', () => {
       let maxFee = '0000000000000000'
       let deadline = '76A86BC816000000'
       let recipient = '906415867F121D037AF447E711B0F5E4D52EBBF066D96860EB'
@@ -128,15 +195,15 @@ describe('catbuffer', () => {
       let message = '746573742D6D657373616765'
 
       // Embedded
-      let embeddedTransaction = recipient +
+      let hexEmbeddedTransaction = recipient +
         mosaicsCount +
         messageSize +
         reserved1 +
         mosaics +
         message
-      let reader = new catbuffer.Reader(Buffer.from(embeddedTransaction, 'hex'))
-      expect(reader.transferTransaction(true)).to.eql({
-        receipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
+      let serializedEmbeddedTransaction = Buffer.from(hexEmbeddedTransaction, 'hex')
+      let deserializedEmbeddedTransaction = {
+        recipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
         mosaics: [
           {
             id: '85BBEA6CC462B244',
@@ -144,15 +211,21 @@ describe('catbuffer', () => {
           }
         ],
         message: '746573742D6D657373616765'
-      })
+      }
+      let reader = new catbuffer.Reader(serializedEmbeddedTransaction)
+      expect(reader.transferTransaction(true)).to.eql(deserializedEmbeddedTransaction)
+
+      let writer = new catbuffer.Writer()
+      writer.transferTransaction(deserializedEmbeddedTransaction, true)
+      expect(writer.data).to.eql(serializedEmbeddedTransaction)
 
       // Non-embedded
-      let transaction = maxFee + deadline + embeddedTransaction
-      reader = new catbuffer.Reader(Buffer.from(transaction, 'hex'))
-      expect(reader.transferTransaction()).to.eql({
+      let hexTransaction = maxFee + deadline + hexEmbeddedTransaction
+      let serializedTransaction = Buffer.from(hexTransaction, 'hex')
+      let deserializedTransaction = {
         maxFee: '0',
         deadline: '97851779190',
-        receipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
+        recipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
         mosaics: [
           {
             id: '85BBEA6CC462B244',
@@ -160,14 +233,20 @@ describe('catbuffer', () => {
           }
         ],
         message: '746573742D6D657373616765'
-      })
+      }
+      reader = new catbuffer.Reader(serializedTransaction)
+      expect(reader.transferTransaction()).to.eql(deserializedTransaction)
+
+      writer = new catbuffer.Writer()
+      writer.transferTransaction(deserializedTransaction)
+      expect(writer.data).to.eql(serializedTransaction)
 
       // Check transaction header
-      reader = new catbuffer.Reader(Buffer.from(transaction, 'hex'))
-      expect(reader.transactionHeader(constants.transactionTransfer).receipientAddress).to.equal('SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL')
+      reader = new catbuffer.Reader(serializedTransaction)
+      expect(reader.transactionHeader(constants.transactionTransfer).recipientAddress).to.equal('SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL')
     })
 
-    it('should parse a register namespace transaction', () => {
+    it('should process a register namespace transaction', () => {
       let maxFee = '0000000000000000'
       let deadline = '0100000000000000'
       let duration = 'E803000000000000'
@@ -177,36 +256,45 @@ describe('catbuffer', () => {
       let name = '613270316D67'
 
       // Embedded
-      let embeddedTransaction = duration +
+      let hexEmbeddedTransaction = duration +
         namespaceId +
         namespaceType +
         nameSize +
         name
-      let reader = new catbuffer.Reader(Buffer.from(embeddedTransaction, 'hex'))
-      expect(reader.registerNamespaceTransaction(true)).to.eql({
+      let serializedEmbeddedTransaction = Buffer.from(hexEmbeddedTransaction, 'hex')
+      let deserializedEmbeddedTransaction = {
         duration: '1000',
         namespaceId: '1A0E4DF21A0E4DF2',
         namespaceType: 0,
         name: 'a2p1mg'
-      })
+      }
+      let reader = new catbuffer.Reader(serializedEmbeddedTransaction)
+      expect(reader.registerNamespaceTransaction(true)).to.eql(deserializedEmbeddedTransaction)
+
+      let writer = new catbuffer.Writer()
+      writer.registerNamespaceTransaction(deserializedEmbeddedTransaction, true)
+      expect(writer.data).to.eql(serializedEmbeddedTransaction)
 
       // Non-embedded
-      let transaction = maxFee + deadline + embeddedTransaction
-      reader = new catbuffer.Reader(Buffer.from(transaction, 'hex'))
-      expect(reader.registerNamespaceTransaction()).to.eql({
+      let hexTransaction = maxFee + deadline + hexEmbeddedTransaction
+      let serializedTransaction = Buffer.from(hexTransaction, 'hex')
+      let deserializedTransaction = {
         maxFee: '0',
         deadline: '1',
         duration: '1000',
         namespaceId: '1A0E4DF21A0E4DF2',
         namespaceType: 0,
         name: 'a2p1mg'
-      })
+      }
+      reader = new catbuffer.Reader(serializedTransaction)
+      expect(reader.registerNamespaceTransaction()).to.eql(deserializedTransaction)
 
       // Check transaction header
-      reader = new catbuffer.Reader(Buffer.from(transaction, 'hex'))
+      reader = new catbuffer.Reader(serializedTransaction)
       expect(reader.transactionHeader(constants.transactionRegisterNamespace).duration).to.equal('1000')
     })
 
+    // TODO(ahuszagh) Work on the round-trip tests here...
     it('should parse an address alias transaction', () => {
       let maxFee = '0000000000000000'
       let deadline = '0100000000000000'

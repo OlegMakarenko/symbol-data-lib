@@ -329,7 +329,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S',
+                recipientAddress: 'TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S',
                 mosaics: [
                   {
                       id: '85BBEA6CC462B244',
@@ -354,7 +354,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TBRPVXDECCHY7HXLGBQVCZ7DWAISCM7HSJTDQWSM',
+                recipientAddress: 'TBRPVXDECCHY7HXLGBQVCZ7DWAISCM7HSJTDQWSM',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -379,7 +379,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TD3XEX4ALMMB46PN242C5LPEYEVZSUXIQMXN5WJR',
+                recipientAddress: 'TD3XEX4ALMMB46PN242C5LPEYEVZSUXIQMXN5WJR',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -404,7 +404,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TCCMDNGOXTGMM3BZQ3YZODLQ7DSUKEDGUHPOQTR4',
+                recipientAddress: 'TCCMDNGOXTGMM3BZQ3YZODLQ7DSUKEDGUHPOQTR4',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -429,7 +429,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TBT5QFV4A5SG3AGIZMOREHXSVJQIJXIJD3U4A2KR',
+                recipientAddress: 'TBT5QFV4A5SG3AGIZMOREHXSVJQIJXIJD3U4A2KR',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -450,7 +450,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TALZVLE4PHQ2CU2ZOBOLB5KSJJWPLIGDGOAJF56N',
+                recipientAddress: 'TALZVLE4PHQ2CU2ZOBOLB5KSJJWPLIGDGOAJF56N',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -471,7 +471,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TC3YJDLMGURXIWCSQ6X5INGTKD3BNZEGUV5VLW6J',
+                recipientAddress: 'TC3YJDLMGURXIWCSQ6X5INGTKD3BNZEGUV5VLW6J',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -492,7 +492,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TACGT6SJGUJOCNVQ6U5B5NTULDXOIC3JSTHSUYDF',
+                recipientAddress: 'TACGT6SJGUJOCNVQ6U5B5NTULDXOIC3JSTHSUYDF',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -513,7 +513,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TBWEKD2CAG2QSDHFIHI7A6N6XMT64CMMEYHI45VN',
+                recipientAddress: 'TBWEKD2CAG2QSDHFIHI7A6N6XMT64CMMEYHI45VN',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -534,7 +534,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TD6BXOCQ3TQOKEWKGO4EAV6DO4B7TSSDM7M6B76C',
+                recipientAddress: 'TD6BXOCQ3TQOKEWKGO4EAV6DO4B7TSSDM7M6B76C',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -555,7 +555,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TAZ6QTG7HHSWVISVACSNCRQMPGTZVMOLSKMONWZK',
+                recipientAddress: 'TAZ6QTG7HHSWVISVACSNCRQMPGTZVMOLSKMONWZK',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -576,7 +576,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TBQ3Q7WJ73QA5NS7ZECI2PWG6HYBDT5RD4ZVTPH4',
+                recipientAddress: 'TBQ3Q7WJ73QA5NS7ZECI2PWG6HYBDT5RD4ZVTPH4',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -597,7 +597,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TDQWBTVGQR6V3RLQMTK2SGC2Y4TVDO7WP2SZHYMZ',
+                recipientAddress: 'TDQWBTVGQR6V3RLQMTK2SGC2Y4TVDO7WP2SZHYMZ',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -618,7 +618,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TDMRMXB3XCETCS45PTDLIMZ3CPGQS5LP2YCZBKSE',
+                recipientAddress: 'TDMRMXB3XCETCS45PTDLIMZ3CPGQS5LP2YCZBKSE',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -639,7 +639,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TD5B4PYOIU7GAMDIA5WEDXAA6TX7OTO5DHT23NHP',
+                recipientAddress: 'TD5B4PYOIU7GAMDIA5WEDXAA6TX7OTO5DHT23NHP',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -660,7 +660,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TDK7QN662CD7QWNBOTNKNEMCZ44FMR6DVEXKECWB',
+                recipientAddress: 'TDK7QN662CD7QWNBOTNKNEMCZ44FMR6DVEXKECWB',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -681,7 +681,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TCSJ3DE3JSWQV5I6GUJM7CQJQS4ROPAB72MWHFQG',
+                recipientAddress: 'TCSJ3DE3JSWQV5I6GUJM7CQJQS4ROPAB72MWHFQG',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -702,7 +702,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TC774Y5FIV2NPVO7ORK62NZUVMJ5LNGGBVNQ227K',
+                recipientAddress: 'TC774Y5FIV2NPVO7ORK62NZUVMJ5LNGGBVNQ227K',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -723,7 +723,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TAQDYZOLS42DR3SU3RUU3YCDCIGM3MSC2JVBKGYJ',
+                recipientAddress: 'TAQDYZOLS42DR3SU3RUU3YCDCIGM3MSC2JVBKGYJ',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
@@ -744,7 +744,7 @@ describe('spool', () => {
               transaction: {
                 maxFee: '0',
                 deadline: '1',
-                receipientAddress: 'TBT77TM7S2CI3MVFVEAESMRWUYCTVBWNT5WS4ERH',
+                recipientAddress: 'TBT77TM7S2CI3MVFVEAESMRWUYCTVBWNT5WS4ERH',
                 mosaics: [
                   {
                     id: '85BBEA6CC462B244',
