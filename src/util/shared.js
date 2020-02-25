@@ -23,6 +23,38 @@
 import os from 'os'
 import base32 from './base32'
 
+// Endian-dependent serialization
+let writeInt8 = (data, value, offset = 0) => data.writeInt8(value, offset)
+let writeUint8 = (data, value, offset = 0) => data.writeUInt8(value, offset)
+let writeInt16
+let writeInt32
+let writeUint16
+let writeUint32
+let writeUint64
+if (os.endianness() == 'LE') {
+  // Little-endian
+  writeInt16 = (data, value, offset = 0) => data.writeInt16LE(value, offset)
+  writeInt32 = (data, value, offset = 0) => data.writeInt32LE(value, offset)
+  writeUint16 = (data, value, offset = 0) => data.writeUInt16LE(value, offset)
+  writeUint32 = (data, value, offset = 0) => data.writeUInt32LE(value, offset)
+  writeUint64 = (data, value, offset = 0) => {
+    writeUint32(data, value[0], offset)
+    writeUint32(data, value[1], offset+4)
+    return offset + 8
+  }
+} else {
+  // Big-endian
+  writeInt16 = (data, value, offset = 0) => data.writeInt16BE(value, offset)
+  writeInt32 = (data, value, offset = 0) => data.writeInt32BE(value, offset)
+  writeUint16 = (data, value, offset = 0) => data.writeUInt16BE(value, offset)
+  writeUint32 = (data, value, offset = 0) => data.writeUInt32BE(value, offset)
+  writeUint64 = (data, value, offset = 0) => {
+    writeUint32(data, value[0], offset+4)
+    writeUint32(data, value[1], offset)
+    return offset + 8
+  }
+}
+
 // Endian-dependent deserialization.
 let readInt8 = (data, offset = 0) => data.readInt8(offset)
 let readUint8 = (data, offset = 0) => data.readUInt8(offset)
@@ -45,6 +77,28 @@ if (os.endianness() == 'LE') {
   readUint16 = (data, offset = 0) => data.readUInt16BE(offset)
   readUint32 = (data, offset = 0) => data.readUInt32BE(offset)
   readUint64 = (data, offset = 0) => [readUint32(data, offset+4), readUint32(data, offset)]
+}
+
+/**
+ *  Read binary data as hex.
+ */
+const writeHex = (data, value, offset = 0) => {
+  return data.write(value, offset, 'hex')
+}
+
+/**
+ *  Read binary data as ASCII.
+ */
+const writeAscii = (data, value, offset = 0) => {
+  return data.write(value, offset, 'ascii')
+}
+
+/**
+ *  Read binary data as base32.
+ */
+const writeBase32 = (data, value, offset = 0) => {
+  let decoded = base32.decode(Buffer.from(value, 'ascii'))
+  return decoded.copy(data, offset)
 }
 
 /**
@@ -118,6 +172,19 @@ const longToId = long => {
 }
 
 export default {
+  // Writers
+  writeInt8,
+  writeUint8,
+  writeInt16,
+  writeInt32,
+  writeUint16,
+  writeUint32,
+  writeUint64,
+  writeHex,
+  writeAscii,
+  writeBase32,
+
+  // Readers
   readInt8,
   readUint8,
   readInt16,
@@ -128,6 +195,8 @@ export default {
   readHex,
   readAscii,
   readBase32,
+
+  // Uint64 support
   longToUint64,
   uint64ToString,
   longToString,

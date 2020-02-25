@@ -21,6 +21,66 @@ import expect from 'expect.js'
 import shared from '../../src/util/shared'
 
 describe('shared', () => {
+  it('should write an int8 to binary', () => {
+    let buffer = Buffer.alloc(1)
+    expect(shared.writeInt8(buffer, 1)).to.equal(1)
+    expect(buffer).to.eql(Buffer.from('01', 'hex'))
+  })
+
+  it('should write an int16 to binary', () => {
+    let buffer = Buffer.alloc(2)
+    expect(shared.writeInt16(buffer, 1)).to.equal(2)
+    expect(buffer).to.eql(Buffer.from('0100', 'hex'))
+  })
+
+  it('should write an int32 to binary', () => {
+    let buffer = Buffer.alloc(4)
+    expect(shared.writeInt32(buffer, 1)).to.equal(4)
+    expect(buffer).to.eql(Buffer.from('01000000', 'hex'))
+  })
+
+  it('should write an uint8 to binary', () => {
+    let buffer = Buffer.alloc(1)
+    expect(shared.writeUint8(buffer, 1)).to.equal(1)
+    expect(buffer).to.eql(Buffer.from('01', 'hex'))
+  })
+
+  it('should write an uint16 to binary', () => {
+    let buffer = Buffer.alloc(2)
+    expect(shared.writeUint16(buffer, 1)).to.equal(2)
+    expect(buffer).to.eql(Buffer.from('0100', 'hex'))
+  })
+
+  it('should write an uint32 to binary', () => {
+    let buffer = Buffer.alloc(4)
+    expect(shared.writeUint32(buffer, 1)).to.equal(4)
+    expect(buffer).to.eql(Buffer.from('01000000', 'hex'))
+  })
+
+  it('should write an uint64 to binary', () => {
+    let buffer = Buffer.alloc(8)
+    expect(shared.writeUint64(buffer, [1, 0])).to.equal(8)
+    expect(buffer).to.eql(Buffer.from('0100000000000000', 'hex'))
+  })
+
+  it('should write hex to binary', () => {
+    let buffer = Buffer.alloc(8)
+    expect(shared.writeHex(buffer, '0123456789ABCDEF')).to.equal(8)
+    expect(buffer).to.eql(Buffer.from('0123456789ABCDEF', 'hex'))
+  })
+
+  it('should write ascii to binary', () => {
+    let buffer = Buffer.alloc(11)
+    expect(shared.writeAscii(buffer, 'hello world')).to.equal(11)
+    expect(buffer).to.eql(Buffer.from('hello world', 'ascii'))
+  })
+
+  it('should write base32 to binary', () => {
+    let buffer = Buffer.alloc(25)
+    expect(shared.writeBase32(buffer, 'TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S')).to.equal(25)
+    expect(buffer).to.eql(Buffer.from('989D619A4C32CCDABE2B498AC1034B3FC8C30E56F183AF2F72', 'hex'))
+  })
+
   it('should read a binary number to int8', () => {
     let buffer = Buffer.from('01', 'hex')
     expect(shared.readInt8(buffer)).to.equal(1)

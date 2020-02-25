@@ -89,7 +89,7 @@ const decode = encoded => {
     decodeBlock(encoded, i * ENCODED_BLOCK_SIZE, output, i * DECODED_BLOCK_SIZE)
   }
 
-  return output
+  return Buffer.from(output)
 }
 
 export default {
