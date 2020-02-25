@@ -679,7 +679,7 @@ class Writer extends BaseWriter {
     this.baseTransaction(value, embedded)
     if (value.namespaceType === constants.namespaceRoot) {
       this.uint64String(value.duration)
-    } else if (transaction.namespaceType === constants.namespaceChild) {
+    } else if (value.namespaceType === constants.namespaceChild) {
       this.id(value.parentId)
     } else {
       throw new Error(`invalid namespace type, got ${value.namespaceType}`)

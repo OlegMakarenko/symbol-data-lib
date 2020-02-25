@@ -289,13 +289,16 @@ describe('catbuffer', () => {
       reader = new catbuffer.Reader(serializedTransaction)
       expect(reader.registerNamespaceTransaction()).to.eql(deserializedTransaction)
 
+      writer = new catbuffer.Writer()
+      writer.registerNamespaceTransaction(deserializedTransaction)
+      expect(writer.data).to.eql(serializedTransaction)
+
       // Check transaction header
       reader = new catbuffer.Reader(serializedTransaction)
       expect(reader.transactionHeader(constants.transactionRegisterNamespace).duration).to.equal('1000')
     })
 
-    // TODO(ahuszagh) Work on the round-trip tests here...
-    it('should parse an address alias transaction', () => {
+    it('should process an address alias transaction', () => {
       let maxFee = '0000000000000000'
       let deadline = '0100000000000000'
       let namespaceId = 'F24D0E1AF24D0E1A'
@@ -303,30 +306,43 @@ describe('catbuffer', () => {
       let aliasAction = '01'
 
       // Embedded
-      let embeddedTransaction = namespaceId + address + aliasAction
-      let reader = new catbuffer.Reader(Buffer.from(embeddedTransaction, 'hex'))
-      expect(reader.addressAliasTransaction(true)).to.eql({
+      let hexEmbeddedTransaction = namespaceId + address + aliasAction
+      let serializedEmbeddedTransaction = Buffer.from(hexEmbeddedTransaction, 'hex')
+      let deserializedEmbeddedTransaction = {
         namespaceId: '1A0E4DF21A0E4DF2',
         address: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
         aliasAction: 1
-      })
+      }
+      let reader = new catbuffer.Reader(serializedEmbeddedTransaction)
+      expect(reader.addressAliasTransaction(true)).to.eql(deserializedEmbeddedTransaction)
+
+      let writer = new catbuffer.Writer()
+      writer.addressAliasTransaction(deserializedEmbeddedTransaction, true)
+      expect(writer.data).to.eql(serializedEmbeddedTransaction)
 
       // Non-embedded
-      let transaction = maxFee + deadline + embeddedTransaction
-      reader = new catbuffer.Reader(Buffer.from(transaction, 'hex'))
-      expect(reader.addressAliasTransaction()).to.eql({
+      let hexTransaction = maxFee + deadline + hexEmbeddedTransaction
+      let serializedTransaction = Buffer.from(hexTransaction, 'hex')
+      let deserializedTransaction = {
         maxFee: '0',
         deadline: '1',
         namespaceId: '1A0E4DF21A0E4DF2',
         address: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
         aliasAction: 1
-      })
+      }
+      reader = new catbuffer.Reader(serializedTransaction)
+      expect(reader.addressAliasTransaction()).to.eql(deserializedTransaction)
+
+      writer = new catbuffer.Writer()
+      writer.addressAliasTransaction(deserializedTransaction)
+      expect(writer.data).to.eql(serializedTransaction)
 
       // Check transaction header
-      reader = new catbuffer.Reader(Buffer.from(transaction, 'hex'))
+      reader = new catbuffer.Reader(serializedTransaction)
       expect(reader.transactionHeader(constants.transactionAddressAlias).namespaceId).to.equal('1A0E4DF21A0E4DF2')
     })
 
+    // TODO(ahuszagh) Work on the round-trip tests here...
     it('should parse a mosaic alias transaction', () => {
       let maxFee = '0000000000000000'
       let deadline = '0100000000000000'

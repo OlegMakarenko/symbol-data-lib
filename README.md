@@ -10,6 +10,7 @@ Library and command-line scripts to facilitate debugging and accessing NEM Node 
 - [Getting Started](#getting-started)
   - [Scripts](#scripts)
   - [Javascript API](#javascript-api)
+  - [Advanced Use](#advanced-use)
 - [Detailed Setup](#detailed-setup)
 - [Compatibility Warning](#compatibility-warning)
 - [Roadmap](#roadmap)
@@ -407,6 +408,122 @@ blocks = codec.block.file(file)
 let directory '/data/audit/block dispatcher'
 blocks = codec.block.directory(directory)
 ````
+
+## Advanced Use
+
+Since each component is independent, integrating components can simplify a workflow as well as provide enhanced data. For example, the node public key must be provided to the TCP API, which can be extracted from the configuration files. An example of integrating configuration data to facilitate dumping the remaining data is as follows:
+
+```javascript
+import symbolData = 'symbol-data-lib'
+
+const HASH_ALGORITHM = 'keccak'
+const CLIENT_PUBLIC_KEY = 'C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F763'
+
+/**
+ *  Extract the node settings from the configuration files.
+ *
+ *  Returns an object containing the node private key, public key,
+ *  TCP port, data directory, and MongoDB path.
+ *
+ *  @param options {Object}       - Options to specify dump parameters.
+ *    @field configDir {String}   - Path to the catapult config directory.
+ *    @field verbose {Boolean}    - Display debug information.
+ */
+const extractNodeSettings = async options => {
+    // Read the config data
+    let collection = 'database,node,user'
+    let data = await symbolData.dump({...options, collection})
+    let database = data.database
+    let node = data.node
+    let user = data.user
+    let mongoDatabase = `${database.databaseUri}/${database.databaseName}`
+    let dataDirectory = user.dataDirectory
+    let nodePrivateKey = user.bootPrivateKey
+    let tcpPort = node.node.port
+
+    // Get the public key for the node.
+    let nodePublicKey = symbolData.crypto.privateKeyToPublicKey(nodePrivateKey, HASH_ALGORITHM)
+
+    return {
+        mongoDatabase,
+        dataDirectory,
+        tcpPort,
+        nodePrivateKey,
+        nodePublicKey
+    }
+}
+
+/**
+ *  Dump the audit data.
+ */
+const audit = async nodeSettings => {
+    let options = {
+        dataDir: nodeSettings.dataDirectory,
+        collection: 'all'
+    }
+    return symbolData.audit.dump(options)
+}
+
+/**
+ *  Dump the block data.
+ */
+const block = async nodeSettings => {
+    let options = {
+        dataDir: nodeSettings.dataDirectory
+    }
+    return symbolData.block.dump(options)
+}
+
+/**
+ *  Dump the MongoDB data.
+ */
+const mongo = async nodeSettings => {
+    let options = {
+        database: nodeSettings.mongoDatabase,
+        collection: 'all'
+    }
+    return symbolData.mongo.dump(options)
+}
+
+/**
+ *  Dump the RocksDB data.
+ */
+const rocks = async nodeSettings => {
+    let options = {
+        dataDir: nodeSettings.dataDirectory,
+        collection: 'all'
+    }
+    return symbolData.rocks.dump(options)
+}
+
+/**
+ *  Dump the spool data.
+ */
+const spool = async nodeSettings => {
+    let options = {
+        dataDir: nodeSettings.dataDirectory,
+        collection: 'all'
+    }
+    return symbolData.spool.dump(options)
+}
+
+// TODO(ahuszagh) Add TCP once the API is finalized.
+
+/**
+ *  Dump and store all the relevant data.
+ */
+const dump = async options => {
+    let nodeSettings = await extractNodeSettings(options)
+
+    return {
+        audit: await audit(nodeSettings),
+        block: await block(nodeSettings),
+        mongo: await mongo(nodeSettings),
+        rocks: await rocks(nodeSettings),
+        spool: await spool(nodeSettings)
+    }
+}
+```
 
 # Detailed Setup
 

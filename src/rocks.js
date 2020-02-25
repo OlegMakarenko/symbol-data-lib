@@ -116,7 +116,6 @@ const dumpMany = async (options, collections) => {
  *
  *  @param options {Object}       - Options to specify dump parameters.
  *    @field dataDir {String}     - Path to the catapult data directory.
- *    @field node {String}        - Name of the node (api-node-0).
  *    @field collection {String}  - Collection name(s).
  *    @field limit {Number}       - Maximum number of items to dump.
  *    @field verbose {Boolean}    - Display debug information.

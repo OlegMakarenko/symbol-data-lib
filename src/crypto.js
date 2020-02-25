@@ -16,24 +16,26 @@
  *
  */
 
-import audit from './audit'
-import block from './block'
-import codec from './codec'
-import config from './config'
-import crypto from './crypto'
-import mongo from './mongo'
-import rocks from './rocks'
-import spool from './spool'
-import tcp from './tcp'
+import crypto from './util/crypto'
+import shared from './util/shared'
+
+/**
+ *  High-level cryptographic functions for key-pair extraction.
+ *
+ *  @param privateKey {String}     - Hex-encoded private key.
+ *  @param hashAlgorithm {String}  - Hash algorithm ('keccak' or 'sha3').
+ *
+ *  Returns {String} Hex-encoded public key.
+ */
+const privateKeyToPublicKey = (privateKey, hashAlgorithm) => {
+  let hash512 = crypto[hashAlgorithm]['512']
+  let signingKey = new crypto.SigningKey(privateKey, hash512)
+  let verifyingKey = signingKey.verifyingKey
+
+  return shared.readHex(verifyingKey.buffer)
+}
+
 
 export default {
-  audit,
-  block,
-  codec,
-  config,
-  crypto,
-  mongo,
-  rocks,
-  spool,
-  tcp
+  privateKeyToPublicKey
 }
