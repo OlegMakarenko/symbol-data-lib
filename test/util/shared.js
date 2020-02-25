@@ -63,24 +63,6 @@ describe('shared', () => {
     expect(buffer).to.eql(Buffer.from('0100000000000000', 'hex'))
   })
 
-  it('should write hex to binary', () => {
-    let buffer = Buffer.alloc(8)
-    expect(shared.writeHex(buffer, '0123456789ABCDEF')).to.equal(8)
-    expect(buffer).to.eql(Buffer.from('0123456789ABCDEF', 'hex'))
-  })
-
-  it('should write ascii to binary', () => {
-    let buffer = Buffer.alloc(11)
-    expect(shared.writeAscii(buffer, 'hello world')).to.equal(11)
-    expect(buffer).to.eql(Buffer.from('hello world', 'ascii'))
-  })
-
-  it('should write base32 to binary', () => {
-    let buffer = Buffer.alloc(25)
-    expect(shared.writeBase32(buffer, 'TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S')).to.equal(25)
-    expect(buffer).to.eql(Buffer.from('989D619A4C32CCDABE2B498AC1034B3FC8C30E56F183AF2F72', 'hex'))
-  })
-
   it('should read a binary number to int8', () => {
     let buffer = Buffer.from('01', 'hex')
     expect(shared.readInt8(buffer)).to.equal(1)
@@ -131,6 +113,10 @@ describe('shared', () => {
     expect(shared.readBase32(buffer)).to.eql('TCOWDGSMGLGNVPRLJGFMCA2LH7EMGDSW6GB26L3S')
   })
 
+  it('should read a 64-bit integer from string', () => {
+    expect(shared.stringToUint64('18446744073709551615')).to.eql([4294967295, 4294967295])
+  })
+
   it('should convert a 64-bit integer to string', () => {
     let uint64 = [4294967295, 4294967295]
     expect(shared.uint64ToString(uint64)).to.equal('18446744073709551615')
@@ -149,6 +135,10 @@ describe('shared', () => {
   it('should convert an uint64 to ID', () => {
     let uint64 = [3602851589, 1643573176]
     expect(shared.uint64ToId(uint64)).to.equal('61F6EFB8D6BF2705')
+  })
+
+  it('should convert an ID to uint64', () => {
+    expect(shared.idToUint64('61F6EFB8D6BF2705')).to.eql([3602851589, 1643573176])
   })
 
   it('should convert a long to ID', () => {

@@ -82,39 +82,23 @@ if (os.endianness() == 'LE') {
 /**
  *  Read binary data as hex.
  */
-const writeHex = (data, value, offset = 0) => {
-  return data.write(value, offset, 'hex')
+const readHex = data => {
+  return data.toString('hex').toUpperCase()
 }
 
 /**
  *  Read binary data as ASCII.
  */
-const writeAscii = (data, value, offset = 0) => {
-  return data.write(value, offset, 'ascii')
+const readAscii = data => {
+  return data.toString('ascii')
 }
 
 /**
  *  Read binary data as base32.
  */
-const writeBase32 = (data, value, offset = 0) => {
-  let decoded = base32.decode(Buffer.from(value, 'ascii'))
-  return decoded.copy(data, offset)
+const readBase32 = data => {
+  return base32.encode(data)
 }
-
-/**
- *  Read binary data as hex.
- */
-const readHex = data => data.toString('hex').toUpperCase()
-
-/**
- *  Read binary data as ASCII.
- */
-const readAscii = data => data.toString('ascii')
-
-/**
- *  Read binary data as base32.
- */
-const readBase32 = data => base32.encode(data)
 
 /**
  *  Pad value with zeros until desired length.
@@ -122,22 +106,53 @@ const readBase32 = data => base32.encode(data)
 const pad0 = (str, length) => str.padStart(length, '0')
 
 /**
+ *  Deserialize 64-bit integer from string, with
+ */
+const stringToUint64 = (string, radix = 10) => {
+  let low = 0
+  let high = 0
+  let index = 0
+  let length = string.length
+  while (index < length) {
+    let digit = parseInt(string[index++], radix)
+    if (Number.isNaN(digit)) {
+      throw new Error('invalid digit found in unsigned 64-bit integer')
+    }
+    low = low * radix + digit
+    high = high * radix + Math.floor(low / 0x100000000)
+    low %= 0x100000000
+  }
+
+  return [low, high]
+}
+
+/**
  *  Serialize 64-bit integer to string, with radix.
  */
-const uint64ToString = uint64 => {
+const uint64ToString = (uint64, radix = 10) => {
   let low = uint64[0]
   let high = uint64[1]
   let result = ''
   for (;;) {
-    let mod = (high % 10) * 0x100000000 + low
-    high = Math.floor(high / 10)
-    low = Math.floor(mod / 10)
-    result = (mod % 10).toString(10) + result
+    let mod = (high % radix) * 0x100000000 + low
+    high = Math.floor(high / radix)
+    low = Math.floor(mod / radix)
+    result = (mod % radix).toString(radix) + result
     if (!high && !low) {
       break
     }
   }
   return result
+}
+
+/**
+ *  Convert ID to a  64-bit, unsigned integer.
+ */
+const idToUint64 = id => {
+  let high = parseInt(id.slice(0, 8), 16)
+  let low = parseInt(id.slice(8, 16), 16)
+
+  return [low, high]
 }
 
 /**
@@ -157,9 +172,9 @@ const longToString = long => {
 /**
  *  Convert 64-bit, unsigned integer to an ID.
  */
-const uint64ToId = id => {
-  let part1 = id[1].toString(16)
-  let part2 = id[0].toString(16)
+const uint64ToId = uint64 => {
+  let part1 = uint64[1].toString(16)
+  let part2 = uint64[0].toString(16)
 
   return (pad0(part1, 8) + pad0(part2, 8)).toUpperCase()
 }
@@ -180,9 +195,6 @@ export default {
   writeUint16,
   writeUint32,
   writeUint64,
-  writeHex,
-  writeAscii,
-  writeBase32,
 
   // Readers
   readInt8,
@@ -197,9 +209,11 @@ export default {
   readBase32,
 
   // Uint64 support
-  longToUint64,
+  stringToUint64,
   uint64ToString,
+  longToUint64,
   longToString,
+  idToUint64,
   uint64ToId,
   longToId
 }

@@ -20,6 +20,8 @@
  *  Binary writer with helpers for primitive operations.
  */
 
+import assert from 'assert'
+import base32 from '../util/base32'
 import shared from '../util/shared'
 
 export default class Writer {
@@ -55,7 +57,8 @@ export default class Writer {
   grow(size) {
     if (this.capacity < size) {
       // Double the size to avoid many allocations.
-      let data = Buffer.alloc(2 * this.capacity)
+      let capacity = Math.max(2 * this.capacity, size)
+      let data = Buffer.alloc(capacity)
       this._data.copy(data)
       this._data = data
     }
@@ -121,5 +124,59 @@ export default class Writer {
     this._index = shared.writeUint64(this._data, value, this._index)
   }
 
-  // TODO(ahuszagh) need a lot more...
+  uint64String(value) {
+    return this.uint64(shared.stringToUint64(value))
+  }
+
+  // CATAPULT TYPES
+
+  binary(value) {
+    this.grow(this.size + value.length)
+    this._index += value.copy(this._data, this._index)
+  }
+
+  ascii(value) {
+    this.binary(Buffer.from(value, 'ascii'))
+  }
+
+  base32(value) {
+    // Base32 codec can't handle string values, requires a buffer.
+    if (typeof value === 'string') {
+      value = Buffer.from(value, 'ascii')
+    }
+    this.binary(base32.decode(value))
+  }
+
+  hex(value) {
+    this.binary(Buffer.from(value, 'hex'))
+  }
+
+  address(value) {
+    assert(value.length === 40, 'invalid address length')
+    this.base32(value)
+  }
+
+  hash256(value) {
+    assert(value.length === 64, 'invalid hash256 length')
+    this.hex(value)
+  }
+
+  key(value) {
+    assert(value.length === 64, 'invalid key length')
+    this.hex(value)
+  }
+
+  signature(value) {
+    assert(value.length === 128, 'invalid signature length')
+    this.hex(value)
+  }
+
+  id(value) {
+    assert(value.length === 16, 'invalid ID length')
+    this.uint64(shared.idToUint64(value))
+  }
+
+  entityType(value) {
+    this.uint16(value)
+  }
 }
