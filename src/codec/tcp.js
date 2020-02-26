@@ -188,7 +188,7 @@ class TcpWriter extends catbuffer.Writer {
     this.hex(challenge)
   }
 
-  empty(value) {
+  empty() {
   }
 
   hashes(value) {
@@ -507,22 +507,22 @@ const codec = {
   pushTransactions: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     // Parse a push transactions response.
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -565,22 +565,22 @@ const codec = {
   secureSigned: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     // Parse a push transactions response.
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -604,21 +604,21 @@ const codec = {
   pushPartialTransactions: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -627,21 +627,21 @@ const codec = {
   pushDetachedCosignatures: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -650,21 +650,21 @@ const codec = {
   pullPartialTransactionInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -673,21 +673,21 @@ const codec = {
   pushNodeInfo: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -709,21 +709,21 @@ const codec = {
   pushNodePeers: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -906,21 +906,21 @@ const codec = {
   confirmTimestampedHashes: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -929,21 +929,21 @@ const codec = {
   activeNodeInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -967,21 +967,21 @@ const codec = {
   unlockedAccounts: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -990,21 +990,21 @@ const codec = {
   accountInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -1013,21 +1013,21 @@ const codec = {
   hashLockInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -1036,21 +1036,21 @@ const codec = {
   secretLockInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -1059,21 +1059,21 @@ const codec = {
   metadataInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -1082,21 +1082,21 @@ const codec = {
   mosaicInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -1105,21 +1105,21 @@ const codec = {
   multisigInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -1128,21 +1128,21 @@ const codec = {
   namespaceInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -1151,21 +1151,21 @@ const codec = {
   accountRestrictionsInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   },
@@ -1174,21 +1174,21 @@ const codec = {
   mosaicRestrictionsInfos: {
     request: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     },
 
     response: {
       serialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       },
 
       deserialize: () => {
-        throw new Error('client challenge request does not exist.')
+        throw new Error('not yet implemented')
       }
     }
   }
