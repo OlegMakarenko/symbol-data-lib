@@ -713,14 +713,14 @@ class Writer extends BaseWriter {
     this.uint8(value.divisibility)
   }
 
-  mosaicSupplyChangeTransaction(embedded) {
+  mosaicSupplyChangeTransaction(value, embedded) {
     this.baseTransaction(value, embedded)
     this.id(value.mosaicId)
     this.uint64String(value.delta)
     this.uint8(value.action)
   }
 
-  modifyMultisigTransaction(embedded) {
+  modifyMultisigTransaction(value, embedded) {
     this.baseTransaction(value, embedded)
     this.int8(value.minRemovalDelta)
     this.int8(value.minApprovalDelta)
@@ -744,12 +744,14 @@ class Writer extends BaseWriter {
     // Write a dummy transactions size and re-write it later.
     writer.uint32(0)
     // Write the reserved value
-    write.uint32(0)
+    writer.uint32(0)
+    let initial = writer.size
 
     // Write the embedded transactions, and re-write the size, and then
     // copy the data over.
     writer.transactions(value.innerTransactions, true)
-    shared.writeUint32(writer._data, writer.size, 0)
+    let length = writer.size - initial
+    shared.writeUint32(writer._data, length, 0)
     this.binary(writer.data)
 
     // Now, write the remaining cosignatures.
@@ -795,7 +797,7 @@ class Writer extends BaseWriter {
     this.uint8(value.restrictionAdditions.length)
     this.uint8(value.restrictionDeletions.length)
     // Write the reserved value
-    write.uint32(0)
+    this.uint32(0)
     this.n(value.restrictionAdditions, restriction)
     this.n(value.restrictionDeletions, restriction)
   }
@@ -919,17 +921,13 @@ class Writer extends BaseWriter {
     // Store a cursor to the index prior, so we can re-write the size later.
     let initial = this.size
 
-    // Write the entity.
-    if (embedded) {
-      this.verifiableEntity(value.entity)
-    } else {
-      this.embeddedEntity(value.entity)
-    }
-
-    // Write the remaining data.
+    // Write the entity and header.
+    this.entity(value.entity, embedded)
     this.transactionHeader(value.transaction, value.entity.type, embedded)
 
     // Now, re-write the size.
+    // TODO(ahuszagh) Also need to align the length.
+    // Which means, I need to write up to the nearest byte and fill it with filler....
     let length = this.size - initial
     shared.writeUint32(this._data, length, initial)
   }
