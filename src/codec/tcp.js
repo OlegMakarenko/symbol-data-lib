@@ -223,67 +223,52 @@ class TcpWriter extends catbuffer.Writer {
     this.uint64String(value.communicationTimestamps.receiveTimestamp)
   }
 
-// TODO(ahuszagh) Implement...
-//  path() {
-//    // The path consists of 16-bit nibbles, and is aligned to a full byte.
-//    // Therefore, the number of bytes is `nibbles + 1 // 2`. If the number
-//    // of nibbles is odd, the low nibble for the last index must be 0.
-//    let nibbles = this.uint8()
-//    let alignedPath = this.hex(Math.floor((nibbles + 1) / 2))
-//
-//    // Verify filler nibble is 0.
-//    if ((nibbles % 2) === 1) {
-//      assert(alignedPath[alignedPath.length - 1] === '0', 'non-0 filler byte')
-//    }
-//
-//    return alignedPath.slice(0, nibbles)
-//  }
-//
-//  branch() {
-//    let path = this.path()
-//    let linkMask = this.uint16()
-//    let links = {}
-//    for (let index = 0; index < constants.pathMaxLinks; index++) {
-//      let mask = 1 << index >>> 0
-//      if ((linkMask & mask) !== 0) {
-//        links[index] = this.hash256()
-//      }
-//    }
-//
-//    return {
-//      path,
-//      links
-//    }
-//  }
-//
-//  leaf() {
-//    let path = this.path()
-//    let value = this.hash256()
-//
-//    return {
-//      path,
-//      value
-//    }
-//  }
-//
-//  treeNode() {
-//    let marker = this.uint8()
-//    if (marker === 0x0) {
-//      return this.branch()
-//    } else if (marker === 0xFF) {
-//      return this.leaf()
-//    } else {
-//      throw new Error(`invalid tree marker, got ${marker}`)
-//    }
-//  }
-//
-//  tree() {
-//    let tree = []
-//    while (this._data.length !== 0) {
-//      tree.push(this.treeNode())
-//    }
-//    return tree
-//  }
+  path(value) {
+    // Write the number of 16-bit nibbles.
+    // The returned value is in hex, but doesn't necessarily actually
+    // an even number of bytes.
+    this.uint8(Math.floor(value.length + 1 / 2))
+    let path = value
+    if (value.length % 2 === 1) {
+      path += '0'
+    }
+    this.hex(path)
+  }
+
+  branch(value) {
+    this.path(value.path)
+
+    // Write the mask
+    let mask = 0
+    for (let key of Object.keys(value.links)) {
+      mask |= (1 << key >>> 0)
+    }
+    this.uint16(mask)
+
+    // Write the links.
+    for (let value of Object.values(value.links)) {
+      this.hash256(value)
+    }
+  }
+
+  leaf(value) {
+    this.path(value.path)
+    this.hash256(value.value)
+  }
+
+  treeNode(value) {
+    if (value.links !== undefined) {
+      this.uint8(0x0)
+      this.branch(value)
+    } else{
+      this.uint8(0xFF)
+      this.leaf(value)
+    }
+  }
+
+  tree(value) {
+    this.n(value, 'treeNode')
+  }
 
   diagnosticCounter(value) {
     this.uint64String(value.id)
@@ -769,105 +754,139 @@ const codec = {
     }
   },
 
-  // TODO(ahuszagh) Change all the use serialize/deserialize
-
-  // Parse account state path information.
+  // Process account state path information.
   accountStatePath: {
-    // Parse an account state path request.
-    request: data => ({
-      address: TcpReader.solitary(data, 'address')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.address, 'address'),
+      deserialize: data => ({
+        address: TcpReader.solitary(data, 'address')
+      })
+    },
 
-    // Parse an account state path response.
-    response: data => TcpReader.solitary(data, 'tree')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'tree'),
+      deserialize: data => TcpReader.solitary(data, 'tree')
+    }
   },
 
-  // Parse hash lock state path information.
+  // Process hash lock state path information.
   hashLockStatePath: {
-    // Parse a hash lock state path request.
-    request: data => ({
-      hash: TcpReader.solitary(data, 'hash256')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.hash, 'hash256'),
+      deserialize: data => ({
+        hash: TcpReader.solitary(data, 'hash256')
+      })
+    },
 
-    // Parse a hash lock state path response.
-    response: data => TcpReader.solitary(data, 'tree')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'tree'),
+      deserialize: data => TcpReader.solitary(data, 'tree')
+    }
   },
 
-  // Parse secret lock state path information.
+  // Process secret lock state path information.
   secretLockStatePath: {
-    // Parse a secret lock state path request.
-    request: data => ({
-      secret: TcpReader.solitary(data, 'hash256')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.secret, 'hash256'),
+      deserialize: data => ({
+        secret: TcpReader.solitary(data, 'hash256')
+      })
+    },
 
-    // Parse a secret lock state path response.
-    response: data => TcpReader.solitary(data, 'tree')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'tree'),
+      deserialize: data => TcpReader.solitary(data, 'tree')
+    }
   },
 
-  // Parse metadata state path information.
+  // Process metadata state path information.
   metadataStatePath: {
-    // Parse a metadata state path request.
-    request: data => ({
-      hash: TcpReader.solitary(data, 'hash256')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.hash, 'hash256'),
+      deserialize: data => ({
+        hash: TcpReader.solitary(data, 'hash256')
+      })
+    },
 
-    // Parse a metadata state path response.
-    response: data => TcpReader.solitary(data, 'tree')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'tree'),
+      deserialize: data => TcpReader.solitary(data, 'tree')
+    }
   },
 
-  // Parse mosaic state path information.
+  // Process mosaic state path information.
   mosaicStatePath: {
-    // Parse a mosaic state path request.
-    request: data => ({
-      mosaicId: TcpReader.solitary(data, 'id')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.mosaicId, 'id'),
+      deserialize: data => ({
+        mosaicId: TcpReader.solitary(data, 'id')
+      })
+    },
 
-    // Parse a mosaic state path response.
-    response: data => TcpReader.solitary(data, 'tree')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'tree'),
+      deserialize: data => TcpReader.solitary(data, 'tree')
+    }
   },
 
-  // Parse multisig state path information.
+  // Process multisig state path information.
   multisigStatePath: {
-    // Parse a multisig state path request.
-    request: data => ({
-      publicKey: TcpReader.solitary(data, 'key')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.publicKey, 'key'),
+      deserialize: data => ({
+        publicKey: TcpReader.solitary(data, 'key')
+      })
+    },
 
-    // Parse a multisig state path response.
-    response: data => TcpReader.solitary(data, 'tree')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'tree'),
+      deserialize: data => TcpReader.solitary(data, 'tree')
+    }
   },
 
-  // Parse namespace state path information.
+  // Process namespace state path information.
   namespaceStatePath: {
-    // Parse a namespace state path request.
-    request: data => ({
-      namespaceId: TcpReader.solitary(data, 'id')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.namespaceId, 'id'),
+      deserialize: data => ({
+        namespaceId: TcpReader.solitary(data, 'id')
+      })
+    },
 
-    // Parse a namespace state path response.
-    response: data => TcpReader.solitary(data, 'tree')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'tree'),
+      deserialize: data => TcpReader.solitary(data, 'tree')
+    }
   },
 
-  // Parse account restrictions state path information.
+  // Process account restrictions state path information.
   accountRestrictionsStatePath: {
-    // Parse an account restrictions state path request.
-    request: data => ({
-      address: TcpReader.solitary(data, 'address')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.address, 'address'),
+      deserialize: data => ({
+        address: TcpReader.solitary(data, 'address')
+      })
+    },
 
-    // Parse an account restrictions state path response.
-    response: data => TcpReader.solitary(data, 'tree')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'tree'),
+      deserialize: data => TcpReader.solitary(data, 'tree')
+    }
   },
 
-  // Parse mosaic restrictions state path information.
+  // Process mosaic restrictions state path information.
   mosaicRestrictionsStatePath: {
-    // Parse a mosaic restrictions state path request.
-    request: data => ({
-      hash: TcpReader.solitary(data, 'hash256')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.hash, 'hash256'),
+      deserialize: data => ({
+        hash: TcpReader.solitary(data, 'hash256')
+      })
+    },
 
-    // Parse a mosaic restrictions state path response.
-    response: data => TcpReader.solitary(data, 'tree')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'tree'),
+      deserialize: data => TcpReader.solitary(data, 'tree')
+    }
   },
 
   // Process diagnostic counters information.
