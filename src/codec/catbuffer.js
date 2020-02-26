@@ -621,7 +621,7 @@ class Writer extends BaseWriter {
     //  }
     // Write a dummy size, we need to fix it after.
     this.sizePrefix(0)
-    let signature = this.entityVerification(value)
+    this.entityVerification(value)
     this.entityBody(value)
   }
 

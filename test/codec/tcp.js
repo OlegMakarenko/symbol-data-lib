@@ -20,6 +20,26 @@ import expect from 'expect.js'
 import constants from '../../src/codec/constants'
 import tcp from '../../src/codec/tcp'
 
+const testHeader = (serialized, deserialized) => {
+  expect(tcp.header.serialize(deserialized)).to.eql(serialized)
+  expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
+}
+
+const testRequest = (serialized, deserialized, method) => {
+  expect(tcp[method].request.serialize(deserialized)).to.eql(serialized)
+  expect(tcp[method].request.deserialize(serialized)).to.eql(deserialized)
+}
+
+const testResponse = (serialized, deserialized, method) => {
+  expect(tcp[method].response.serialize(deserialized)).to.eql(serialized)
+  expect(tcp[method].response.deserialize(serialized)).to.eql(deserialized)
+}
+
+const testError = (method, type) => {
+  expect(() => tcp[method][type].serialize(undefined)).to.throwException()
+  expect(() => tcp[method][type].deserialize(undefined)).to.throwException()
+}
+
 describe('tcp', () => {
   describe('header', () => {
     it('should process a server challenge request', () => {
@@ -28,8 +48,7 @@ describe('tcp', () => {
         type: constants.serverChallenge,
         payload: Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
       }
-      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
-      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
+      testHeader(serialized, deserialized)
     })
 
     it('should process a server challenge response', () => {
@@ -38,8 +57,7 @@ describe('tcp', () => {
         type: constants.serverChallenge,
         payload: Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE01', 'hex')
       }
-      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
-      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
+      testHeader(serialized, deserialized)
     })
 
     it('should process a client challenge request', () => {
@@ -48,8 +66,7 @@ describe('tcp', () => {
         type: constants.clientChallenge,
         payload: Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
       }
-      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
-      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
+      testHeader(serialized, deserialized)
     })
 
     it('should process a node info request', () => {
@@ -58,8 +75,7 @@ describe('tcp', () => {
         type: constants.nodeDiscoveryPullPing,
         payload: Buffer.from('', 'hex')
       }
-      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
-      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
+      testHeader(serialized, deserialized)
     })
 
     it('should process a node info response', () => {
@@ -68,8 +84,7 @@ describe('tcp', () => {
         type: constants.nodeDiscoveryPullPing,
         payload: Buffer.from('3900000000000000C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F76303000000DC1E9800084331423445323542', 'hex')
       }
-      expect(tcp.header.serialize(deserialized)).to.eql(serialized)
-      expect(tcp.header.deserialize(serialized)).to.eql(deserialized)
+      testHeader(serialized, deserialized)
     })
   })
 
@@ -79,8 +94,7 @@ describe('tcp', () => {
       let deserialized = {
         challenge: 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'
       }
-      expect(tcp.serverChallenge.request.serialize(deserialized)).to.eql(serialized)
-      expect(tcp.serverChallenge.request.deserialize(serialized)).to.eql(deserialized)
+      testRequest(serialized, deserialized, 'serverChallenge')
     })
 
     it('should process a server challenge response', () => {
@@ -91,15 +105,13 @@ describe('tcp', () => {
         publicKey: 'EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE',
         securityMode: 1
       }
-      expect(tcp.serverChallenge.response.serialize(deserialized)).to.eql(serialized)
-      expect(tcp.serverChallenge.response.deserialize(serialized)).to.eql(deserialized)
+      testResponse(serialized, deserialized, 'serverChallenge')
     })
   })
 
   describe('clientChallenge', () => {
     it('should process a client challenge request', () => {
-      expect(() => tcp.clientChallenge.request.serialize(undefined)).to.throwException()
-      expect(() => tcp.clientChallenge.request.deserialize(undefined)).to.throwException()
+      testError('clientChallenge', 'request')
     })
 
     it('should process a client challenge response', () => {
@@ -107,18 +119,15 @@ describe('tcp', () => {
       let deserialized = {
         challenge: 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'
       }
-      expect(tcp.clientChallenge.response.serialize(deserialized)).to.eql(serialized)
-      expect(tcp.clientChallenge.response.deserialize(serialized)).to.eql(deserialized)
+      testResponse(serialized, deserialized, 'clientChallenge')
     })
   })
 
-  // TODO(ahuszagh) Make them round-trip here...
 
   describe('pushBlock', () => {
-    it('should deserialize a push block request', () => {
-      // TODO(ahuszagh) Needs to be round-trip.
-      let buffer = Buffer.from('300100000000000067B4D79E8AE271DD7C3F0A8E8EE34E1AC08659FB200ED79D7A5B24CB0F97894A3FEA8FCEE12876B634284F2BADC2FF9A4C302D806FAABD7777B3E07D9713B201C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787000000000198438102000000000000000CD430B00100000000407A10F35A00006E5DC4D3B6027AA2CF77CCD0222DE9E85536385829C72D77189F214C1AC8109800000000000000000000000000000000000000000000000000000000000000002C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A993640989360E6E1B87FB725DE8A57E98E106C1CB10950BCA29FB3D6D31B7AF025FD8E8C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B7870000000000000000', 'hex')
-      expect(tcp.pushBlock.request.deserialize(buffer)).to.eql({
+    it('should process a push block request', () => {
+      let serialized = Buffer.from('300100000000000067B4D79E8AE271DD7C3F0A8E8EE34E1AC08659FB200ED79D7A5B24CB0F97894A3FEA8FCEE12876B634284F2BADC2FF9A4C302D806FAABD7777B3E07D9713B201C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787000000000198438102000000000000000CD430B00100000000407A10F35A00006E5DC4D3B6027AA2CF77CCD0222DE9E85536385829C72D77189F214C1AC8109800000000000000000000000000000000000000000000000000000000000000002C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A993640989360E6E1B87FB725DE8A57E98E106C1CB10950BCA29FB3D6D31B7AF025FD8E8C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B7870000000000000000', 'hex')
+      let deserialized = {
         entity: {
           signature: '67B4D79E8AE271DD7C3F0A8E8EE34E1AC08659FB200ED79D7A5B24CB0F97894A3FEA8FCEE12876B634284F2BADC2FF9A4C302D806FAABD7777B3E07D9713B201',
           key: 'C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787',
@@ -137,26 +146,27 @@ describe('tcp', () => {
           beneficiaryPublicKey: 'C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787',
           feeMultiplier: 0
         }
-      })
+      }
+      testRequest(serialized, deserialized, 'pushBlock')
     })
 
     it('should process a push block response', () => {
-      expect(() => tcp.pushBlock.response.serialize(undefined)).to.throwException()
-      expect(() => tcp.pushBlock.response.deserialize(undefined)).to.throwException()
+      testError('pushBlock', 'response')
     })
   })
 
   describe('pullBlock', () => {
-    it('should deserialize a pull block request', () => {
-      let buffer = Buffer.from('0200000000000000', 'hex')
-      expect(tcp.pullBlock.request(buffer)).to.eql({
+    it('should process a pull block request', () => {
+      let serialized = Buffer.from('0200000000000000', 'hex')
+      let deserialized = {
         height: '2'
-      })
+      }
+      testRequest(serialized, deserialized, 'pullBlock')
     })
 
-    it('should deserialize a pull block response', () => {
-      let buffer = Buffer.from('300100000000000067B4D79E8AE271DD7C3F0A8E8EE34E1AC08659FB200ED79D7A5B24CB0F97894A3FEA8FCEE12876B634284F2BADC2FF9A4C302D806FAABD7777B3E07D9713B201C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787000000000198438102000000000000000CD430B00100000000407A10F35A00006E5DC4D3B6027AA2CF77CCD0222DE9E85536385829C72D77189F214C1AC8109800000000000000000000000000000000000000000000000000000000000000002C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A993640989360E6E1B87FB725DE8A57E98E106C1CB10950BCA29FB3D6D31B7AF025FD8E8C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B7870000000000000000', 'hex')
-      expect(tcp.pullBlock.response(buffer)).to.eql({
+    it('should process a pull block response', () => {
+      let serialized = Buffer.from('300100000000000067B4D79E8AE271DD7C3F0A8E8EE34E1AC08659FB200ED79D7A5B24CB0F97894A3FEA8FCEE12876B634284F2BADC2FF9A4C302D806FAABD7777B3E07D9713B201C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787000000000198438102000000000000000CD430B00100000000407A10F35A00006E5DC4D3B6027AA2CF77CCD0222DE9E85536385829C72D77189F214C1AC8109800000000000000000000000000000000000000000000000000000000000000002C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A993640989360E6E1B87FB725DE8A57E98E106C1CB10950BCA29FB3D6D31B7AF025FD8E8C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B7870000000000000000', 'hex')
+      let deserialized = {
         entity: {
           signature: '67B4D79E8AE271DD7C3F0A8E8EE34E1AC08659FB200ED79D7A5B24CB0F97894A3FEA8FCEE12876B634284F2BADC2FF9A4C302D806FAABD7777B3E07D9713B201',
           key: 'C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787',
@@ -175,64 +185,71 @@ describe('tcp', () => {
           beneficiaryPublicKey: 'C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787',
           feeMultiplier: 0
         }
-      })
+      }
+      testResponse(serialized, deserialized, 'pullBlock')
     })
   })
 
   describe('chainInfo', () => {
-    it('should deserialize a chain info request', () => {
-      let buffer = Buffer.from('', 'hex')
-      expect(tcp.chainInfo.request(buffer)).to.eql({})
+    it('should process a chain info request', () => {
+      let serialized = Buffer.from('', 'hex')
+      let deserialized = {}
+      testRequest(serialized, deserialized, 'chainInfo')
     })
 
-    it('should deserialize a chain info response', () => {
-      let buffer = Buffer.from('D1E80000000000000000000000000000DBE03DB783584A08', 'hex')
-      expect(tcp.chainInfo.response(buffer)).to.eql({
+    it('should process a chain info response', () => {
+      let serialized = Buffer.from('D1E80000000000000000000000000000DBE03DB783584A08', 'hex')
+      let deserialized = {
         height: '59601',
         scoreHigh: '0',
         scoreLow: '597387223318257883'
-      })
+      }
+      testResponse(serialized, deserialized, 'chainInfo')
 
-      buffer = Buffer.from('E1DD0000000000000000000000000000FA9B88B1A9DEE607', 'hex')
-      expect(tcp.chainInfo.response(buffer)).to.eql({
+      serialized = Buffer.from('E1DD0000000000000000000000000000FA9B88B1A9DEE607', 'hex')
+      deserialized = {
         height: '56801',
         scoreHigh: '0',
         scoreLow: '569387223318305786'
-      })
+      }
+      testResponse(serialized, deserialized, 'chainInfo')
     })
   })
 
   describe('blockHashes', () => {
-    it('should deserialize a block hashes request', () => {
-      let buffer = Buffer.from('040000000000000002000000', 'hex')
-      expect(tcp.blockHashes.request(buffer)).to.eql({
+    it('should process a block hashes request', () => {
+      let serialized = Buffer.from('040000000000000002000000', 'hex')
+      let deserialized = {
         height: '4',
         hashes: 2
-      })
+      }
+      testRequest(serialized, deserialized, 'blockHashes')
     })
 
-    it('should deserialize a block hashes response', () => {
-      let buffer = Buffer.from('6D66277B048C6697530DB6E9DFEE8F468106ED21BC9B087B5327D4DF3027C6F0102B28117C238D208F96CE46B79834D94212DD7C5CC840E9ED1356720393A0BE', 'hex')
-      expect(tcp.blockHashes.response(buffer)).to.eql([
+    it('should process a block hashes response', () => {
+      let serialized = Buffer.from('6D66277B048C6697530DB6E9DFEE8F468106ED21BC9B087B5327D4DF3027C6F0102B28117C238D208F96CE46B79834D94212DD7C5CC840E9ED1356720393A0BE', 'hex')
+      let deserialized = [
         '6D66277B048C6697530DB6E9DFEE8F468106ED21BC9B087B5327D4DF3027C6F0',
         '102B28117C238D208F96CE46B79834D94212DD7C5CC840E9ED1356720393A0BE'
-      ])
+      ]
+      testResponse(serialized, deserialized, 'blockHashes')
     })
   })
 
   describe('pullBlocks', () => {
-    it('should deserialize a pull blocks request', () => {
-      let buffer = Buffer.from('040000000000000002000000E8030000', 'hex')
-      expect(tcp.pullBlocks.request(buffer)).to.eql({
+    it('should process a pull blocks request', () => {
+      let serialized = Buffer.from('040000000000000002000000E8030000', 'hex')
+      let deserialized = {
         height: '4',
         blocks: 2,
         bytes: 1000
-      })
+      }
+      testRequest(serialized, deserialized, 'pullBlocks')
     })
 
-    it('should deserialize a pull blocks response', () => {
-      let buffer = Buffer.from('3001000000000000A8B90CE9AF2A5835C04D6069E38F18D5B5055D2B759F2DB2FE8217FF8699D6F3E9322238A88970F9CB34BD4F882F852F7938CF4A539B887BB2D92DAF5E56000DC151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787000000000198438104000000000000007FE931B00100000000E430F71452000053C22EAD88155FDA9D62AF2CE6DE2208A08443E7BDEDD2B278FCD1E8433C571500000000000000000000000000000000000000000000000000000000000000002C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A9936409926458EFE34A53659B60718FCC4047B11D77791CE7868F9E4C9CD623D25AF163C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B78700000000000000003001000000000000549BC4DC8BEA332A9E43D2B06600A460B76E3CA39B114AE26EB0C0DA90927C55872C0E21805A727F643629E251B7E9AF39E9218098535ABFC6963506660CDA0CC151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787000000000198438105000000000000002E7632B001000000003F3B51FA4D00006D66277B048C6697530DB6E9DFEE8F468106ED21BC9B087B5327D4DF3027C6F000000000000000000000000000000000000000000000000000000000000000002C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A99364093837BF257F57D37ACE69D74CEC955D710B672A90E5416CB0FFEAAD17BA4599ACC151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B7870000000000000000', 'hex')
-      expect(tcp.pullBlocks.response(buffer)).to.eql([
+    it('should process a pull blocks response', () => {
+      let serialized = Buffer.from('3001000000000000A8B90CE9AF2A5835C04D6069E38F18D5B5055D2B759F2DB2FE8217FF8699D6F3E9322238A88970F9CB34BD4F882F852F7938CF4A539B887BB2D92DAF5E56000DC151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787000000000198438104000000000000007FE931B00100000000E430F71452000053C22EAD88155FDA9D62AF2CE6DE2208A08443E7BDEDD2B278FCD1E8433C571500000000000000000000000000000000000000000000000000000000000000002C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A9936409926458EFE34A53659B60718FCC4047B11D77791CE7868F9E4C9CD623D25AF163C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B78700000000000000003001000000000000549BC4DC8BEA332A9E43D2B06600A460B76E3CA39B114AE26EB0C0DA90927C55872C0E21805A727F643629E251B7E9AF39E9218098535ABFC6963506660CDA0CC151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787000000000198438105000000000000002E7632B001000000003F3B51FA4D00006D66277B048C6697530DB6E9DFEE8F468106ED21BC9B087B5327D4DF3027C6F000000000000000000000000000000000000000000000000000000000000000002C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A99364093837BF257F57D37ACE69D74CEC955D710B672A90E5416CB0FFEAAD17BA4599ACC151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B7870000000000000000', 'hex')
+      let deserialized = [
         {
           entity: {
             signature: 'A8B90CE9AF2A5835C04D6069E38F18D5B5055D2B759F2DB2FE8217FF8699D6F3E9322238A88970F9CB34BD4F882F852F7938CF4A539B887BB2D92DAF5E56000D',
@@ -273,7 +290,8 @@ describe('tcp', () => {
             feeMultiplier: 0
           }
         }
-      ])
+      ]
+      testResponse(serialized, deserialized, 'pullBlocks')
     })
   })
 
@@ -282,17 +300,19 @@ describe('tcp', () => {
   })
 
   describe('pullTransactions', () => {
-    it('should deserialize a pull transactions request', () => {
-      let buffer = Buffer.from('0000000000000000', 'hex')
-      expect(tcp.pullTransactions.request(buffer)).to.eql({
+    it('should process a pull transactions request', () => {
+      let serialized = Buffer.from('0000000000000000', 'hex')
+      let deserialized = {
         minFeeMultiplier: 0,
         shortHashes: []
-      })
+      }
+      testRequest(serialized, deserialized, 'pullTransactions')
     })
 
-    it('should deserialize a pull transactions response', () => {
-      let buffer = Buffer.from('', 'hex')
-      expect(tcp.pullTransactions.response(buffer)).to.eql([])
+    it('should process a pull transactions response', () => {
+      let serialized = Buffer.from('', 'hex')
+      let deserialized = []
+      testResponse(serialized, deserialized, 'pullTransactions')
     })
   })
 
@@ -300,15 +320,17 @@ describe('tcp', () => {
     // TODO(ahuszagh) Add unittests.
   })
 
+  // TODO(ahuszagh) Make them round-trip here...
+
   describe('subCacheMerkleRoots', () => {
-    it('should deserialize a sub cache merkle roots request', () => {
+    it('should process a sub cache merkle roots request', () => {
       let buffer = Buffer.from('0400000000000000', 'hex')
       expect(tcp.subCacheMerkleRoots.request(buffer)).to.eql({
         height: '4'
       })
     })
 
-    it('should deserialize a sub cache merkle roots response', () => {
+    it('should process a sub cache merkle roots response', () => {
       let buffer = Buffer.from('1571253376BBF084EDCD7739127997099C9285D2F539C5456E403EB768BE1106E5228B463E386B75AA4AE191C7026324361644E2A6C69539CDCF18A1BD92BF3E3F16A91F8269557C8A8E90DBEE48B355BD2C06560E9F57B94D02D5F6EA546B4A000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 'hex')
       expect(tcp.subCacheMerkleRoots.response(buffer)).to.eql([
         '1571253376BBF084EDCD7739127997099C9285D2F539C5456E403EB768BE1106',

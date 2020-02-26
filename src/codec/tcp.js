@@ -186,6 +186,13 @@ class TcpWriter extends catbuffer.Writer {
     assert(challenge.length === 2 * constants.challengeSize, 'invalid challenge size')
     this.hex(challenge)
   }
+
+  empty(value) {
+  }
+
+  hashes(value) {
+    this.n(value, 'hash256')
+  }
 }
 
 // CODEC
@@ -288,7 +295,6 @@ const codec = {
   pushBlock: {
     request: {
       serialize: data => TcpWriter.solitary(data, 'block'),
-
       deserialize: data => TcpReader.solitary(data, 'block')
     },
 
@@ -303,128 +309,201 @@ const codec = {
     }
   },
 
-  // TODO(ahuszagh) Change all the use serialize/deserialize
-
-  // Parse pull block information.
+  // Process pull block information.
   pullBlock: {
-    // Parse a pull block request.
-    request: data => ({
-      height: TcpReader.solitary(data, 'uint64String')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.height, 'uint64String'),
 
-    // Parse a pull block response.
-    response: data => TcpReader.solitary(data, 'block')
+      deserialize: data => ({
+        height: TcpReader.solitary(data, 'uint64String')
+      })
+    },
+
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'block'),
+      deserialize: data => TcpReader.solitary(data, 'block')
+    }
   },
 
-  // Parse chain information
+  // Process chain information
   chainInfo: {
-    // Parse a chain info request.
-    request: data => TcpReader.solitary(data, 'empty'),
+    request: {
+      serialize: data => TcpWriter.solitary(data, 'empty'),
+      deserialize: data => TcpReader.solitary(data, 'empty')
+    },
 
-    // Parse a chain info response.
-    response: data => {
-      let reader = new TcpReader(data)
-      let height = reader.uint64String()
-      let scoreHigh = reader.uint64String()
-      let scoreLow = reader.uint64String()
-      reader.validateEmpty()
+    response: {
+      serialize: data => {
+        let writer = new TcpWriter(24)
+        writer.uint64String(data.height)
+        writer.uint64String(data.scoreHigh)
+        writer.uint64String(data.scoreLow)
 
-      return {
-        height,
-        scoreHigh,
-        scoreLow
+        return writer.data
+      },
+
+      deserialize: data => {
+        let reader = new TcpReader(data)
+        let height = reader.uint64String()
+        let scoreHigh = reader.uint64String()
+        let scoreLow = reader.uint64String()
+        reader.validateEmpty()
+
+        return {
+          height,
+          scoreHigh,
+          scoreLow
+        }
       }
     }
   },
 
-  // Parse block hashes information.
+  // Process block hashes information.
   blockHashes: {
-    // Parse a block hashes request.
-    request: data => {
-      let reader = new TcpReader(data)
-      let height = reader.uint64String()
-      let hashes = reader.uint32()
-      reader.validateEmpty()
+    request: {
+      serialize: data => {
+        let writer = new TcpWriter(12)
+        writer.uint64String(data.height)
+        writer.uint32(data.hashes)
 
-      return {
-        height,
-        hashes
+        return writer.data
+      },
+
+      deserialize: data => {
+        let reader = new TcpReader(data)
+        let height = reader.uint64String()
+        let hashes = reader.uint32()
+        reader.validateEmpty()
+
+        return {
+          height,
+          hashes
+        }
       }
     },
 
-    // Parse a block hashes response.
-    response: data => TcpReader.solitary(data, 'hashes')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'hashes'),
+      deserialize: data => TcpReader.solitary(data, 'hashes')
+    }
   },
 
-  // Parse pull blocks information.
+  // Process pull blocks information.
   pullBlocks: {
-    // Parse a pull blocks request.
-    request: data => {
-      let reader = new TcpReader(data)
-      let height = reader.uint64String()
-      let blocks = reader.uint32()
-      let bytes = reader.uint32()
-      reader.validateEmpty()
+    request: {
+      serialize: data => {
+        let writer = new TcpWriter(16)
+        writer.uint64String(data.height)
+        writer.uint32(data.blocks)
+        writer.uint32(data.bytes)
 
-      return {
-        height,
-        blocks,
-        bytes
+        return writer.data
+      },
+
+      deserialize: data => {
+        let reader = new TcpReader(data)
+        let height = reader.uint64String()
+        let blocks = reader.uint32()
+        let bytes = reader.uint32()
+        reader.validateEmpty()
+
+        return {
+          height,
+          blocks,
+          bytes
+        }
       }
     },
 
-    // Parse a pull blocks response.
-    response: data => TcpReader.solitary(data, 'blocks')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'blocks'),
+      deserialize: data => TcpReader.solitary(data, 'blocks')
+    }
   },
 
-  // Parse push transactions information.
+  // Process push transactions information.
   pushTransactions: {
-    // TODO(ahuszagh) Here...
-    // Parse a push transactions request.
-    request: data => {
-      // Needs to push transaction infos.
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
     // Parse a push transactions response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse pull transactions information.
+  // Process pull transactions information.
   pullTransactions: {
-    // Parse a pull transactions request.
-    request: data => {
-      let reader = new TcpReader(data)
-      let minFeeMultiplier = reader.uint32()
-      let shortHashCount = reader.uint32()
-      let shortHashes = []
-      reader.n(shortHashes, shortHashCount, 'uint32')
-      reader.validateEmpty()
+    request: {
+      serialize: data => {
+        let writer = new TcpWriter(8 + 4 * data.shortHashes.length)
+        writer.uint32(data.minFeeMultiplier)
+        writer.uint32(data.shortHashes.length)
+        writer.n(data.shortHashes, 'uint32')
 
-      return {
-        minFeeMultiplier,
-        shortHashes
+        return writer.data
+      },
+
+      deserialize: data => {
+        let reader = new TcpReader(data)
+        let minFeeMultiplier = reader.uint32()
+        let shortHashCount = reader.uint32()
+        let shortHashes = []
+        reader.n(shortHashes, shortHashCount, 'uint32')
+        reader.validateEmpty()
+
+        return {
+          minFeeMultiplier,
+          shortHashes
+        }
       }
     },
 
     // Parse a pull transactions response.
-    response: data => TcpReader.solitary(data, 'transactions')
-  },
-
-  // Parse secure signed information.
-  secureSigned: {
-    // Parse a secure signed request.
-    request: data => {
-      throw new Error('not yet implemented')
-    },
-
-    // Parse a secure signed response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'transactions'),
+      deserialize: data => TcpReader.solitary(data, 'transactions')
     }
   },
+
+  // Process secure signed information.
+  secureSigned: {
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
+    },
+
+    // Parse a push transactions response.
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
+    }
+  },
+
+  // TODO(ahuszagh) Change all the use serialize/deserialize
 
   // Parse sub cache merkle roots.
   subCacheMerkleRoots: {
