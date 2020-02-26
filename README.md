@@ -354,7 +354,7 @@ Running catapult-block-dump with:
 CLIENT_KEY='3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770D'
 NODE_KEY='C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F763'
 $ catapult-tcp-dump --client-private-key $CLIENT_KEY \
-    --node-public-key $NODE_KEY 
+    --node-public-key $NODE_KEY \
     --requests '[{"type": "pullBlock", "params": {"height": "2"}}]' \
     --verbose
 Running catapult-tcp-dump with: 
