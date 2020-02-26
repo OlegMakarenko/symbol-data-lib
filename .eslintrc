@@ -9,6 +9,7 @@
         "no-control-regex": "off",
         "no-empty": ["error", {
             "allowEmptyCatch": true
-        }]
+        }],
+        "semi": ["error", "never"]
     }
 }

@@ -42,7 +42,7 @@ const encodeBlock = (input, inputOffset, output, outputOffset) => {
 const decodeChar = c => {
   const decodedChar = INVERSE_ALPHABET[c]
   if (undefined === decodedChar) {
-    throw Error(`illegal base32 character ${c}`);
+    throw Error(`illegal base32 character ${c}`)
   }
 
   return decodedChar
@@ -58,7 +58,7 @@ const decodeBlock = (input, inputOffset, output, outputOffset) => {
   output[outputOffset + 2] = ((bytes[3] & 0x0F) << 4) | (bytes[4] >> 1)
   output[outputOffset + 3] = ((bytes[4] & 0x01) << 7) | (bytes[5] << 2) | (bytes[6] >> 3)
   output[outputOffset + 4] = ((bytes[6] & 0x07) << 5) | bytes[7]
-};
+}
 
 /**
  *  Encode buffer to base32.

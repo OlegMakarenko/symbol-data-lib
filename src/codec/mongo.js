@@ -67,7 +67,7 @@ const RECEIPT_TYPE = {
   3: balanceChangeReceipt,
   4: artifactExpiryReceipt,
   5: inflationReceipt
-};
+}
 
 const basicReceipt = entry => {
   let callback = RECEIPT_TYPE[(entry.type & 0xF000) >> 12] || unknownReceipt
