@@ -10,12 +10,14 @@
     "catapult-config-dump": "dist/bin/catapult-config-dump.js",
     "catapult-mongo-dump": "dist/bin/catapult-mongo-dump.js",
     "catapult-rocks-dump": "dist/bin/catapult-rocks-dump.js",
-    "catapult-spool-dump": "dist/bin/catapult-spool-dump.js"
+    "catapult-spool-dump": "dist/bin/catapult-spool-dump.js",
+    "catapult-tcp-dump": "dist/bin/catapult-tcp-dump.js"
   },
   "scripts": {
     "build": "babel src -d dist/src && babel bin -d dist/bin",
     "clean": "rm -rf dist",
     "lint": "eslint src",
+    "lint.bin": "eslint bin",
     "lint.test": "eslint test --global it,describe",
     "test": "mocha --no-warnings \"test/index.js\" --require @babel/register --require @babel/core --require @babel/polyfill"
   },

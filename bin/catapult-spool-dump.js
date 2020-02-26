@@ -18,6 +18,7 @@
  */
 
 import '@babel/polyfill'
+import fs from 'fs'
 import yargs from 'yargs'
 import symbolData from '../src'
 
@@ -29,7 +30,7 @@ const options = yargs
     'catapult-spool-dump [OPTION...]',
     'Dump spool data to JSON'
   )
-  // Example
+  // Example.
   .example(
     'catapult-spool-dump --collection block_change --limit 10',
     'Dump the block change spool data as JSON.'

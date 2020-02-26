@@ -26,6 +26,33 @@ import BaseReader from './reader'
 import BaseWriter from './writer'
 import shared from '../util/shared'
 
+/**
+ *  Map the transaction type to the method name.
+ */
+const TRANSACTION_TYPE_MAP = {
+  [constants.transactionTransfer]: 'transferTransaction',
+  [constants.transactionRegisterNamespace]: 'registerNamespaceTransaction',
+  [constants.transactionAddressAlias]: 'addressAliasTransaction',
+  [constants.transactionMosaicAlias]: 'mosaicAliasTransaction',
+  [constants.transactionMosaicDefinition]: 'mosaicDefinitionTransaction',
+  [constants.transactionMosaicSupplyChange]: 'mosaicSupplyChangeTransaction',
+  [constants.transactionModifyMultisigAccount]: 'modifyMultisigTransaction',
+  [constants.transactionAggregateComplete]: 'aggregateCompleteTransaction',
+  [constants.transactionAggregateBonded]: 'aggregateBondedTransaction',
+  [constants.transactionLock]: 'lockTransaction',
+  [constants.transactionSecretLock]: 'secretLockTransaction',
+  [constants.transactionSecretProof]: 'secretProofTransaction',
+  [constants.transactionAccountRestrictionAddress]: 'accountRestrictionAddressTransaction',
+  [constants.transactionAccountRestrictionMosaic]: 'accountRestrictionMosaicTransaction',
+  [constants.transactionAccountRestrictionOperation]: 'accountRestrictionOperationTransaction',
+  [constants.transactionLinkAccount]: 'linkAccountTransaction',
+  [constants.transactionMosaicAddressRestriction]: 'mosaicAddressRestrictionTransaction',
+  [constants.transactionMosaicGlobalRestriction]: 'mosaicGlobalRestrictionTransaction',
+  [constants.transactionAccountMetadataTransaction]: 'accountMetadataTransaction',
+  [constants.transactionMosaicMetadataTransaction]: 'mosaicMetadataTransaction',
+  [constants.transactionNamespaceMetadataTransaction]: 'namespaceMetadataTransaction',
+}
+
 // HELPERS
 
 // Align size to boundary.
@@ -444,51 +471,11 @@ class Reader extends BaseReader {
   }
 
   transactionHeader(type, embedded) {
-    if (type === constants.transactionTransfer) {
-      return this.transferTransaction(embedded)
-    } else if (type === constants.transactionRegisterNamespace) {
-      return this.registerNamespaceTransaction(embedded)
-    } else if (type === constants.transactionAddressAlias) {
-      return this.addressAliasTransaction(embedded)
-    } else if (type === constants.transactionMosaicAlias) {
-      return this.mosaicAliasTransaction(embedded)
-    } else if (type === constants.transactionMosaicDefinition) {
-      return this.mosaicDefinitionTransaction(embedded)
-    } else if (type === constants.transactionMosaicSupplyChange) {
-      return this.mosaicSupplyChangeTransaction(embedded)
-    } else if (type === constants.transactionModifyMultisigAccount) {
-      return this.modifyMultisigTransaction(embedded)
-    } else if (type === constants.transactionAggregateComplete) {
-      return this.aggregateCompleteTransaction(embedded)
-    } else if (type === constants.transactionAggregateBonded) {
-      return this.aggregateBondedTransaction(embedded)
-    } else if (type === constants.transactionLock) {
-      return this.lockTransaction(embedded)
-    } else if (type === constants.transactionSecretLock) {
-      return this.secretLockTransaction(embedded)
-    } else if (type === constants.transactionSecretProof) {
-      return this.secretProofTransaction(embedded)
-    } else if (type === constants.transactionAccountRestrictionAddress) {
-      return this.accountRestrictionAddressTransaction(embedded)
-    } else if (type === constants.transactionAccountRestrictionMosaic) {
-      return this.accountRestrictionMosaicTransaction(embedded)
-    } else if (type === constants.transactionAccountRestrictionOperation) {
-      return this.accountRestrictionOperationTransaction(embedded)
-    } else if (type === constants.transactionLinkAccount) {
-      return this.linkAccountTransaction(embedded)
-    } else if (type === constants.transactionMosaicAddressRestriction) {
-      return this.mosaicAddressRestrictionTransaction(embedded)
-    } else if (type === constants.transactionMosaicGlobalRestriction) {
-      return this.mosaicGlobalRestrictionTransaction(embedded)
-    } else if (type === constants.transactionAccountMetadataTransaction) {
-      return this.accountMetadataTransaction(embedded)
-    } else if (type === constants.transactionMosaicMetadataTransaction) {
-      return this.mosaicMetadataTransaction(embedded)
-    } else if (type === constants.transactionNamespaceMetadataTransaction) {
-      return this.namespaceMetadataTransaction(embedded)
-    } else {
+    let method = TRANSACTION_TYPE_MAP[type]
+    if (method === undefined) {
       throw new Error(`invalid transaction type, got ${type}`)
     }
+    return this[method](embedded)
   }
 
   transaction(embedded) {
@@ -870,51 +857,11 @@ class Writer extends BaseWriter {
   }
 
   transactionHeader(value, type, embedded) {
-    if (type === constants.transactionTransfer) {
-      this.transferTransaction(value, embedded)
-    } else if (type === constants.transactionRegisterNamespace) {
-      this.registerNamespaceTransaction(value, embedded)
-    } else if (type === constants.transactionAddressAlias) {
-      this.addressAliasTransaction(value, embedded)
-    } else if (type === constants.transactionMosaicAlias) {
-      this.mosaicAliasTransaction(value, embedded)
-    } else if (type === constants.transactionMosaicDefinition) {
-      this.mosaicDefinitionTransaction(value, embedded)
-    } else if (type === constants.transactionMosaicSupplyChange) {
-      this.mosaicSupplyChangeTransaction(value, embedded)
-    } else if (type === constants.transactionModifyMultisigAccount) {
-      this.modifyMultisigTransaction(value, embedded)
-    } else if (type === constants.transactionAggregateComplete) {
-      this.aggregateCompleteTransaction(value, embedded)
-    } else if (type === constants.transactionAggregateBonded) {
-      this.aggregateBondedTransaction(value, embedded)
-    } else if (type === constants.transactionLock) {
-      this.lockTransaction(value, embedded)
-    } else if (type === constants.transactionSecretLock) {
-      this.secretLockTransaction(value, embedded)
-    } else if (type === constants.transactionSecretProof) {
-      this.secretProofTransaction(value, embedded)
-    } else if (type === constants.transactionAccountRestrictionAddress) {
-      this.accountRestrictionAddressTransaction(value, embedded)
-    } else if (type === constants.transactionAccountRestrictionMosaic) {
-      this.accountRestrictionMosaicTransaction(value, embedded)
-    } else if (type === constants.transactionAccountRestrictionOperation) {
-      this.accountRestrictionOperationTransaction(value, embedded)
-    } else if (type === constants.transactionLinkAccount) {
-      this.linkAccountTransaction(value, embedded)
-    } else if (type === constants.transactionMosaicAddressRestriction) {
-      this.mosaicAddressRestrictionTransaction(value, embedded)
-    } else if (type === constants.transactionMosaicGlobalRestriction) {
-      this.mosaicGlobalRestrictionTransaction(value, embedded)
-    } else if (type === constants.transactionAccountMetadataTransaction) {
-      this.accountMetadataTransaction(value, embedded)
-    } else if (type === constants.transactionMosaicMetadataTransaction) {
-      this.mosaicMetadataTransaction(value, embedded)
-    } else if (type === constants.transactionNamespaceMetadataTransaction) {
-      this.namespaceMetadataTransaction(value, embedded)
-    } else {
+    let method = TRANSACTION_TYPE_MAP[type]
+    if (method === undefined) {
       throw new Error(`invalid transaction type, got ${type}`)
     }
+    this[method](value, embedded)
   }
 
   transaction(value, embedded) {

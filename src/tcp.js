@@ -26,6 +26,54 @@ import crypto from './util/crypto'
 import Socket from './util/socket'
 
 /**
+ *  Map packet type name to the enumerated constant.
+ */
+const PACKET_TYPE_MAP = {
+  serverChallenge: constants.serverChallenge,
+  clientChallenge: constants.clientChallenge,
+  pushBlock: constants.pushBlock,
+  pullBlock: constants.pullBlock,
+  chainInfo: constants.chainInfo,
+  blockHashes: constants.blockHashes,
+  pullBlocks: constants.pullBlocks,
+  pushTransactions: constants.pushTransactions,
+  pullTransactions: constants.pullTransactions,
+  secureSigned: constants.secureSigned,
+  subCacheMerkleRoots: constants.subCacheMerkleRoots,
+  pushPartialTransactions: constants.pushPartialTransactions,
+  pushDetachedCosignatures: constants.pushDetachedCosignatures,
+  pullPartialTransactionInfos: constants.pullPartialTransactionInfos,
+  pushNodeInfo: constants.nodeDiscoveryPushPing,
+  pullNodeInfo: constants.nodeDiscoveryPullPing,
+  pushNodePeers: constants.nodeDiscoveryPushPeers,
+  pullNodePeers: constants.nodeDiscoveryPullPeers,
+  timeSync: constants.timeSyncNetworkTime,
+  accountStatePath: constants.accountStatePath,
+  hashLockStatePath: constants.hashLockStatePath,
+  secretLockStatePath: constants.secretLockStatePath,
+  metadataStatePath: constants.metadataStatePath,
+  mosaicStatePath: constants.mosaicStatePath,
+  multisigStatePath: constants.multisigStatePath,
+  namespaceStatePath: constants.namespaceStatePath,
+  accountRestrictionsStatePath: constants.accountRestrictionsStatePath,
+  mosaicRestrictionsStatePath: constants.mosaicRestrictionsStatePath,
+  diagnosticCounters: constants.diagnosticCounters,
+  confirmTimestampedHashes: constants.confirmTimestampedHashes,
+  activeNodeInfos: constants.activeNodeInfos,
+  blockStatement: constants.blockStatement,
+  unlockedAccounts: constants.unlockedAccounts,
+  accountInfos: constants.accountInfos,
+  hashLockInfos: constants.hashLockInfos,
+  secretLockInfos: constants.secretLockInfos,
+  metadataInfos: constants.metadataInfos,
+  mosaicInfos: constants.mosaicInfos,
+  multisigInfos: constants.multisigInfos,
+  namespaceInfos: constants.namespaceInfos,
+  accountRestrictionsInfos: constants.accountRestrictionsInfos,
+  mosaicRestrictionsInfos: constants.mosaicRestrictionsInfos
+}
+
+/**
  *  Get connection to TCP socket.
  *
  *  @param options {Object}       - Options to specify connection parameters.
@@ -45,22 +93,11 @@ const connect = async options => {
 }
 
 /**
- *  Create a packet header to response to a request.
- */
-const createHeader = (size, packetType) => {
-  let array = new Uint32Array(2)
-  array[0] = size
-  array[1] = packetType
-
-  return Buffer.from(array.buffer)
-}
-
-/**
  *  Handle the server challenge when connecting to a node.
  */
 const serverChallenge = async options => {
   // Read and validate the packet.
-  let packet = tcpCodec.header(await options.socket.receive())
+  let packet = tcpCodec.header.deserialize(await options.socket.receive())
   if (packet.type !== constants.serverChallenge) {
     throw new Error('invalid server challenge request packet')
   } else if (packet.payload.length !== constants.challengeSize) {
@@ -69,7 +106,8 @@ const serverChallenge = async options => {
 
   // Get our client signing key.
   let hash512 = crypto[options.hashAlgorithm]['512']
-  let signingKey = new crypto.SigningKey(options.clientPrivateKey, hash512)
+  let privateKey = Buffer.from(options.clientPrivateKey, 'hex')
+  let signingKey = new crypto.SigningKey(privateKey, hash512)
   let verifyingKey = signingKey.verifyingKey
   let publicKey = verifyingKey.buffer
 
@@ -81,13 +119,10 @@ const serverChallenge = async options => {
   let signature = signingKey.sign(Buffer.concat([packet.payload, mode], length))
 
   // Create the response packet
-  let size = constants.packetHeaderSize +
-    constants.challengeSize +
-    signature.length +
-    publicKey.length +
-    mode.length
-  let header = createHeader(size, constants.serverChallenge)
-  let response = Buffer.concat([header, challenge, signature, publicKey, mode], size)
+  let type = constants.serverChallenge
+  let size = constants.challengeSize + signature.length + publicKey.length + mode.length
+  let payload = Buffer.concat([challenge, signature, publicKey, mode], size)
+  let response = tcpCodec.header.serialize({type, payload})
 
   // Send the response and return the new challenge data.
   await options.socket.send(response)
@@ -100,7 +135,7 @@ const serverChallenge = async options => {
  */
 const clientChallenge = async options => {
   // Read and validate the signature packet.
-  let packet = tcpCodec.header(await options.socket.receive())
+  let packet = tcpCodec.header.deserialize(await options.socket.receive())
   if (packet.type !== constants.clientChallenge) {
     throw new Error('invalid client challenge response packet')
   } else if (packet.payload.length !== constants.signatureSize) {
@@ -109,7 +144,8 @@ const clientChallenge = async options => {
 
   // Get our node verifying key.
   let hash512 = crypto[options.hashAlgorithm]['512']
-  let verifyingKey = new crypto.VerifyingKey(options.nodePublicKey, hash512)
+  let publicKey = Buffer.from(options.nodePublicKey, 'hex')
+  let verifyingKey = new crypto.VerifyingKey(publicKey, hash512)
 
   // Verify the signature
   if (!verifyingKey.verify(packet.payload, options.challenge)) {
@@ -135,9 +171,28 @@ const authorize = async options => {
  *
  *  @param options {Object}             - Options to specify dump parameters.
  *    @field hashAlgorithm {String}     - Hashing algorithm. Can be `keccak` or `sha3`.
- *    @field clientPrivateKey {String}  - Private key for the client.
- *    @field nodePublicKey {String}     - Public key for the node.
+ *    @field clientPrivateKey {String}  - Hex-encoded private key for the client.
+ *    @field nodePublicKey {String}     - Hex-encoded public key for the node.
+ *    @field requests {Array}           - Array of requests to make to the TCP API.
  *    @field verbose {Boolean}          - Display debug information.
+ *
+ *  # Requests
+ *
+ *  The requests are an array of objects, where each object contains the
+ *  the packet type ('pullBlock', 'nodeInfo', etc.) and the params. For example,
+ *  to pull the packet for blocks at height '64', use:
+ *
+ *  ```javascript
+ *  {
+ *    type: 'pullBlock',
+ *    params: {
+ *      height: '64'
+ *    }
+ *  }
+ *  ```
+ *
+ *  Each request in the TCP codec source code has an example of the
+ *  request packet parameters expected.
  *
  *  [`here`]: https://nodejs.org/api/net.html#net_socket_connect_options_connectlistener
  */
@@ -146,24 +201,38 @@ const dump = async options => {
   let socket = await connect(options)
   await authorize({...options, socket})
 
-  // Run the desired requests
-  // TODO(ahuszagh) Remove this part.
-  //let data = spoc
-  // TODO(ahuszagh) Need to do the custom requests here...
+  // Run the desired requests.
+  let data = []
+  for (let item of options.requests) {
+    // Get the config parameters.
+    let codec = tcpCodec[item.type]
+    let type = PACKET_TYPE_MAP[item.type]
+    if (codec === undefined) {
+      throw new Error(`invalid request type, got ${item.type}`)
+    }
+
+    // Send the request data.
+    let payload = codec.request.serialize(item.params)
+    let request = tcpCodec.header.serialize({type, payload})
+    await socket.send(request)
+
+    // Receive and process the response data.
+    let packet = tcpCodec.header.deserialize(await socket.receive())
+    if (packet.type !== type) {
+      throw new Error(`invalid response type, got packet of type ${packet.type} for request ${item.type}`)
+    }
+    data.push({
+      type: item.type,
+      params: item.params,
+      response: codec.response.deserialize(packet.payload)
+    })
+  }
 
   // Close the socket and return the data.
   await socket.close()
 
-  // TODO(ahuszagh) Need to process the data
-  return undefined
+  return data
 }
-
-// TODO(ahuszagh) Really need a serial sockets API here...
-
-// TODO(ahuszagh) Going to need to have much a more complex API here.
-//   May need structured data to be passed to the request.
-// But, at the very least, going to need to have a socket that works.
-// NTOD
 
 export default {
   dump
