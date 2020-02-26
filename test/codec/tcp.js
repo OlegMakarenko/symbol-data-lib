@@ -320,19 +320,18 @@ describe('tcp', () => {
     // TODO(ahuszagh) Add unittests.
   })
 
-  // TODO(ahuszagh) Make them round-trip here...
-
   describe('subCacheMerkleRoots', () => {
     it('should process a sub cache merkle roots request', () => {
-      let buffer = Buffer.from('0400000000000000', 'hex')
-      expect(tcp.subCacheMerkleRoots.request(buffer)).to.eql({
+      let serialized = Buffer.from('0400000000000000', 'hex')
+      let deserialized = {
         height: '4'
-      })
+      }
+      testRequest(serialized, deserialized, 'subCacheMerkleRoots')
     })
 
     it('should process a sub cache merkle roots response', () => {
-      let buffer = Buffer.from('1571253376BBF084EDCD7739127997099C9285D2F539C5456E403EB768BE1106E5228B463E386B75AA4AE191C7026324361644E2A6C69539CDCF18A1BD92BF3E3F16A91F8269557C8A8E90DBEE48B355BD2C06560E9F57B94D02D5F6EA546B4A000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 'hex')
-      expect(tcp.subCacheMerkleRoots.response(buffer)).to.eql([
+      let serialized = Buffer.from('1571253376BBF084EDCD7739127997099C9285D2F539C5456E403EB768BE1106E5228B463E386B75AA4AE191C7026324361644E2A6C69539CDCF18A1BD92BF3E3F16A91F8269557C8A8E90DBEE48B355BD2C06560E9F57B94D02D5F6EA546B4A000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000', 'hex')
+      let deserialized = [
         '1571253376BBF084EDCD7739127997099C9285D2F539C5456E403EB768BE1106',
         'E5228B463E386B75AA4AE191C7026324361644E2A6C69539CDCF18A1BD92BF3E',
         '3F16A91F8269557C8A8E90DBEE48B355BD2C06560E9F57B94D02D5F6EA546B4A',
@@ -342,7 +341,8 @@ describe('tcp', () => {
         '0000000000000000000000000000000000000000000000000000000000000000',
         '0000000000000000000000000000000000000000000000000000000000000000',
         '0000000000000000000000000000000000000000000000000000000000000000'
-      ])
+      ]
+      testResponse(serialized, deserialized, 'subCacheMerkleRoots')
     })
   })
 
@@ -363,14 +363,15 @@ describe('tcp', () => {
   })
 
   describe('pullNodeInfo', () => {
-    it('should deserialize a node info request', () => {
-      let buffer = Buffer.from('', 'hex')
-      expect(tcp.pullNodeInfo.request(buffer)).to.eql({})
+    it('should process a node info request', () => {
+      let serialized = Buffer.from('', 'hex')
+      let deserialized = {}
+      testRequest(serialized, deserialized, 'pullNodeInfo')
     })
 
-    it('should deserialize a node info response', () => {
-      let buffer = Buffer.from('3900000000000000C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F76303000000DC1E9800084331423445323542', 'hex')
-      expect(tcp.pullNodeInfo.response(buffer)).to.eql({
+    it('should process a node info response', () => {
+      let serialized = Buffer.from('3900000000000000C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F76303000000DC1E9800084331423445323542', 'hex')
+      let deserialized = {
         version: 0,
         publicKey: 'C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F763',
         roles: 3,
@@ -378,7 +379,8 @@ describe('tcp', () => {
         networkIdentifier: 0x98,
         host: '',
         friendlyName: 'C1B4E25B'
-      })
+      }
+      testResponse(serialized, deserialized, 'pullNodeInfo')
     })
   })
 
@@ -387,14 +389,15 @@ describe('tcp', () => {
   })
 
   describe('pullNodePeers', () => {
-    it('should deserialize a node peers request', () => {
-      let buffer = Buffer.from('', 'hex')
-      expect(tcp.pullNodePeers.request(buffer)).to.eql({})
+    it('should process a node peers request', () => {
+      let serialized = Buffer.from('', 'hex')
+      let deserialized = {}
+      testRequest(serialized, deserialized, 'pullNodePeers')
     })
 
-    it('should deserialize a node peers response', () => {
-      let buffer = Buffer.from('54000000000000008D270FA5E8E30D01182E8A339A31818856E30ABD0249662CFBA43CE8610333D303000000DC1E980E1539352E3231362E3231352E323435436F6C6F6D626961546573746E65744E6F646531305500000000000000318FE9A12487C0C518D35C09DE12D2AB8FF194638FA05F71E9E3619DA30E3F5503000000DC1E980E163134302E3232372E3132332E3932282A5E2D5E292F53796D626F6C2D746573746E6F6465', 'hex')
-      expect(tcp.pullNodePeers.response(buffer)).to.eql([
+    it('should process a node peers response', () => {
+      let serialized = Buffer.from('54000000000000008D270FA5E8E30D01182E8A339A31818856E30ABD0249662CFBA43CE8610333D303000000DC1E980E1539352E3231362E3231352E323435436F6C6F6D626961546573746E65744E6F646531305500000000000000318FE9A12487C0C518D35C09DE12D2AB8FF194638FA05F71E9E3619DA30E3F5503000000DC1E980E163134302E3232372E3132332E3932282A5E2D5E292F53796D626F6C2D746573746E6F6465', 'hex')
+      let deserialized = [
         {
           version: 0,
           publicKey: '8D270FA5E8E30D01182E8A339A31818856E30ABD0249662CFBA43CE8610333D3',
@@ -413,26 +416,31 @@ describe('tcp', () => {
           host: '140.227.123.92',
           friendlyName: '(*^-^)/Symbol-testnode'
         }
-      ])
+      ]
+      testResponse(serialized, deserialized, 'pullNodePeers')
     })
   })
 
   describe('timeSync', () => {
-    it('should deserialize a time sync request', () => {
-      let buffer = Buffer.from('', 'hex')
-      expect(tcp.timeSync.request(buffer)).to.eql({})
+    it('should process a time sync request', () => {
+      let serialized = Buffer.from('', 'hex')
+      let deserialized = {}
+      testRequest(serialized, deserialized, 'timeSync')
     })
 
-    it('should deserialize a time sync response', () => {
-      let buffer = Buffer.from('B11ABF1602000000B11ABF1602000000', 'hex')
-      expect(tcp.timeSync.response(buffer)).to.eql({
+    it('should process a time sync response', () => {
+      let serialized = Buffer.from('B11ABF1602000000B11ABF1602000000', 'hex')
+      let deserialized = {
         communicationTimestamps: {
           sendTimestamp: '8971557553',
           receiveTimestamp: '8971557553'
         }
-      })
+      }
+      testResponse(serialized, deserialized, 'timeSync')
     })
   })
+
+  // TODO(ahuszagh) Make them round-trip here...
 
   describe('accountStatePath', () => {
     it('should deserialize an account state path request', () => {

@@ -319,7 +319,7 @@ describe('catbuffer', () => {
       let maxFee = ['0000000000000000', '0']
       let deadline = ['0100000000000000', '1']
       let aggregateHash = '3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006'
-      let transactionsSize = '41000000'
+      let transactionsSize = '48000000'
       let reserved1 = '00000000'
 
       // Embedded transaction
@@ -333,9 +333,10 @@ describe('catbuffer', () => {
       let mosaicId = 'F89E03B7BE7C3FA0'
       let delta = 'A086010000000000'
       let action = '01'
+      let padding = '00000000000000'
 
       // Transaction
-      let hex = aggregateHash + transactionsSize + reserved1 + size + reserved2 + key + reserved3 + version + network + type + mosaicId + delta + action
+      let hex = aggregateHash + transactionsSize + reserved1 + size + reserved2 + key + reserved3 + version + network + type + mosaicId + delta + action + padding
       let transaction = {
         aggregateHash: '3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006',
         innerTransactions: [
@@ -363,7 +364,7 @@ describe('catbuffer', () => {
       let maxFee = ['0000000000000000', '0']
       let deadline = ['0100000000000000', '1']
       let aggregateHash = '3D28C804EDD07D5A728E5C5FFEC01AB07AFA5766AE6997B38526D36015A4D006'
-      let transactionsSize = '41000000'
+      let transactionsSize = '48000000'
       let reserved1 = '00000000'
 
       // Embedded transaction
@@ -377,9 +378,10 @@ describe('catbuffer', () => {
       let mosaicId = 'F89E03B7BE7C3FA0'
       let delta = 'A086010000000000'
       let action = '01'
+      let padding = '00000000000000'
 
       // Transaction
-      let hex = aggregateHash + transactionsSize + reserved1 + size + reserved2 + key + reserved3 + version + network + type + mosaicId + delta + action
+      let hex = aggregateHash + transactionsSize + reserved1 + size + reserved2 + key + reserved3 + version + network + type + mosaicId + delta + action + padding
       let transaction = {
         maxFee: '0',
         deadline: '1',

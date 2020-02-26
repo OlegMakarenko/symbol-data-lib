@@ -926,10 +926,14 @@ class Writer extends BaseWriter {
     this.transactionHeader(value.transaction, value.entity.type, embedded)
 
     // Now, re-write the size.
-    // TODO(ahuszagh) Also need to align the length.
-    // Which means, I need to write up to the nearest byte and fill it with filler....
     let length = this.size - initial
     shared.writeUint32(this._data, length, initial)
+
+    // Now, need to write the aligned size.
+    let alignedLength = align(length, 8)
+    let difference = alignedLength - length
+    let fill = Buffer.alloc(difference)
+    this.binary(fill)
   }
 
   transactions(value, embedded) {

@@ -23,6 +23,7 @@
 import assert from 'assert'
 import catbuffer from './catbuffer'
 import constants from './constants'
+import shared from '../util/shared'
 
 // READERS
 
@@ -193,6 +194,105 @@ class TcpWriter extends catbuffer.Writer {
   hashes(value) {
     this.n(value, 'hash256')
   }
+
+  node(value) {
+    // Write the dummy node size and store an index to the start.
+    let initial = this.size
+    this.uint32(0)
+    this.uint32(value.version)
+    this.key(value.publicKey)
+    this.uint32(value.roles)
+    this.uint16(value.port)
+    this.uint8(value.networkIdentifier)
+    this.uint8(value.host.length)
+    this.uint8(value.friendlyName.length)
+    this.ascii(value.host)
+    this.ascii(value.friendlyName)
+
+    // Re-write the node size
+    let length = this.size - initial
+    shared.writeUint32(this._data, length, initial)
+  }
+
+  nodes(value) {
+    this.n(value, 'node')
+  }
+
+  timeSync(value) {
+    this.uint64String(value.communicationTimestamps.sendTimestamp)
+    this.uint64String(value.communicationTimestamps.receiveTimestamp)
+  }
+
+// TODO(ahuszagh) Implement...
+//  path() {
+//    // The path consists of 16-bit nibbles, and is aligned to a full byte.
+//    // Therefore, the number of bytes is `nibbles + 1 // 2`. If the number
+//    // of nibbles is odd, the low nibble for the last index must be 0.
+//    let nibbles = this.uint8()
+//    let alignedPath = this.hex(Math.floor((nibbles + 1) / 2))
+//
+//    // Verify filler nibble is 0.
+//    if ((nibbles % 2) === 1) {
+//      assert(alignedPath[alignedPath.length - 1] === '0', 'non-0 filler byte')
+//    }
+//
+//    return alignedPath.slice(0, nibbles)
+//  }
+//
+//  branch() {
+//    let path = this.path()
+//    let linkMask = this.uint16()
+//    let links = {}
+//    for (let index = 0; index < constants.pathMaxLinks; index++) {
+//      let mask = 1 << index >>> 0
+//      if ((linkMask & mask) !== 0) {
+//        links[index] = this.hash256()
+//      }
+//    }
+//
+//    return {
+//      path,
+//      links
+//    }
+//  }
+//
+//  leaf() {
+//    let path = this.path()
+//    let value = this.hash256()
+//
+//    return {
+//      path,
+//      value
+//    }
+//  }
+//
+//  treeNode() {
+//    let marker = this.uint8()
+//    if (marker === 0x0) {
+//      return this.branch()
+//    } else if (marker === 0xFF) {
+//      return this.leaf()
+//    } else {
+//      throw new Error(`invalid tree marker, got ${marker}`)
+//    }
+//  }
+//
+//  tree() {
+//    let tree = []
+//    while (this._data.length !== 0) {
+//      tree.push(this.treeNode())
+//    }
+//    return tree
+//  }
+
+  diagnosticCounter(value) {
+    this.uint64String(value.id)
+    this.uint64String(value.value)
+  }
+
+  diagnosticCounters(value) {
+    this.n(value, 'diagnosticCounter')
+  }
 }
 
 // CODEC
@@ -235,7 +335,6 @@ const codec = {
   serverChallenge: {
     request: {
       serialize: data => TcpWriter.solitary(data.challenge, 'challenge'),
-
       deserialize: data => ({
         challenge: TcpReader.solitary(data, 'challenge')
       })
@@ -284,7 +383,6 @@ const codec = {
 
     response: {
       serialize: data => TcpWriter.solitary(data.challenge, 'challenge'),
-
       deserialize: data => ({
         challenge: TcpReader.solitary(data, 'challenge')
       })
@@ -313,7 +411,6 @@ const codec = {
   pullBlock: {
     request: {
       serialize: data => TcpWriter.solitary(data.height, 'uint64String'),
-
       deserialize: data => ({
         height: TcpReader.solitary(data, 'uint64String')
       })
@@ -503,110 +600,176 @@ const codec = {
     }
   },
 
-  // TODO(ahuszagh) Change all the use serialize/deserialize
-
-  // Parse sub cache merkle roots.
+  // Process sub cache merkle roots.
   subCacheMerkleRoots: {
-    // Parse a sub cache merkle request.
-    request: data => ({
-      height: TcpReader.solitary(data, 'uint64String')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.height, 'uint64String'),
+      deserialize: data => ({
+        height: TcpReader.solitary(data, 'uint64String')
+      })
+    },
 
-    // Parse a sub cache merkle response.
-    response: data => TcpReader.solitary(data, 'hashes')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'hashes'),
+      deserialize: data => TcpReader.solitary(data, 'hashes')
+    }
   },
 
-  // Parse push partial transactions information.
+  // Process push partial transactions information.
   pushPartialTransactions: {
-    // Parse a push partial transactions request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a push partial transactions response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse push detached cosignatures information.
+  // Process push detached cosignatures information.
   pushDetachedCosignatures: {
-    // Parse a push detached cosignatures request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a push detached cosignatures response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse push partial transaction information.
+  // Process push partial transaction information.
   pullPartialTransactionInfos: {
-    // Parse a push partial transaction info request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a push partial transaction info response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse push local node information.
+  // Process push local node information.
   pushNodeInfo: {
-    // Parse a push local node request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a push local node response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse pull  local node information.
+  // Process pull local node information.
   pullNodeInfo: {
-    // Parse a pull node info request.
-    request: data => TcpReader.solitary(data, 'empty'),
-
-    // Parse a pull node info response.
-    response: data => TcpReader.solitary(data, 'node')
-  },
-
-  // Parse push node peers information.
-  pushNodePeers: {
-    // Parse a push node peers request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: data => TcpWriter.solitary(data, 'empty'),
+      deserialize: data => TcpReader.solitary(data, 'empty')
     },
 
-    // Parse a push node peers response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'node'),
+      deserialize: data => TcpReader.solitary(data, 'node')
     }
   },
 
-  // Parse pull node peers information.
+  // Process push node peers information.
+  pushNodePeers: {
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
+    },
+
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
+    }
+  },
+
+  // Process pull node peers information.
   pullNodePeers: {
-    // Parse a pull node peers request.
-    request: data => TcpReader.solitary(data, 'empty'),
+    request: {
+      serialize: data => TcpWriter.solitary(data, 'empty'),
+      deserialize: data => TcpReader.solitary(data, 'empty')
+    },
 
-    // Parse a pull node peers response.
-    response: data => TcpReader.solitary(data, 'nodes')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'nodes'),
+      deserialize: data => TcpReader.solitary(data, 'nodes')
+    }
   },
 
-  // Parse time synchronization information.
+  // Process time synchronization information.
   timeSync: {
-    // Parse a time synchronization request.
-    request: data => TcpReader.solitary(data, 'empty'),
+    request: {
+      serialize: data => TcpWriter.solitary(data, 'empty'),
+      deserialize: data => TcpReader.solitary(data, 'empty')
+    },
 
-    // Parse a time synchronization response.
-    response: data => TcpReader.solitary(data, 'timeSync')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'timeSync'),
+      deserialize: data => TcpReader.solitary(data, 'timeSync')
+    }
   },
+
+  // TODO(ahuszagh) Change all the use serialize/deserialize
 
   // Parse account state path information.
   accountStatePath: {
@@ -707,179 +870,307 @@ const codec = {
     response: data => TcpReader.solitary(data, 'tree')
   },
 
-  // Parse diagnostic counters information.
+  // Process diagnostic counters information.
   diagnosticCounters: {
-    // Parse a diagnostic counters request.
-    request: data => TcpReader.solitary(data, 'empty'),
+    request: {
+      serialize: data => TcpWriter.solitary(data, 'empty'),
+      deserialize: data => TcpReader.solitary(data, 'empty')
+    },
 
-    // Parse a diagnostic counters response.
-    response: data => TcpReader.solitary(data, 'diagnosticCounters')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'diagnosticCounters'),
+      deserialize: data => TcpReader.solitary(data, 'diagnosticCounters')
+    }
   },
 
-  // Parse confirm timestamp hashes information.
+  // Process confirm timestamp hashes information.
   confirmTimestampedHashes: {
-    // Parse a confirm timestamp hashes request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a confirm timestamp hashes response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse active node information.
+  // Process active node information.
   activeNodeInfos: {
-    // Parse a active node request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a active node response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse block statement information.
+  // Process block statement information.
   blockStatement: {
-    // Parse a block statement request.
-    request: data => ({
-      height: TcpReader.solitary(data, 'uint64String')
-    }),
+    request: {
+      serialize: data => TcpWriter.solitary(data.height, 'uint64String'),
+      deserialize: data => ({
+        height: TcpReader.solitary(data, 'uint64String')
+      })
+    },
 
-    // Parse a block statement response.
-    response: data => TcpReader.solitary(data, 'blockStatement')
+    response: {
+      serialize: data => TcpWriter.solitary(data, 'blockStatement'),
+      deserialize: data => TcpReader.solitary(data, 'blockStatement')
+    }
   },
 
-  // Parse unlocked accounts information.
+  // Process unlocked accounts information.
   unlockedAccounts: {
-    // Parse an unlocked accounts request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse an unlocked accounts response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse account information.
+  // Process account information.
   accountInfos: {
-    // Parse an accounts request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse an accounts response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse hash lock information.
+  // Process hash lock information.
   hashLockInfos: {
-    // Parse a hash lock request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a hash lock response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse secret lock information.
+  // Process secret lock information.
   secretLockInfos: {
-    // Parse a secret lock request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a secret lock response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse metadata information.
+  // Process metadata information.
   metadataInfos: {
-    // Parse a metadata request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a metadata response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse mosaic information.
+  // Process mosaic information.
   mosaicInfos: {
-    // Parse a mosaic request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a mosaic response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse multisig information.
+  // Process multisig information.
   multisigInfos: {
-    // Parse a multisig request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a multisig response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse namespace information.
+  // Process namespace information.
   namespaceInfos: {
-    // Parse a namespace request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a namespace response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse account restriction information.
+  // Process account restriction information.
   accountRestrictionsInfos: {
-    // Parse an account restriction request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse an account restriction response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   },
 
-  // Parse mosaic restriction information.
+  // Process mosaic restriction information.
   mosaicRestrictionsInfos: {
-    // Parse a mosaic restriction request.
-    request: data => {
-      throw new Error('not yet implemented')
+    request: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     },
 
-    // Parse a mosaic restriction response.
-    response: data => {
-      throw new Error('not yet implemented')
+    response: {
+      serialize: () => {
+        throw new Error('client challenge request does not exist.')
+      },
+
+      deserialize: () => {
+        throw new Error('client challenge request does not exist.')
+      }
     }
   }
 }
