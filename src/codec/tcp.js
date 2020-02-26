@@ -284,6 +284,72 @@ class TcpWriter extends catbuffer.Writer {
 
 /**
  *  Codec for TCP models.
+ *
+ *  # Format
+ *
+ *  Here we define shared formats for the TCP models.
+ *
+ *  ```
+ *  VerifiableEntity: {
+ *    signature: String,
+ *    key: String,
+ *    version: Number,
+ *    network: Number,
+ *    type: Number
+ *  }
+ *
+ *  BlockHeader: {
+ *    height: String,
+ *    timestamp: String,
+ *    difficulty: String,
+ *    previousBlockHash: String,
+ *    transactionsHash: String,
+ *    receiptsHash: String,
+ *    stateHash: String,
+ *    beneficiaryPublicKey: String,
+ *    feeMultiplier: Number
+ *  }
+ *
+ *  Transaction: {
+ *    entity: VerifiableEntity,
+ *    transaction: {
+ *      maxFee: String,
+ *      deadline: String,
+ *      # Depends on the transaction type.
+ *    }
+ *  }
+ *
+ *  Block: {
+ *    entity: VerifiableEntity,
+ *    block: BlockHeader
+ *    transactions?: Transaction[]
+ *  }
+ *
+ *  NodeInfo: {
+ *    version: Number,
+ *    roles: Number,
+ *    port: Number,
+ *    networkIdentifier: Number,
+ *    publicKey: String,
+ *    host: String,
+ *    friendlyName: String
+ *  }
+ *
+ *  Branch: {
+ *    path: String,
+ *    links: {String: String}
+ *  }
+ *
+ *  Leaf: {
+ *    path: String,
+ *    value: String
+ *  }
+ *
+ *  Tree: {
+ *    # TreeNode may either be a Branch or Leaf.
+ *    TreeNode[]
+ *  }
+ *  ```
  */
 const codec = {
   // Unlike the  other codecs, this has both serialize and deserialize
@@ -292,6 +358,16 @@ const codec = {
 
   // Process a general packet header.
   header: {
+    /**
+     *  # Format
+     *
+     *  ```
+     *  data: {
+     *    type: Number,
+     *    payload: Buffer
+     *  }
+     *  ```
+     */
     serialize: packet => {
       let size = constants.packetHeaderSize + packet.payload.length
       let writer = new TcpWriter(size)
@@ -302,6 +378,13 @@ const codec = {
       return writer.data
     },
 
+    /**
+     *  # Format
+     *
+     *  ```
+     *  data: Buffer
+     *  ```
+     */
     deserialize: data => {
       let reader = new TcpReader(data)
       let size = reader.uint32()
@@ -319,13 +402,42 @@ const codec = {
   // Process a server challenge.
   serverChallenge: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    challenge: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.challenge, 'challenge'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         challenge: TcpReader.solitary(data, 'challenge')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    challenge: String,
+       *    signature: String,
+       *    publicKey: String,
+       *    securityMode: Number
+       *  }
+       *  ```
+       */
       serialize: data => {
         let writer = new TcpWriter(200)
         writer.challenge(data.challenge)
@@ -336,6 +448,13 @@ const codec = {
         return writer.data
       },
 
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => {
         let reader = new TcpReader(data)
         let challenge = reader.challenge()
@@ -367,7 +486,24 @@ const codec = {
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    challenge: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.challenge, 'challenge'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         challenge: TcpReader.solitary(data, 'challenge')
       })
@@ -377,7 +513,22 @@ const codec = {
   // Process push block information.
   pushBlock: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Block
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'block'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'block')
     },
 
@@ -395,14 +546,46 @@ const codec = {
   // Process pull block information.
   pullBlock: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    height: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.height, 'uint64String'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         height: TcpReader.solitary(data, 'uint64String')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Block
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'block'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'block')
     }
   },
@@ -410,11 +593,37 @@ const codec = {
   // Process chain information
   chainInfo: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {}
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'empty'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'empty')
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    height: String,
+       *    scoreHigh: String,
+       *    scoreLow: String
+       *  }
+       *  ```
+       */
       serialize: data => {
         let writer = new TcpWriter(24)
         writer.uint64String(data.height)
@@ -424,6 +633,13 @@ const codec = {
         return writer.data
       },
 
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => {
         let reader = new TcpReader(data)
         let height = reader.uint64String()
@@ -443,6 +659,16 @@ const codec = {
   // Process block hashes information.
   blockHashes: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    height: String,
+       *    hashes: Number
+       *  }
+       *  ```
+       */
       serialize: data => {
         let writer = new TcpWriter(12)
         writer.uint64String(data.height)
@@ -451,6 +677,13 @@ const codec = {
         return writer.data
       },
 
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => {
         let reader = new TcpReader(data)
         let height = reader.uint64String()
@@ -465,7 +698,22 @@ const codec = {
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: String[]
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'hashes'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'hashes')
     }
   },
@@ -473,6 +721,17 @@ const codec = {
   // Process pull blocks information.
   pullBlocks: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    height: String,
+       *    blocks: Number,
+       *    bytes: Number
+       *  }
+       *  ```
+       */
       serialize: data => {
         let writer = new TcpWriter(16)
         writer.uint64String(data.height)
@@ -482,6 +741,13 @@ const codec = {
         return writer.data
       },
 
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => {
         let reader = new TcpReader(data)
         let height = reader.uint64String()
@@ -498,7 +764,22 @@ const codec = {
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Block[]
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'blocks'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'blocks')
     }
   },
@@ -530,6 +811,16 @@ const codec = {
   // Process pull transactions information.
   pullTransactions: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    minFeeMultiplier: Number,
+       *    shortHashes: Number[]
+       *  }
+       *  ```
+       */
       serialize: data => {
         let writer = new TcpWriter(8 + 4 * data.shortHashes.length)
         writer.uint32(data.minFeeMultiplier)
@@ -539,6 +830,13 @@ const codec = {
         return writer.data
       },
 
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => {
         let reader = new TcpReader(data)
         let minFeeMultiplier = reader.uint32()
@@ -556,7 +854,22 @@ const codec = {
 
     // Parse a pull transactions response.
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Transaction[]
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'transactions'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'transactions')
     }
   },
@@ -588,14 +901,46 @@ const codec = {
   // Process sub cache merkle roots.
   subCacheMerkleRoots: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    height: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.height, 'uint64String'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         height: TcpReader.solitary(data, 'uint64String')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: String[]
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'hashes'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'hashes')
     }
   },
@@ -695,12 +1040,42 @@ const codec = {
   // Process pull local node information.
   pullNodeInfo: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {}
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'empty'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'empty')
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: NodeInfo
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'node'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'node')
     }
   },
@@ -731,12 +1106,42 @@ const codec = {
   // Process pull node peers information.
   pullNodePeers: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {}
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'empty'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'empty')
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: NodeInfo[]
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'nodes'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'nodes')
     }
   },
@@ -744,12 +1149,47 @@ const codec = {
   // Process time synchronization information.
   timeSync: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {}
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'empty'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'empty')
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    communicationTimestamps: {
+       *      sendTimestamp: String,
+       *      receiveTimestamp: String
+       *    }
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'timeSync'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'timeSync')
     }
   },
@@ -757,14 +1197,46 @@ const codec = {
   // Process account state path information.
   accountStatePath: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    address: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.address, 'address'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         address: TcpReader.solitary(data, 'address')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Tree
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'tree'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'tree')
     }
   },
@@ -772,14 +1244,46 @@ const codec = {
   // Process hash lock state path information.
   hashLockStatePath: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    hash: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.hash, 'hash256'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         hash: TcpReader.solitary(data, 'hash256')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Tree
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'tree'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'tree')
     }
   },
@@ -787,14 +1291,46 @@ const codec = {
   // Process secret lock state path information.
   secretLockStatePath: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    hash: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.secret, 'hash256'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         secret: TcpReader.solitary(data, 'hash256')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Tree
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'tree'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'tree')
     }
   },
@@ -802,14 +1338,46 @@ const codec = {
   // Process metadata state path information.
   metadataStatePath: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    hash: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.hash, 'hash256'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         hash: TcpReader.solitary(data, 'hash256')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Tree
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'tree'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'tree')
     }
   },
@@ -817,14 +1385,46 @@ const codec = {
   // Process mosaic state path information.
   mosaicStatePath: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    mosaicId: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.mosaicId, 'id'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         mosaicId: TcpReader.solitary(data, 'id')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Tree
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'tree'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'tree')
     }
   },
@@ -832,14 +1432,46 @@ const codec = {
   // Process multisig state path information.
   multisigStatePath: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    publicKey: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.publicKey, 'key'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         publicKey: TcpReader.solitary(data, 'key')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Tree
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'tree'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'tree')
     }
   },
@@ -847,14 +1479,46 @@ const codec = {
   // Process namespace state path information.
   namespaceStatePath: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    namespaceId: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.namespaceId, 'id'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         namespaceId: TcpReader.solitary(data, 'id')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Tree
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'tree'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'tree')
     }
   },
@@ -862,14 +1526,46 @@ const codec = {
   // Process account restrictions state path information.
   accountRestrictionsStatePath: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    address: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.address, 'address'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         address: TcpReader.solitary(data, 'address')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Tree
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'tree'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'tree')
     }
   },
@@ -877,14 +1573,46 @@ const codec = {
   // Process mosaic restrictions state path information.
   mosaicRestrictionsStatePath: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {
+       *    hash: String
+       *  }
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data.hash, 'hash256'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => ({
         hash: TcpReader.solitary(data, 'hash256')
       })
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Tree
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'tree'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'tree')
     }
   },
@@ -892,12 +1620,42 @@ const codec = {
   // Process diagnostic counters information.
   diagnosticCounters: {
     request: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: {}
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'empty'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'empty')
     },
 
     response: {
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: DiagnosticCounter[]
+       *  ```
+       */
       serialize: data => TcpWriter.solitary(data, 'diagnosticCounters'),
+
+      /**
+       *  # Format
+       *
+       *  ```
+       *  data: Buffer
+       *  ```
+       */
       deserialize: data => TcpReader.solitary(data, 'diagnosticCounters')
     }
   },

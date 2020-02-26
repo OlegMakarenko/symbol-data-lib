@@ -349,6 +349,61 @@ Running catapult-block-dump with:
         }
     }
 }
+
+# Pull the 2nd block from the TCP API.
+CLIENT_KEY='3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770D'
+NODE_KEY='C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F763'
+$ catapult-tcp-dump --client-private-key $CLIENT_KEY \
+    --node-public-key $NODE_KEY 
+    --requests '[{"type": "pullBlock", "params": {"height": "1"}}]' \
+    --verbose
+Running catapult-tcp-dump with: 
+    host                = localhost
+    port                = 7900
+    hash-algorithm      = keccak
+    client-private-key  = 3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770D
+    node-public-key     = C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F763
+    requests            = [
+  {
+    "type": "pullBlock",
+    "params": {
+      "height": "2"
+    }
+  }
+]
+    output              = stdout
+Connected to a TCP server at:
+    address   = 127.0.0.1
+    family    = IPv4
+    port      = 41082
+[
+    {
+        "type": "pullBlock",
+        "params": {
+            "height": "2"
+        },
+        "response": {
+            "entity": {
+                "signature": "67B4D79E8AE271DD7C3F0A8E8EE34E1AC08659FB200ED79D7A5B24CB0F97894A3FEA8FCEE12876B634284F2BADC2FF9A4C302D806FAABD7777B3E07D9713B201",
+                "key": "C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787",
+                "version": 1,
+                "network": 152,
+                "type": 33091
+            },
+            "block": {
+                "height": "2",
+                "timestamp": "7250957324",
+                "difficulty": "100000000000000",
+                "previousBlockHash": "6E5DC4D3B6027AA2CF77CCD0222DE9E85536385829C72D77189F214C1AC81098",
+                "transactionsHash": "0000000000000000000000000000000000000000000000000000000000000000",
+                "receiptsHash": "2C58E870D91B7FD590C2C5EBB85DE610D6B3C6B65C71CE1CE2EEC207A9936409",
+                "stateHash": "89360E6E1B87FB725DE8A57E98E106C1CB10950BCA29FB3D6D31B7AF025FD8E8",
+                "beneficiaryPublicKey": "C151A3A63E7AFF6BDB78BF40E8A78C772DDB36E2306401771B0BFDCD4DD3B787",
+                "feeMultiplier": 0
+            }
+        }
+    }
+]
 ```
 
 ## Javascript API
@@ -417,7 +472,7 @@ Since each component is independent, integrating components can simplify a workf
 import symbolData = 'symbol-data-lib'
 
 const HASH_ALGORITHM = 'keccak'
-const CLIENT_PUBLIC_KEY = 'C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F763'
+const CLIENT_PRIVATE_KEY = '3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770D'
 
 /**
  *  Extract the node settings from the configuration files.
@@ -507,7 +562,44 @@ const spool = async nodeSettings => {
     return symbolData.spool.dump(options)
 }
 
-// TODO(ahuszagh) Add TCP once the API is finalized.
+/**
+ *  Dump the tcp data.
+ */
+const tcp = async nodeSettings => {
+    // Sample requests to make, here we pull blocks 1 and 2,
+    // the local node info, and the peers info.
+    let requests = [
+    {
+        {
+            type: 'pullBlock',
+            params: {
+                height: '1'
+            }
+        },
+        {
+            type: 'pullBlock',
+            params: {
+                height: '2'
+            }
+        },
+        {
+            type: 'pullNodeInfo',
+            params: {}
+        },
+        {
+            type: 'pullNodePeers',
+            params: {}
+        }
+    ]
+    let options = {
+        port: nodeSettings.tcpPort,
+        hashAlgorithm: HASH_ALGORITHM,
+        clientPrivateKey: CLIENT_PRIVATE_KEY,
+        nodePublicKey: nodeSettings.nodePublicKey,
+        requests
+    }
+    return symbolData.tcp.dump(options)
+}
 
 /**
  *  Dump and store all the relevant data.
@@ -520,7 +612,8 @@ const dump = async options => {
         block: await block(nodeSettings),
         mongo: await mongo(nodeSettings),
         rocks: await rocks(nodeSettings),
-        spool: await spool(nodeSettings)
+        spool: await spool(nodeSettings),
+        tcp: await tcp(nodeSettings)
     }
 }
 ```
