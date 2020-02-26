@@ -203,33 +203,35 @@ const dump = async options => {
 
   // Run the desired requests.
   let data = []
-  for (let item of options.requests) {
-    // Get the config parameters.
-    let codec = tcpCodec[item.type]
-    let type = PACKET_TYPE_MAP[item.type]
-    if (codec === undefined) {
-      throw new Error(`invalid request type, got ${item.type}`)
-    }
+  try {
+    for (let item of options.requests) {
+      // Get the config parameters.
+      let codec = tcpCodec[item.type]
+      let type = PACKET_TYPE_MAP[item.type]
+      if (codec === undefined) {
+        throw new Error(`invalid request type, got ${item.type}`)
+      }
 
-    // Send the request data.
-    let payload = codec.request.serialize(item.params)
-    let request = tcpCodec.header.serialize({type, payload})
-    await socket.send(request)
+      // Send the request data.
+      let payload = codec.request.serialize(item.params)
+      let request = tcpCodec.header.serialize({type, payload})
+      await socket.send(request)
 
-    // Receive and process the response data.
-    let packet = tcpCodec.header.deserialize(await socket.receive())
-    if (packet.type !== type) {
-      throw new Error(`invalid response type, got packet of type ${packet.type} for request ${item.type}`)
+      // Receive and process the response data.
+      let packet = tcpCodec.header.deserialize(await socket.receive())
+      if (packet.type !== type) {
+        throw new Error(`invalid response type, got packet of type ${packet.type} for request ${item.type}`)
+      }
+      data.push({
+        type: item.type,
+        params: item.params,
+        response: codec.response.deserialize(packet.payload)
+      })
     }
-    data.push({
-      type: item.type,
-      params: item.params,
-      response: codec.response.deserialize(packet.payload)
-    })
+ } finally {
+    // Close the socket and return the data.
+    await socket.close()
   }
-
-  // Close the socket and return the data.
-  await socket.close()
 
   return data
 }

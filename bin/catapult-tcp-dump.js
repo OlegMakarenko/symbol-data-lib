@@ -18,8 +18,8 @@
  */
 
 import '@babel/polyfill'
-import fs from 'fs'
 import yargs from 'yargs'
+import { logError, printJson, readJson } from './util'
 import symbolData from '../src'
 
 // ARGUMENTS
@@ -80,19 +80,7 @@ const options = yargs
   // Parse arguments.
   .parse()
 
-// REQUESTS
-// --------
-
-try {
-  // Try parsing the data as a JSON literal.
-  options.requests = JSON.parse(options.requests)
-} catch {
-  // Not a valid JSON literal, provide a file.
-  options.requests = JSON.parse(fs.readFileSync(options.requests, 'utf8'))
-}
-
-// VERBOSE
-// -------
+options.requests = readJson(options.requests)
 
 // Display verbose information.
 if (options.verbose) {
@@ -102,19 +90,11 @@ if (options.verbose) {
   console.info(`    hash-algorithm      = ${options.hashAlgorithm}`)
   console.info(`    client-private-key  = ${options.clientPrivateKey}`)
   console.info(`    node-public-key     = ${options.nodePublicKey}`)
-  console.info(`    requests            = ${JSON.stringify(options.requests, null, 2)}`)
+  console.info(`    requests            = ${JSON.stringify(options.requests, null, 4)}`)
   console.info(`    output              = ${options.output ? options.output : 'stdout'}`)
 }
 
-// DUMP
-// ----
-
 // Dump the tcp data to JSON.
-symbolData.tcp.dump(options).then(result => {
-  let json = JSON.stringify(result, null, 4) + '\n'
-  if (options.output !== undefined) {
-    fs.writeFileSync(options.output, json)
-  } else {
-    process.stdout.write(json)
-  }
-})
+symbolData.tcp.dump(options)
+  .then(result => printJson(result, options.output))
+  .catch(error => logError(error))

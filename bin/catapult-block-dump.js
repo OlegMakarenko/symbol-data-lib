@@ -18,8 +18,8 @@
  */
 
 import '@babel/polyfill'
-import fs from 'fs'
 import yargs from 'yargs'
+import { logError, printJson } from './util'
 import symbolData from '../src'
 
 // ARGUMENTS
@@ -68,11 +68,6 @@ if (options.verbose) {
 }
 
 // Dump the block data to JSON.
-symbolData.block.dump(options).then(result => {
-  let json = JSON.stringify(result, null, 4) + '\n'
-  if (options.output !== undefined) {
-    fs.writeFileSync(options.output, json)
-  } else {
-    process.stdout.write(json)
-  }
-})
+symbolData.block.dump(options)
+  .then(result => printJson(result, options.output))
+  .catch(error => logError(error))

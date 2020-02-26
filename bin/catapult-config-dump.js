@@ -18,8 +18,8 @@
  */
 
 import '@babel/polyfill'
-import fs from 'fs'
 import yargs from 'yargs'
+import { logError, printJson } from './util'
 import symbolData from '../src'
 
 // ARGUMENTS
@@ -79,11 +79,6 @@ if (!symbolData.config.isValidCollection(options.collection)) {
 }
 
 // Dump the RocksDB data to JSON.
-symbolData.config.dump(options).then(result => {
-  let json = JSON.stringify(result, null, 4) + '\n'
-  if (options.output !== undefined) {
-    fs.writeFileSync(options.output, json)
-  } else {
-    process.stdout.write(json)
-  }
-})
+symbolData.config.dump(options)
+  .then(result => printJson(result, options.output))
+  .catch(error => logError(error))

@@ -364,12 +364,12 @@ Running catapult-tcp-dump with:
     client-private-key  = 3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770D
     node-public-key     = C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F763
     requests            = [
-  {
-    "type": "pullBlock",
-    "params": {
-      "height": "2"
+    {
+        "type": "pullBlock",
+        "params": {
+            "height": "2"
+        }
     }
-  }
 ]
     output              = stdout
 Connected to a TCP server at:

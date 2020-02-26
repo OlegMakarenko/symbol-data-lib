@@ -65,32 +65,34 @@ const dumpOne = async options => {
     console.info(`Connected to rocks at ${directory}`)
   }
 
-  // Iterate up to limit values, and assign to result.
   let result = {}
-  let limit = options.limit || Number.MAX_SAFE_INTEGER
-  let codec = rocksCodec[options.collection]
-  let iterator = level.iterator()
-  do {
-    // Fetch the next item from the map.
-    // Break if we've got no more values, or we've reached the SIZE key.
-    let item = await iterator.next()
-    if (item === null) {
-      break
-    } else if (item.encodedKey.equals(Level.size_key)) {
-      continue
-    }
+  try {
+    // Iterate up to limit values, and assign to result.
+    let limit = options.limit || Number.MAX_SAFE_INTEGER
+    let codec = rocksCodec[options.collection]
+    let iterator = level.iterator()
+    do {
+      // Fetch the next item from the map.
+      // Break if we've got no more values, or we've reached the SIZE key.
+      let item = await iterator.next()
+      if (item === null) {
+        break
+      } else if (item.encodedKey.equals(Level.size_key)) {
+        continue
+      }
 
-    // Decode key/value and assign to result.
-    let key = codec.key(item.encodedKey)
-    let value = codec.value(item.encodedValue)
-    result[key] = value
+      // Decode key/value and assign to result.
+      let key = codec.key(item.encodedKey)
+      let value = codec.value(item.encodedValue)
+      result[key] = value
 
-    // Decrement our limit on a successful iteration.
-    --limit
-  } while (limit !== 0)
-
-  // Close the rocksdb handle.
-  await level.close()
+      // Decrement our limit on a successful iteration.
+      --limit
+    } while (limit !== 0)
+  } finally {
+    // Close the rocksdb handle.
+    await level.close()
+  }
 
   // Process the extracted data.
   if (options.collection === 'HashCache') {

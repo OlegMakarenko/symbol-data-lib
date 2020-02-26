@@ -112,12 +112,15 @@ const dump = async options => {
   let client = await connect(options)
   let db = client.db()
   let data
-  if (collections.length !== 1) {
-    data = await dumpMany({...options, db}, collections)
-  } else {
-    data = await dumpOne({...options, db})
+  try {
+    if (collections.length !== 1) {
+      data = await dumpMany({...options, db}, collections)
+    } else {
+      data = await dumpOne({...options, db})
+    }
+  } finally {
+    client.close()
   }
-  client.close()
 
   return data
 }

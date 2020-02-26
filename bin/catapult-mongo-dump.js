@@ -18,8 +18,8 @@
  */
 
 import '@babel/polyfill'
-import fs from 'fs'
 import yargs from 'yargs'
+import { logError, printJson } from './util'
 import symbolData from '../src'
 
 // ARGUMENTS
@@ -85,11 +85,6 @@ if (!symbolData.mongo.isValidCollection(options.collection)) {
 }
 
 // Dump the MongoDB data to JSON.
-symbolData.mongo.dump(options).then(result => {
-  let json = JSON.stringify(result, null, 4) + '\n'
-  if (options.output !== undefined) {
-    fs.writeFileSync(options.output, json)
-  } else {
-    process.stdout.write(json)
-  }
-})
+symbolData.mongo.dump(options)
+  .then(result => printJson(result, options.output))
+  .catch(error => logError(error))
