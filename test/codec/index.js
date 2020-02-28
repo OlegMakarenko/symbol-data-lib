@@ -26,5 +26,6 @@ describe('codec', () => {
   require('./rocks'),
   require('./spool'),
   require('./tcp'),
-  require('./writer')
+  require('./writer'),
+  require('./zmq')
 })

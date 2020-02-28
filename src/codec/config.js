@@ -25,6 +25,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import constants from './constants'
 import shared from '../util/shared'
 
 // HELPERS
@@ -978,7 +979,7 @@ const codec = {
       metadata: {
         name: parseString(peer.metadata.name),
         roles: parseNodeRoleList(peer.metadata.roles)
-      },
+      }
     }))
   },
 
@@ -992,47 +993,12 @@ const codec = {
   file: file => {
     let data = fs.readFileSync(file, 'utf8')
     let basename = path.basename(file)
-    if (basename === 'config-database.properties') {
-      return codec.database(data)
-    } else if (basename === 'config-extensions-broker.properties') {
-      return codec.extensionsBroker(data)
-    } else if (basename === 'config-extensions-recovery.properties') {
-      return codec.extensionsRecovery(data)
-    } else if (basename === 'config-extensions-server.properties') {
-      return codec.extensionsServer(data)
-    } else if (basename === 'config-harvesting.properties') {
-      return codec.harvesting(data)
-    } else if (basename === 'config-inflation.properties') {
-      return codec.inflation(data)
-    } else if (basename === 'config-logging-broker.properties') {
-      return codec.loggingBroker(data)
-    } else if (basename === 'config-logging-recovery.properties') {
-      return codec.loggingRecovery(data)
-    } else if (basename === 'config-logging-server.properties') {
-      return codec.loggingServer(data)
-    } else if (basename === 'config-messaging.properties') {
-      return codec.messaging(data)
-    } else if (basename === 'config-network.properties') {
-      return codec.network(data)
-    } else if (basename === 'config-networkheight.properties') {
-      return codec.networkHeight(data)
-    } else if (basename === 'config-node.properties') {
-      return codec.node(data)
-    } else if (basename === 'config-pt.properties') {
-      return codec.partialTransactions(data)
-    } else if (basename === 'config-task.properties') {
-      return codec.task(data)
-    } else if (basename === 'config-timesync.properties') {
-      return codec.timeSync(data)
-    } else if (basename === 'config-user.properties') {
-      return codec.user(data)
-    } else if (basename === 'peers-api.json') {
-      return codec.peersApi(data)
-    } else if (basename === 'peers-p2p.json') {
-      return codec.peersP2p(data)
-    } else {
+    let method = constants.config.inv[basename]
+    if (method === undefined) {
       throw new Error(`invalid configuration file, got ${basename}`)
     }
+
+    return codec[method](data)
   },
 
   // Read all configuration files in a directory.
@@ -1048,7 +1014,7 @@ const codec = {
       result[path.basename(file)] = codec.file(file)
     }
     return result
-  },
+  }
 }
 
 export default codec

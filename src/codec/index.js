@@ -27,6 +27,7 @@ import mongo from './mongo'
 import rocks from './rocks'
 import spool from './spool'
 import tcp from './tcp'
+import zmq from './zmq'
 
 export default {
   audit,
@@ -35,5 +36,6 @@ export default {
   mongo,
   rocks,
   spool,
-  tcp
+  tcp,
+  zmq
 }

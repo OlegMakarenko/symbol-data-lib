@@ -45,7 +45,7 @@ describe('tcp', () => {
     it('should process a server challenge request', () => {
       let serialized = Buffer.from('4800000001000000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
       let deserialized = {
-        type: constants.serverChallenge,
+        type: constants.packetType.serverChallenge,
         payload: Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
       }
       testHeader(serialized, deserialized)
@@ -54,7 +54,7 @@ describe('tcp', () => {
     it('should process a server challenge response', () => {
       let serialized = Buffer.from('A900000001000000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE01', 'hex')
       let deserialized = {
-        type: constants.serverChallenge,
+        type: constants.packetType.serverChallenge,
         payload: Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE01', 'hex')
       }
       testHeader(serialized, deserialized)
@@ -63,7 +63,7 @@ describe('tcp', () => {
     it('should process a client challenge request', () => {
       let serialized = Buffer.from('4800000002000000CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
       let deserialized = {
-        type: constants.clientChallenge,
+        type: constants.packetType.clientChallenge,
         payload: Buffer.from('CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'hex')
       }
       testHeader(serialized, deserialized)
@@ -72,7 +72,7 @@ describe('tcp', () => {
     it('should process a node info request', () => {
       let serialized = Buffer.from('0800000059020000', 'hex')
       let deserialized = {
-        type: constants.nodeDiscoveryPullPing,
+        type: constants.packetType.nodeDiscoveryPullPing,
         payload: Buffer.from('', 'hex')
       }
       testHeader(serialized, deserialized)
@@ -81,7 +81,7 @@ describe('tcp', () => {
     it('should process a node info response', () => {
       let serialized = Buffer.from('41000000590200003900000000000000C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F76303000000DC1E9800084331423445323542', 'hex')
       let deserialized = {
-        type: constants.nodeDiscoveryPullPing,
+        type: constants.packetType.nodeDiscoveryPullPing,
         payload: Buffer.from('3900000000000000C1B4E25B491D6552F78EDE5A77CB74BB1743955500FB7FAB610338B639C2F76303000000DC1E9800084331423445323542', 'hex')
       }
       testHeader(serialized, deserialized)

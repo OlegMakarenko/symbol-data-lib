@@ -31,30 +31,22 @@ const testGeneral = (serialized, deserialized, method, ...args) => {
   expect(writer.data).to.eql(serialized)
 }
 
-const testTransaction = (
-  hex,
-  transaction,
-  method,
-  type,
-  maxFee,
-  deadline,
-  embeddable = true
-) => {
+const testTransaction = (hex, transaction, type, maxFee, deadline, embeddable = true) => {
   let binary = Buffer.from(hex, 'hex')
 
   // Test the embedded transaction
   if (embeddable) {
-    testGeneral(binary, transaction, method, true)
+    testGeneral(binary, transaction, type, true)
   }
 
   // Test the non-embedded transaction.
   binary = Buffer.from(maxFee[0] + deadline[0] + hex, 'hex')
   transaction = {...transaction, maxFee: maxFee[1], deadline: deadline[1]}
-  testGeneral(binary, transaction, method)
+  testGeneral(binary, transaction, type)
 
   // Check transaction header
   let reader = new catbuffer.Reader(binary)
-  expect(reader.transactionHeader(type)).to.eql(transaction)
+  expect(reader.transactionHeader(constants.transactionType[type])).to.eql(transaction)
 }
 
 describe('catbuffer', () => {
@@ -201,7 +193,7 @@ describe('catbuffer', () => {
         ],
         message: '746573742D6D657373616765'
       }
-      testTransaction(hex, transaction, 'transferTransaction', constants.transactionTransfer, maxFee, deadline)
+      testTransaction(hex, transaction, 'transfer', maxFee, deadline)
     })
 
     it('should process a register namespace transaction', () => {
@@ -220,7 +212,7 @@ describe('catbuffer', () => {
         namespaceType: 0,
         name: 'a2p1mg'
       }
-      testTransaction(hex, transaction, 'registerNamespaceTransaction', constants.transactionRegisterNamespace, maxFee, deadline)
+      testTransaction(hex, transaction, 'registerNamespace', maxFee, deadline)
     })
 
     it('should process an address alias transaction', () => {
@@ -236,7 +228,7 @@ describe('catbuffer', () => {
         address: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
         aliasAction: 1
       }
-      testTransaction(hex, transaction, 'addressAliasTransaction', constants.transactionAddressAlias, maxFee, deadline)
+      testTransaction(hex, transaction, 'addressAlias', maxFee, deadline)
     })
 
     it('should process a mosaic alias transaction', () => {
@@ -252,7 +244,7 @@ describe('catbuffer', () => {
         mosaicId: '2C1F2C93C19AFB5D',
         aliasAction: 1
       }
-      testTransaction(hex, transaction, 'mosaicAliasTransaction', constants.transactionMosaicAlias, maxFee, deadline)
+      testTransaction(hex, transaction, 'mosaicAlias', maxFee, deadline)
     })
 
     it('should process a mosaic definition transaction', () => {
@@ -272,7 +264,7 @@ describe('catbuffer', () => {
         flags: 7,
         divisibility: 6
       }
-      testTransaction(hex, transaction, 'mosaicDefinitionTransaction', constants.transactionMosaicDefinition, maxFee, deadline)
+      testTransaction(hex, transaction, 'mosaicDefinition', maxFee, deadline)
     })
 
     it('should process a mosaic supply change transaction', () => {
@@ -288,7 +280,7 @@ describe('catbuffer', () => {
         delta: '100000',
         action: 1
       }
-      testTransaction(hex, transaction, 'mosaicSupplyChangeTransaction', constants.transactionMosaicSupplyChange, maxFee, deadline)
+      testTransaction(hex, transaction, 'mosaicSupplyChange', maxFee, deadline)
     })
 
     it('should process a modify multisig transaction', () => {
@@ -311,7 +303,7 @@ describe('catbuffer', () => {
           '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F'
         ]
       }
-      testTransaction(hex, transaction, 'modifyMultisigTransaction', constants.transactionModifyMultisigAccount, maxFee, deadline)
+      testTransaction(hex, transaction, 'modifyMultisigAccount', maxFee, deadline)
     })
 
     it('should process an aggregate complete transaction', () => {
@@ -356,7 +348,7 @@ describe('catbuffer', () => {
         ],
         cosignatures: []
       }
-      testTransaction(hex, transaction, 'aggregateCompleteTransaction', constants.transactionAggregateComplete, maxFee, deadline, false)
+      testTransaction(hex, transaction, 'aggregateComplete', maxFee, deadline, false)
     })
 
     it('should process an aggregate bonded transaction', () => {
@@ -403,7 +395,7 @@ describe('catbuffer', () => {
         ],
         cosignatures: []
       }
-      testTransaction(hex, transaction, 'aggregateBondedTransaction', constants.transactionAggregateBonded, maxFee, deadline, false)
+      testTransaction(hex, transaction, 'aggregateBonded', maxFee, deadline, false)
     })
 
     it('should process a hash lock transaction', () => {
@@ -422,7 +414,7 @@ describe('catbuffer', () => {
         duration: '100000',
         hash: 'A5F82EC8EBB341427B6785C8111906CD0DF18838FB11B51CE0E18B5E79DFF630'
       }
-      testTransaction(hex, transaction, 'lockTransaction', constants.transactionLock, maxFee, deadline)
+      testTransaction(hex, transaction, 'lock', maxFee, deadline)
     })
 
     it('should process a secret lock transaction', () => {
@@ -445,7 +437,7 @@ describe('catbuffer', () => {
         hashAlgorithm: 1,
         recipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
       }
-      testTransaction(hex, transaction, 'secretLockTransaction', constants.transactionSecretLock, maxFee, deadline)
+      testTransaction(hex, transaction, 'secretLock', maxFee, deadline)
     })
 
     it('should process a secret proof transaction', () => {
@@ -464,7 +456,7 @@ describe('catbuffer', () => {
         recipientAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL',
         proof: 'AE311DAD16F95EBDE866'
       }
-      testTransaction(hex, transaction, 'secretProofTransaction', constants.transactionSecretProof, maxFee, deadline)
+      testTransaction(hex, transaction, 'secretProof', maxFee, deadline)
     })
 
     it('should process an account restriction address transaction', () => {
@@ -485,7 +477,7 @@ describe('catbuffer', () => {
           'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
         ]
       }
-      testTransaction(hex, transaction, 'accountRestrictionAddressTransaction', constants.transactionAccountRestrictionAddress, maxFee, deadline)
+      testTransaction(hex, transaction, 'accountRestrictionAddress', maxFee, deadline)
     })
 
     it('should process an account restriction mosaic transaction', () => {
@@ -506,7 +498,7 @@ describe('catbuffer', () => {
           'A03F7CBEB7039EF8'
         ]
       }
-      testTransaction(hex, transaction, 'accountRestrictionMosaicTransaction', constants.transactionAccountRestrictionMosaic, maxFee, deadline)
+      testTransaction(hex, transaction, 'accountRestrictionMosaic', maxFee, deadline)
     })
 
     it('should process an account restriction operation transaction', () => {
@@ -527,7 +519,7 @@ describe('catbuffer', () => {
           0x4154
         ]
       }
-      testTransaction(hex, transaction, 'accountRestrictionOperationTransaction', constants.transactionAccountRestrictionOperation, maxFee, deadline)
+      testTransaction(hex, transaction, 'accountRestrictionOperation', maxFee, deadline)
     })
 
     it('should process a link account transaction', () => {
@@ -541,7 +533,7 @@ describe('catbuffer', () => {
         remotePublicKey: '76C1622C7FB58986E500228E8FFB30C606CAAFC1CD78E770E82C73DAB7BD7C9F',
         linkAction: 0
       }
-      testTransaction(hex, transaction, 'linkAccountTransaction', constants.transactionLinkAccount, maxFee, deadline)
+      testTransaction(hex, transaction, 'linkAccount', maxFee, deadline)
     })
 
     it('should process a mosaic address restriction transaction', () => {
@@ -561,7 +553,7 @@ describe('catbuffer', () => {
         newRestrictionValue: '2334176239280306685',
         targetAddress: 'SBSBLBT7CIOQG6XUI7TRDMHV4TKS5O7QM3MWQYHL'
       }
-      testTransaction(hex, transaction, 'mosaicAddressRestrictionTransaction', constants.transactionMosaicAddressRestriction, maxFee, deadline)
+      testTransaction(hex, transaction, 'mosaicAddressRestriction', maxFee, deadline)
     })
 
     it('should process a mosaic global restriction transaction', () => {
@@ -585,7 +577,7 @@ describe('catbuffer', () => {
         previousRestrictionType: 1,
         newRestrictionType: 3
       }
-      testTransaction(hex, transaction, 'mosaicGlobalRestrictionTransaction', constants.transactionMosaicGlobalRestriction, maxFee, deadline)
+      testTransaction(hex, transaction, 'mosaicGlobalRestriction', maxFee, deadline)
     })
 
     it('should process an account metadata transaction', () => {
@@ -604,7 +596,7 @@ describe('catbuffer', () => {
         valueSizeDelta: 20,
         value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
       }
-      testTransaction(hex, transaction, 'accountMetadataTransaction', constants.transactionAccountMetadataTransaction, maxFee, deadline)
+      testTransaction(hex, transaction, 'accountMetadata', maxFee, deadline)
     })
 
     it('should process a mosaic metadata transaction', () => {
@@ -625,7 +617,7 @@ describe('catbuffer', () => {
         valueSizeDelta: 20,
         value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
       }
-      testTransaction(hex, transaction, 'mosaicMetadataTransaction', constants.transactionMosaicMetadataTransaction, maxFee, deadline)
+      testTransaction(hex, transaction, 'mosaicMetadata', maxFee, deadline)
     })
 
     it('should process a namespace metadata transaction', () => {
@@ -646,7 +638,7 @@ describe('catbuffer', () => {
         valueSizeDelta: 20,
         value: '700B6F624F41EB1A423F735ADA96982D7F2B756F'
       }
-      testTransaction(hex, transaction, 'namespaceMetadataTransaction', constants.transactionNamespaceMetadataTransaction, maxFee, deadline)
+      testTransaction(hex, transaction, 'namespaceMetadata', maxFee, deadline)
     })
 
     it('should process a complete transaction', () => {

@@ -101,29 +101,29 @@ class SpoolReader extends catbuffer.Reader {
     // We create a nested reader, ensure it fully reads the buffer,
     // and define the type accordingly.
     let receiptReader = new SpoolReader(receiptBuffer)
-    if (basicType === constants.receiptOther) {
+    if (basicType === constants.receiptType.other) {
       // Unknown basic type, just return the hex data.
       receipt.data = receiptReader.hex(receiptSize - 8)
-    } else if (basicType === constants.receiptBalanceTransfer) {
+    } else if (basicType === constants.receiptType.balanceTransfer) {
       receipt.mosaic = receiptReader.mosaic()
       receipt.senderPublicKey = receiptReader.key()
       receipt.recipientAddress = receiptReader.address()
-    } else if (basicType === constants.receiptBalanceCredit) {
+    } else if (basicType === constants.receiptType.balanceCredit) {
       receipt.mosaic = receiptReader.mosaic()
       receipt.targetPublicKey = receiptReader.key()
-    } else if (basicType === constants.receiptBalanceDebit) {
+    } else if (basicType === constants.receiptType.balanceDebit) {
       // Currently not used: shouldn't contained anything.
-    } else if (basicType === constants.receiptArtifactExpiry) {
+    } else if (basicType === constants.receiptType.artifactExpiry) {
       receipt.artifactId = receiptReader.hex(receiptSize - 8)
-    } else if (basicType === constants.receiptInflation) {
+    } else if (basicType === constants.receiptType.inflation) {
       receipt.mosaic = receiptReader.mosaic()
-    } else if (basicType === constants.receiptAggregate) {
+    } else if (basicType === constants.receiptType.aggregate) {
       // Should be empty.
-    } else if (basicType === constants.receiptAliasResolution) {
+    } else if (basicType === constants.receiptType.aliasResolution) {
       // Contains either an address or a mosaic ID, depending on the type.
-      if (code === constants.receiptAddressResolution) {
+      if (code === constants.receiptType.addressResolution) {
         receipt.address = receiptReader.address()
-      } else if (code === constants.receiptMosaicResolution) {
+      } else if (code === constants.receiptType.mosaicResolution) {
         receipt.mosaicId = receiptReader.id()
       } else {
         throw new Error(`invalid alias resolution code, got ${code}`)
@@ -500,10 +500,10 @@ const codec = {
       let type = reader.uint8()
       let value = {type}
 
-      if (type === constants.blocksSaved) {
+      if (type === constants.spoolType.blocksSaved) {
         Object.assign(value, reader.blockElement())
         value.blockStatement = reader.optionalBlockStatement()
-      } else if (type === constants.blocksDropped) {
+      } else if (type === constants.spoolType.blocksDropped) {
         value.height = reader.uint64String()
       } else {
         throw new Error(`invalid block change operation type, got ${type}`)
@@ -585,11 +585,11 @@ const codec = {
       let type = reader.uint8()
       let value = {type}
 
-      if (type === constants.addPartialTransactions) {
+      if (type === constants.spoolType.addPartialTransactions) {
         value.transactionInfos = reader.transactionInfos()
-      } else if (type === constants.removePartialTransactions) {
+      } else if (type === constants.spoolType.removePartialTransactions) {
         value.transactionInfos = reader.transactionInfos()
-      } else if (type === constants.addCosignature) {
+      } else if (type === constants.spoolType.addCosignature) {
         value.signer = reader.key()
         value.signature = reader.signature()
         value.transactionInfo = reader.transactionInfo()
@@ -615,9 +615,9 @@ const codec = {
       let reader = new SpoolReader(data)
       let type = reader.uint8()
       let value = {type}
-      if (type === constants.scoreChange) {
+      if (type === constants.spoolType.scoreChange) {
         value.chainScore = reader.chainScore()
-      } else if (type === constants.stateChange) {
+      } else if (type === constants.spoolType.stateChange) {
         value.chainScore = reader.chainScore()
         value.height = reader.uint64String()
         value.cacheChanges = reader.cacheChanges()
@@ -667,9 +667,9 @@ const codec = {
       let type = reader.uint8()
       let value = {type}
 
-      if (type === constants.addUnconfirmedTransactions) {
+      if (type === constants.spoolType.addUnconfirmedTransactions) {
         value.transactionInfos = reader.transactionInfos()
-      } else if (type === constants.removeUnconfirmedTransactions) {
+      } else if (type === constants.spoolType.removeUnconfirmedTransactions) {
         value.transactionInfos = reader.transactionInfos()
       } else {
         throw new Error(`invalid block change operation type, got ${type}`)

@@ -34,7 +34,7 @@ class TcpReader extends catbuffer.Reader {
   }
 
   challenge() {
-    return this.hex(constants.challengeSize)
+    return this.hex(constants.packet.challengeSize)
   }
 
   empty() {
@@ -114,7 +114,7 @@ class TcpReader extends catbuffer.Reader {
     let path = this.path()
     let linkMask = this.uint16()
     let links = {}
-    for (let index = 0; index < constants.pathMaxLinks; index++) {
+    for (let index = 0; index < constants.path.maxLinks; index++) {
       let mask = 1 << index >>> 0
       if ((linkMask & mask) !== 0) {
         links[index] = this.hash256()
@@ -184,7 +184,7 @@ class TcpWriter extends catbuffer.Writer {
   }
 
   challenge(challenge) {
-    assert(challenge.length === 2 * constants.challengeSize, 'invalid challenge size')
+    assert(challenge.length === 2 * constants.packet.challengeSize, 'invalid challenge size')
     this.hex(challenge)
   }
 
@@ -369,7 +369,7 @@ const codec = {
      *  ```
      */
     serialize: packet => {
-      let size = constants.packetHeaderSize + packet.payload.length
+      let size = constants.packet.headerSize + packet.payload.length
       let writer = new TcpWriter(size)
       writer.uint32(size)
       writer.uint32(packet.type)
@@ -389,7 +389,7 @@ const codec = {
       let reader = new TcpReader(data)
       let size = reader.uint32()
       let type = reader.uint32()
-      let payload = reader.binary(size - constants.packetHeaderSize)
+      let payload = reader.binary(size - constants.packet.headerSize)
       reader.validateEmpty()
 
       return {

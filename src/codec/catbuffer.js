@@ -26,33 +26,6 @@ import BaseReader from './reader'
 import BaseWriter from './writer'
 import shared from '../util/shared'
 
-/**
- *  Map the transaction type to the method name.
- */
-const TRANSACTION_TYPE_MAP = {
-  [constants.transactionTransfer]: 'transferTransaction',
-  [constants.transactionRegisterNamespace]: 'registerNamespaceTransaction',
-  [constants.transactionAddressAlias]: 'addressAliasTransaction',
-  [constants.transactionMosaicAlias]: 'mosaicAliasTransaction',
-  [constants.transactionMosaicDefinition]: 'mosaicDefinitionTransaction',
-  [constants.transactionMosaicSupplyChange]: 'mosaicSupplyChangeTransaction',
-  [constants.transactionModifyMultisigAccount]: 'modifyMultisigTransaction',
-  [constants.transactionAggregateComplete]: 'aggregateCompleteTransaction',
-  [constants.transactionAggregateBonded]: 'aggregateBondedTransaction',
-  [constants.transactionLock]: 'lockTransaction',
-  [constants.transactionSecretLock]: 'secretLockTransaction',
-  [constants.transactionSecretProof]: 'secretProofTransaction',
-  [constants.transactionAccountRestrictionAddress]: 'accountRestrictionAddressTransaction',
-  [constants.transactionAccountRestrictionMosaic]: 'accountRestrictionMosaicTransaction',
-  [constants.transactionAccountRestrictionOperation]: 'accountRestrictionOperationTransaction',
-  [constants.transactionLinkAccount]: 'linkAccountTransaction',
-  [constants.transactionMosaicAddressRestriction]: 'mosaicAddressRestrictionTransaction',
-  [constants.transactionMosaicGlobalRestriction]: 'mosaicGlobalRestrictionTransaction',
-  [constants.transactionAccountMetadataTransaction]: 'accountMetadataTransaction',
-  [constants.transactionMosaicMetadataTransaction]: 'mosaicMetadataTransaction',
-  [constants.transactionNamespaceMetadataTransaction]: 'namespaceMetadataTransaction',
-}
-
 // HELPERS
 
 // Align size to boundary.
@@ -189,7 +162,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  transferTransaction(embedded) {
+  transfer(embedded) {
     // Parse the fixed data.
     let transaction = this.baseTransaction(embedded)
     transaction.recipientAddress = this.address()
@@ -210,7 +183,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  registerNamespaceTransaction(embedded) {
+  registerNamespace(embedded) {
     // Parse the fixed data.
     let transaction = this.baseTransaction(embedded)
     let union = this.uint64()
@@ -220,9 +193,9 @@ class Reader extends BaseReader {
     transaction.name = this.ascii(nameSize)
 
     // Parse the union data
-    if (transaction.namespaceType === constants.namespaceRoot) {
+    if (transaction.namespaceType === constants.namespaceType.root) {
       transaction.duration = shared.uint64ToString(union)
-    } else if (transaction.namespaceType === constants.namespaceChild) {
+    } else if (transaction.namespaceType === constants.namespaceType.child) {
       transaction.parentId = shared.uint64ToId(union)
     } else {
       throw new Error(`invalid namespace type, got ${transaction.namespaceType}`)
@@ -232,7 +205,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  addressAliasTransaction(embedded) {
+  addressAlias(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.namespaceId = this.id()
     transaction.address = this.address()
@@ -242,7 +215,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicAliasTransaction(embedded) {
+  mosaicAlias(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.namespaceId = this.id()
     transaction.mosaicId = this.id()
@@ -252,7 +225,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicDefinitionTransaction(embedded) {
+  mosaicDefinition(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.duration = this.uint64String()
@@ -264,7 +237,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicSupplyChangeTransaction(embedded) {
+  mosaicSupplyChange(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.delta = this.uint64String()
@@ -274,7 +247,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  modifyMultisigTransaction(embedded) {
+  modifyMultisigAccount(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.minRemovalDelta = this.int8()
     transaction.minApprovalDelta = this.int8()
@@ -297,7 +270,7 @@ class Reader extends BaseReader {
   }
 
   // Both aggregate transactions have the same layout.
-  aggregateTransaction(embedded) {
+  aggregate(embedded) {
     assert(!embedded, 'aggregate transaction cannot be embedded')
 
     let transaction = this.baseTransaction()
@@ -322,15 +295,15 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  aggregateCompleteTransaction(embedded) {
-    return this.aggregateTransaction(embedded)
+  aggregateComplete(embedded) {
+    return this.aggregate(embedded)
   }
 
-  aggregateBondedTransaction(embedded) {
-    return this.aggregateTransaction(embedded)
+  aggregateBonded(embedded) {
+    return this.aggregate(embedded)
   }
 
-  lockTransaction(embedded) {
+  lock(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaic = this.mosaic()
     transaction.duration = this.uint64String()
@@ -340,7 +313,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  secretLockTransaction(embedded) {
+  secretLock(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.secret = this.hash256()
     transaction.mosaic = this.mosaic()
@@ -352,7 +325,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  secretProofTransaction(embedded) {
+  secretProof(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.secret = this.hash256()
     let proofSize = this.uint16()
@@ -385,19 +358,19 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  accountRestrictionAddressTransaction(embedded) {
+  accountRestrictionAddress(embedded) {
     return this.accountRestrictionTransaction('address', embedded)
   }
 
-  accountRestrictionMosaicTransaction(embedded) {
+  accountRestrictionMosaic(embedded) {
     return this.accountRestrictionTransaction('id', embedded)
   }
 
-  accountRestrictionOperationTransaction(embedded) {
+  accountRestrictionOperation(embedded) {
     return this.accountRestrictionTransaction('entityType', embedded)
   }
 
-  linkAccountTransaction(embedded) {
+  linkAccount(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.remotePublicKey = this.key()
     transaction.linkAction = this.uint8()
@@ -406,7 +379,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicAddressRestrictionTransaction(embedded) {
+  mosaicAddressRestriction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.restrictionKey = this.uint64String()
@@ -418,7 +391,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicGlobalRestrictionTransaction(embedded) {
+  mosaicGlobalRestriction(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.referenceMosaicId = this.id()
@@ -432,7 +405,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  accountMetadataTransaction(embedded) {
+  accountMetadata(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
     transaction.scopedMetadataKey = this.uint64String()
@@ -444,7 +417,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicMetadataTransaction(embedded) {
+  mosaicMetadata(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
     transaction.scopedMetadataKey = this.uint64String()
@@ -457,7 +430,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  namespaceMetadataTransaction(embedded) {
+  namespaceMetadata(embedded) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
     transaction.scopedMetadataKey = this.uint64String()
@@ -471,7 +444,7 @@ class Reader extends BaseReader {
   }
 
   transactionHeader(type, embedded) {
-    let method = TRANSACTION_TYPE_MAP[type]
+    let method = constants.transactionType.inv[type]
     if (method === undefined) {
       throw new Error(`invalid transaction type, got ${type}`)
     }
@@ -651,7 +624,7 @@ class Writer extends BaseWriter {
     }
   }
 
-  transferTransaction(value, embedded) {
+  transfer(value, embedded) {
     this.baseTransaction(value, embedded)
     this.address(value.recipientAddress)
     this.uint8(value.mosaics.length)
@@ -662,11 +635,11 @@ class Writer extends BaseWriter {
     this.hex(value.message)
   }
 
-  registerNamespaceTransaction(value, embedded) {
+  registerNamespace(value, embedded) {
     this.baseTransaction(value, embedded)
-    if (value.namespaceType === constants.namespaceRoot) {
+    if (value.namespaceType === constants.namespaceType.root) {
       this.uint64String(value.duration)
-    } else if (value.namespaceType === constants.namespaceChild) {
+    } else if (value.namespaceType === constants.namespaceType.child) {
       this.id(value.parentId)
     } else {
       throw new Error(`invalid namespace type, got ${value.namespaceType}`)
@@ -677,21 +650,21 @@ class Writer extends BaseWriter {
     this.ascii(value.name)
   }
 
-  addressAliasTransaction(value, embedded) {
+  addressAlias(value, embedded) {
     this.baseTransaction(value, embedded)
     this.id(value.namespaceId)
     this.address(value.address)
     this.uint8(value.aliasAction)
   }
 
-  mosaicAliasTransaction(value, embedded) {
+  mosaicAlias(value, embedded) {
     this.baseTransaction(value, embedded)
     this.id(value.namespaceId)
     this.id(value.mosaicId)
     this.uint8(value.aliasAction)
   }
 
-  mosaicDefinitionTransaction(value, embedded) {
+  mosaicDefinition(value, embedded) {
     this.baseTransaction(value, embedded)
     this.id(value.mosaicId)
     this.uint64String(value.duration)
@@ -700,14 +673,14 @@ class Writer extends BaseWriter {
     this.uint8(value.divisibility)
   }
 
-  mosaicSupplyChangeTransaction(value, embedded) {
+  mosaicSupplyChange(value, embedded) {
     this.baseTransaction(value, embedded)
     this.id(value.mosaicId)
     this.uint64String(value.delta)
     this.uint8(value.action)
   }
 
-  modifyMultisigTransaction(value, embedded) {
+  modifyMultisigAccount(value, embedded) {
     this.baseTransaction(value, embedded)
     this.int8(value.minRemovalDelta)
     this.int8(value.minApprovalDelta)
@@ -720,7 +693,7 @@ class Writer extends BaseWriter {
   }
 
   // Both aggregate transactions have the same layout.
-  aggregateTransaction(value, embedded) {
+  aggregate(value, embedded) {
     assert(!embedded, 'aggregate transaction cannot be embedded')
 
     this.baseTransaction(value, embedded)
@@ -745,22 +718,22 @@ class Writer extends BaseWriter {
     this.cosignatures(value.cosignatures)
   }
 
-  aggregateCompleteTransaction(value, embedded) {
-    return this.aggregateTransaction(value, embedded)
+  aggregateComplete(value, embedded) {
+    return this.aggregate(value, embedded)
   }
 
-  aggregateBondedTransaction(value, embedded) {
-    return this.aggregateTransaction(value, embedded)
+  aggregateBonded(value, embedded) {
+    return this.aggregate(value, embedded)
   }
 
-  lockTransaction(value, embedded) {
+  lock(value, embedded) {
     this.baseTransaction(value, embedded)
     this.mosaic(value.mosaic)
     this.uint64String(value.duration)
     this.hash256(value.hash)
   }
 
-  secretLockTransaction(value, embedded) {
+  secretLock(value, embedded) {
     this.baseTransaction(value, embedded)
     this.hash256(value.secret)
     this.mosaic(value.mosaic)
@@ -769,7 +742,7 @@ class Writer extends BaseWriter {
     this.address(value.recipientAddress)
   }
 
-  secretProofTransaction(value, embedded) {
+  secretProof(value, embedded) {
     this.baseTransaction(value, embedded)
     this.hash256(value.secret)
     this.uint16(Math.floor(value.proof.length / 2))
@@ -789,25 +762,25 @@ class Writer extends BaseWriter {
     this.n(value.restrictionDeletions, restriction)
   }
 
-  accountRestrictionAddressTransaction(value, embedded) {
+  accountRestrictionAddress(value, embedded) {
     return this.accountRestrictionTransaction(value, 'address', embedded)
   }
 
-  accountRestrictionMosaicTransaction(value, embedded) {
+  accountRestrictionMosaic(value, embedded) {
     return this.accountRestrictionTransaction(value, 'id', embedded)
   }
 
-  accountRestrictionOperationTransaction(value, embedded) {
+  accountRestrictionOperation(value, embedded) {
     return this.accountRestrictionTransaction(value, 'entityType', embedded)
   }
 
-  linkAccountTransaction(value, embedded) {
+  linkAccount(value, embedded) {
     this.baseTransaction(value, embedded)
     this.key(value.remotePublicKey)
     this.uint8(value.linkAction)
   }
 
-  mosaicAddressRestrictionTransaction(value, embedded) {
+  mosaicAddressRestriction(value, embedded) {
     this.baseTransaction(value, embedded)
     this.id(value.mosaicId)
     this.uint64String(value.restrictionKey)
@@ -816,7 +789,7 @@ class Writer extends BaseWriter {
     this.address(value.targetAddress)
   }
 
-  mosaicGlobalRestrictionTransaction(value, embedded) {
+  mosaicGlobalRestriction(value, embedded) {
     this.baseTransaction(value, embedded)
     this.id(value.mosaicId)
     this.id(value.referenceMosaicId)
@@ -827,7 +800,7 @@ class Writer extends BaseWriter {
     this.uint8(value.newRestrictionType)
   }
 
-  accountMetadataTransaction(value, embedded) {
+  accountMetadata(value, embedded) {
     this.baseTransaction(value, embedded)
     this.key(value.targetPublicKey)
     this.uint64String(value.scopedMetadataKey)
@@ -836,7 +809,7 @@ class Writer extends BaseWriter {
     this.hex(value.value)
   }
 
-  mosaicMetadataTransaction(value, embedded) {
+  mosaicMetadata(value, embedded) {
     this.baseTransaction(value, embedded)
     this.key(value.targetPublicKey)
     this.uint64String(value.scopedMetadataKey)
@@ -846,7 +819,7 @@ class Writer extends BaseWriter {
     this.hex(value.value)
   }
 
-  namespaceMetadataTransaction(value, embedded) {
+  namespaceMetadata(value, embedded) {
     this.baseTransaction(value, embedded)
     this.key(value.targetPublicKey)
     this.uint64String(value.scopedMetadataKey)
@@ -857,7 +830,7 @@ class Writer extends BaseWriter {
   }
 
   transactionHeader(value, type, embedded) {
-    let method = TRANSACTION_TYPE_MAP[type]
+    let method = constants.transactionType.inv[type]
     if (method === undefined) {
       throw new Error(`invalid transaction type, got ${type}`)
     }

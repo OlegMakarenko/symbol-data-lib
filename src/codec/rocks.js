@@ -23,18 +23,13 @@
 import constants from './constants'
 import Reader from './reader'
 
-// CONSTANTS
-const ROLLBACK_BUFFER_SIZE = 2
-const IMPORTANCE_HISTORY_SIZE = 1 + ROLLBACK_BUFFER_SIZE
-const ACTIVITY_BUCKET_HISTORY_SIZE = 5 + ROLLBACK_BUFFER_SIZE
-
 // HELPERS
 
 /**
  *  Format child namespace to the traditionally displayed format.
  */
 const childNamespace = (child, root) => ({
-  registrationType: constants.namespaceChild,
+  registrationType: constants.namespaceType.child,
   depth: child.levels.length,
   levels: child.levels,
   alias: child.alias,
@@ -48,7 +43,7 @@ const childNamespace = (child, root) => ({
  *  Format root namespace to the traditionally displayed format.
  */
 const rootNamespace = (root, namespaceId) => ({
-  registrationType: constants.namespaceRoot,
+  registrationType: constants.namespaceType.root,
   depth: 1,
   levels: [namespaceId],
   alias: root.alias,
@@ -80,11 +75,11 @@ class RocksReader extends Reader {
     let restrictionFlags = this.uint16()
     let valuesCount = this.long()
     let values = []
-    if ((restrictionFlags & constants.accountRestrictionAddress) !== 0) {
+    if ((restrictionFlags & constants.accountRestrictionType.address) !== 0) {
       this.nLong(values, valuesCount, 'address')
-    } else if ((restrictionFlags & constants.accountRestrictionMosaic) !== 0) {
+    } else if ((restrictionFlags & constants.accountRestrictionType.mosaic) !== 0) {
       this.nLong(values, valuesCount, 'id')
-    } else if ((restrictionFlags & constants.accountRestrictionTransactionType) !== 0) {
+    } else if ((restrictionFlags & constants.accountRestrictionType.transactionType) !== 0) {
       this.nLong(values, valuesCount, 'entityType')
     } else {
       throw new Error(`invalid account restriction flags, got ${restrictionFlags}`)
@@ -164,7 +159,7 @@ class RocksReader extends Reader {
   }
 
   mosaicAddressRestriction() {
-    const entryType = constants.mosaicRestrictionAddress
+    const entryType = constants.mosaicRestrictionType.address
     let mosaicId = this.id()
     let targetAddress = this.address()
     let restrictions = this.mosaicRestrictions('value', 'mosaicAddressRestrictionValue')
@@ -190,7 +185,7 @@ class RocksReader extends Reader {
   }
 
   mosaicGlobalRestriction() {
-    const entryType = constants.mosaicRestrictionGlobal
+    const entryType = constants.mosaicRestrictionType.global
     let mosaicId = this.id()
     let restrictions = this.mosaicRestrictions('restriction', 'mosaicGlobalRestrictionValue')
 
@@ -203,13 +198,13 @@ class RocksReader extends Reader {
 
   alias() {
     let type = this.uint8()
-    if (type === constants.aliasMosaic) {
+    if (type === constants.aliasType.mosaic) {
       let mosaicId = this.id()
       return {type, mosaicId}
-    } else if (type === constants.aliasAddress) {
+    } else if (type === constants.aliasType.address) {
       let address = this.address()
       return {type, address}
-    } else if (type === constants.aliasNone) {
+    } else if (type === constants.aliasType.none) {
       return {type}
     } else {
       throw new Error(`invalid alias type ${type}`)
@@ -306,8 +301,6 @@ export default {
       // Constants
       const regular = 0
       const highValue = 1
-      const importanceSize = IMPORTANCE_HISTORY_SIZE - ROLLBACK_BUFFER_SIZE
-      const activityBucketsSize = ACTIVITY_BUCKET_HISTORY_SIZE - ROLLBACK_BUFFER_SIZE
 
       // Model:
       //  struct AccountState {
@@ -340,8 +333,8 @@ export default {
         // No-op, no non-historical data
       } else if (format === highValue) {
         // Read non-historical data.
-        reader.n(importances, importanceSize, 'importance')
-        reader.n(activityBuckets, activityBucketsSize, 'activityBucket')
+        reader.n(importances, constants.rocks.importanceSize, 'importance')
+        reader.n(activityBuckets, constants.rocks.activityBucketsSize, 'activityBucket')
       } else {
         throw new Error(`invalid AccountStateFormat ${format}`)
       }
@@ -352,11 +345,11 @@ export default {
 
       // Parse Historical Information
       if (format == regular) {
-        reader.n(importances, IMPORTANCE_HISTORY_SIZE, 'importance')
-        reader.n(activityBuckets, ACTIVITY_BUCKET_HISTORY_SIZE, 'activityBucket')
+        reader.n(importances, constants.rocks.importanceHistorySize, 'importance')
+        reader.n(activityBuckets, constants.rocks.activityBucketHistorySize, 'activityBucket')
       } else {
-        reader.n(importances, ROLLBACK_BUFFER_SIZE, 'importance')
-        reader.n(activityBuckets, ROLLBACK_BUFFER_SIZE, 'activityBucket')
+        reader.n(importances, constants.rocks.rollbackBufferSize, 'importance')
+        reader.n(activityBuckets, constants.rocks.rollbackBufferSize, 'activityBucket')
       }
 
       reader.validateEmpty()
@@ -537,9 +530,9 @@ export default {
       reader.validateStateVersion(1)
       let entryType = reader.uint8()
       let value
-      if (entryType === constants.mosaicRestrictionAddress) {
+      if (entryType === constants.mosaicRestrictionType.address) {
         value = reader.mosaicAddressRestriction()
-      } else if (entryType === constants.mosaicRestrictionGlobal) {
+      } else if (entryType === constants.mosaicRestrictionType.global) {
         value = reader.mosaicGlobalRestriction()
       } else {
         throw new Error(`invalid mosaic restriction type, got ${entryType}`)

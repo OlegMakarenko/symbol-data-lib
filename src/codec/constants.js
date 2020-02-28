@@ -20,8 +20,29 @@
  *  Shared constants from catapult enumerations.
  */
 
+/**
+ *  Determine if the object has a given key.
+ */
+const hasKey = (object, key) => {
+  return Object.prototype.hasOwnProperty.call(object, key)
+}
+
+/**
+ *  Create a bidirectional, constant object.
+ */
+const bimap = object => {
+  if (hasKey(object, 'inv') || hasKey(object, 'inverse')) {
+    throw new Error('invalid inverse mapping, has conflicting key')
+  }
+  object.inv = object.inverse = {}
+  for (let [key, value] of Object.entries(object)) {
+    object.inverse[value] = key
+  }
+  return object
+}
+
 // Facility code to differentiate packet types.
-const facilityCode = {
+const facilityCode = bimap({
   accountLink: 0x4C,
   aggregate: 0x41,
   core: 0x43,
@@ -34,50 +55,61 @@ const facilityCode = {
   restrictionAccount: 0x50,
   restrictionMosaic: 0x51,
   transfer: 0x54
-}
+})
 
-export default {
-  // Transaction type.
-  transactionTransfer: 0x4154,
-  transactionRegisterNamespace: 0x414E,
-  transactionAddressAlias: 0x424E,
-  transactionMosaicAlias: 0x434E,
-  transactionMosaicDefinition: 0x414D,
-  transactionMosaicSupplyChange: 0x424D,
-  transactionModifyMultisigAccount: 0x4155,
-  transactionAggregateComplete: 0x4141,
-  transactionAggregateBonded: 0x4241,
-  transactionLock: 0x4148,
-  transactionSecretLock: 0x4152,
-  transactionSecretProof: 0x4252,
-  transactionAccountRestrictionAddress: 0x4150,
-  transactionAccountRestrictionMosaic: 0x4250,
-  transactionAccountRestrictionOperation: 0x4350,
-  transactionLinkAccount: 0x414C,
-  transactionMosaicAddressRestriction: 0x4251,
-  transactionMosaicGlobalRestriction: 0x4151,
-  transactionAccountMetadataTransaction: 0x4144,
-  transactionMosaicMetadataTransaction: 0x4244,
-  transactionNamespaceMetadataTransaction: 0x4344,
+// Transaction type.
+const transactionType = bimap({
+  transfer: 0x4154,
+  registerNamespace: 0x414E,
+  addressAlias: 0x424E,
+  mosaicAlias: 0x434E,
+  mosaicDefinition: 0x414D,
+  mosaicSupplyChange: 0x424D,
+  modifyMultisigAccount: 0x4155,
+  aggregateComplete: 0x4141,
+  aggregateBonded: 0x4241,
+  lock: 0x4148,
+  secretLock: 0x4152,
+  secretProof: 0x4252,
+  accountRestrictionAddress: 0x4150,
+  accountRestrictionMosaic: 0x4250,
+  accountRestrictionOperation: 0x4350,
+  linkAccount: 0x414C,
+  mosaicAddressRestriction: 0x4251,
+  mosaicGlobalRestriction: 0x4151,
+  accountMetadata: 0x4144,
+  mosaicMetadata: 0x4244,
+  namespaceMetadata: 0x4344
+})
 
-  // Namespace registration type.
-  namespaceRoot: 0,
-  namespaceChild: 1,
+// Namespace registration type.
+const namespaceType = bimap({
+  root: 0,
+  child: 1
+})
 
-  // Alias type.
-  aliasNone: 0,
-  aliasMosaic: 1,
-  aliasAddress: 2,
+// Alias type.
+const aliasType = bimap({
+  none: 0,
+  mosaic: 1,
+  address: 2
+})
 
-  // Account restriction type.
-  accountRestrictionAddress: 0x0001,
-  accountRestrictionMosaic: 0x0002,
-  accountRestrictionTransactionType: 0x0004,
+// Account restriction type.
+const accountRestrictionType = bimap({
+  address: 0x0001,
+  mosaic: 0x0002,
+  transactionType: 0x0004
+})
 
-  // Mosaic restriction type.
-  mosaicRestrictionAddress: 0,
-  mosaicRestrictionGlobal: 1,
+// Mosaic restriction type.
+const mosaicRestrictionType = bimap({
+  address: 0,
+  global: 1
+})
 
+// Spool data type.
+const spoolType = {
   // Spool block_change type.
   blocksSaved: 0,
   blocksDropped: 1,
@@ -93,33 +125,58 @@ export default {
 
   // Spool unconfirmed_transactions_change type.
   addUnconfirmedTransactions: 0,
-  removeUnconfirmedTransactions: 1,
+  removeUnconfirmedTransactions: 1
+}
 
-  // Basic receipt type.
-  receiptOther: 0x0,
-  receiptBalanceTransfer: 0x1,
-  receiptBalanceCredit: 0x2,
-  receiptBalanceDebit: 0x3,
-  receiptArtifactExpiry: 0x4,
-  receiptInflation: 0x5,
-  receiptAggregate: 0xE,
-  receiptAliasResolution: 0xF,
+// Receipt and basic receipt types.
+const receiptType = bimap({
+  // Basic receipt types.
+  other: 0x0,
+  balanceTransfer: 0x1,
+  balanceCredit: 0x2,
+  balanceDebit: 0x3,
+  artifactExpiry: 0x4,
+  inflation: 0x5,
+  aggregate: 0xE,
+  aliasResolution: 0xF,
 
   // Alias resolution receipt type.
-  receiptAddressResolution: 1,
-  receiptMosaicResolution: 2,
+  addressResolution: 1,
+  mosaicResolution: 2
+})
 
-  // Path constants
-  pathMaxLinks: 16,
+// Path constants.
+const path = {
+  maxLinks: 16
+}
 
-  // Security modes.
-  connectionSecurityNone: 1,
-  connectionSecuritySigned: 2,
+// RocksDB constants.
+const ROLLBACK_BUFFER_SIZE = 2
+const IMPORTANCE_SIZE = 1
+const ACTIVITY_BUCKET_SIZE = 5
+const rocks = {
+  rollbackBufferSize: ROLLBACK_BUFFER_SIZE,
+  importanceSize: IMPORTANCE_SIZE,
+  importanceHistorySize: IMPORTANCE_SIZE + ROLLBACK_BUFFER_SIZE,
+  activityBucketSize: ACTIVITY_BUCKET_SIZE,
+  activityBucketHistorySize: ACTIVITY_BUCKET_SIZE + ROLLBACK_BUFFER_SIZE
+}
 
-  // Packet information and types.
-  packetHeaderSize: 8,
+// Security mode.
+const securityMode = bimap({
+  none: 1,
+  signed: 2
+})
+
+// Packet constants.
+const packet = {
+  headerSize: 8,
   challengeSize: 64,
-  signatureSize: 64,
+  signatureSize: 64
+}
+
+// Packet type.
+const packetType = bimap({
   serverChallenge: 1,
   clientChallenge: 2,
   pushBlock: 3,
@@ -162,4 +219,58 @@ export default {
   namespaceInfos: 1200 + facilityCode.namespace,
   accountRestrictionsInfos: 1200 + facilityCode.restrictionAccount,
   mosaicRestrictionsInfos: 1200 + facilityCode.restrictionMosaic
+})
+
+// ZeroMQ marker constants.
+const zmq = {
+  block: Buffer.from('496ACA80E4D8F29F', 'hex'),
+  dropBlocks: Buffer.from('B0B025EE8AD6205C', 'hex'),
+  transaction: Buffer.of(0x61),
+  unconfirmedTransactionAdd: Buffer.of(0x75),
+  unconfirmedTransactionRemove: Buffer.of(0x72),
+  transactionStatus: Buffer.of(0x73),
+  partialTransactionAdd: Buffer.of(0x70),
+  partialTransactionRemove: Buffer.of(0x71),
+  cosignature: Buffer.of(0x63)
+}
+
+// Configuration collection to file names.
+const config = bimap({
+  'database': 'config-database.properties',
+  'extensionsBroker': 'config-extensions-broker.properties',
+  'extensionsRecovery': 'config-extensions-recovery.properties',
+  'extensionsServer': 'config-extensions-server.properties',
+  'harvesting': 'config-harvesting.properties',
+  'inflation': 'config-inflation.properties',
+  'loggingBroker': 'config-logging-broker.properties',
+  'loggingRecovery': 'config-logging-recovery.properties',
+  'loggingServer': 'config-logging-server.properties',
+  'messaging': 'config-messaging.properties',
+  'network': 'config-network.properties',
+  'networkHeight': 'config-networkheight.properties',
+  'node': 'config-node.properties',
+  'partialTransactions': 'config-pt.properties',
+  'task': 'config-task.properties',
+  'timeSync': 'config-timesync.properties',
+  'user': 'config-user.properties',
+  'peersApi': 'peers-api.json',
+  'peersP2p': 'peers-p2p.json'
+})
+
+export default {
+  facilityCode,
+  transactionType,
+  namespaceType,
+  aliasType,
+  accountRestrictionType,
+  mosaicRestrictionType,
+  spoolType,
+  receiptType,
+  path,
+  rocks,
+  securityMode,
+  packet,
+  packetType,
+  zmq,
+  config
 }

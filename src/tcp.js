@@ -26,54 +26,6 @@ import crypto from './util/crypto'
 import Socket from './util/socket'
 
 /**
- *  Map packet type name to the enumerated constant.
- */
-const PACKET_TYPE_MAP = {
-  serverChallenge: constants.serverChallenge,
-  clientChallenge: constants.clientChallenge,
-  pushBlock: constants.pushBlock,
-  pullBlock: constants.pullBlock,
-  chainInfo: constants.chainInfo,
-  blockHashes: constants.blockHashes,
-  pullBlocks: constants.pullBlocks,
-  pushTransactions: constants.pushTransactions,
-  pullTransactions: constants.pullTransactions,
-  secureSigned: constants.secureSigned,
-  subCacheMerkleRoots: constants.subCacheMerkleRoots,
-  pushPartialTransactions: constants.pushPartialTransactions,
-  pushDetachedCosignatures: constants.pushDetachedCosignatures,
-  pullPartialTransactionInfos: constants.pullPartialTransactionInfos,
-  pushNodeInfo: constants.nodeDiscoveryPushPing,
-  pullNodeInfo: constants.nodeDiscoveryPullPing,
-  pushNodePeers: constants.nodeDiscoveryPushPeers,
-  pullNodePeers: constants.nodeDiscoveryPullPeers,
-  timeSync: constants.timeSyncNetworkTime,
-  accountStatePath: constants.accountStatePath,
-  hashLockStatePath: constants.hashLockStatePath,
-  secretLockStatePath: constants.secretLockStatePath,
-  metadataStatePath: constants.metadataStatePath,
-  mosaicStatePath: constants.mosaicStatePath,
-  multisigStatePath: constants.multisigStatePath,
-  namespaceStatePath: constants.namespaceStatePath,
-  accountRestrictionsStatePath: constants.accountRestrictionsStatePath,
-  mosaicRestrictionsStatePath: constants.mosaicRestrictionsStatePath,
-  diagnosticCounters: constants.diagnosticCounters,
-  confirmTimestampedHashes: constants.confirmTimestampedHashes,
-  activeNodeInfos: constants.activeNodeInfos,
-  blockStatement: constants.blockStatement,
-  unlockedAccounts: constants.unlockedAccounts,
-  accountInfos: constants.accountInfos,
-  hashLockInfos: constants.hashLockInfos,
-  secretLockInfos: constants.secretLockInfos,
-  metadataInfos: constants.metadataInfos,
-  mosaicInfos: constants.mosaicInfos,
-  multisigInfos: constants.multisigInfos,
-  namespaceInfos: constants.namespaceInfos,
-  accountRestrictionsInfos: constants.accountRestrictionsInfos,
-  mosaicRestrictionsInfos: constants.mosaicRestrictionsInfos
-}
-
-/**
  *  Get connection to TCP socket.
  *
  *  @param options {Object}       - Options to specify connection parameters.
@@ -98,9 +50,9 @@ const connect = async options => {
 const serverChallenge = async options => {
   // Read and validate the packet.
   let packet = tcpCodec.header.deserialize(await options.socket.receive())
-  if (packet.type !== constants.serverChallenge) {
+  if (packet.type !== constants.packetType.serverChallenge) {
     throw new Error('invalid server challenge request packet')
-  } else if (packet.payload.length !== constants.challengeSize) {
+  } else if (packet.payload.length !== constants.packet.challengeSize) {
     throw new Error(`invalid challenge size, got ${packet.payload.length} bytes`)
   }
 
@@ -113,14 +65,14 @@ const serverChallenge = async options => {
 
   // Draft a response.
   // Currently, only unsigned packets are used. This will change.
-  let challenge = crypto.randomBytes(constants.challengeSize)
-  let mode = Buffer.of(constants.connectionSecurityNone)
-  let length = constants.challengeSize + 1
+  let challenge = crypto.randomBytes(constants.packet.challengeSize)
+  let mode = Buffer.of(constants.securityMode.none)
+  let length = constants.packet.challengeSize + 1
   let signature = signingKey.sign(Buffer.concat([packet.payload, mode], length))
 
   // Create the response packet
-  let type = constants.serverChallenge
-  let size = constants.challengeSize + signature.length + publicKey.length + mode.length
+  let type = constants.packetType.serverChallenge
+  let size = constants.packet.challengeSize + signature.length + publicKey.length + mode.length
   let payload = Buffer.concat([challenge, signature, publicKey, mode], size)
   let response = tcpCodec.header.serialize({type, payload})
 
@@ -136,10 +88,10 @@ const serverChallenge = async options => {
 const clientChallenge = async options => {
   // Read and validate the signature packet.
   let packet = tcpCodec.header.deserialize(await options.socket.receive())
-  if (packet.type !== constants.clientChallenge) {
+  if (packet.type !== constants.packetType.clientChallenge) {
     throw new Error('invalid client challenge response packet')
-  } else if (packet.payload.length !== constants.signatureSize) {
-    throw new Error(`invalid signayure size, got ${packet.payload.length} bytes`)
+  } else if (packet.payload.length !== constants.packet.signatureSize) {
+    throw new Error(`invalid signature size, got ${packet.payload.length} bytes`)
   }
 
   // Get our node verifying key.
@@ -207,7 +159,7 @@ const dump = async options => {
     for (let item of options.requests) {
       // Get the config parameters.
       let codec = tcpCodec[item.type]
-      let type = PACKET_TYPE_MAP[item.type]
+      let type = constants.packetType[item.type]
       if (codec === undefined) {
         throw new Error(`invalid request type, got ${item.type}`)
       }

@@ -153,194 +153,201 @@ const mosaic = mosaic => ({
   amount: shared.longToString(mosaic.amount)
 })
 
-const transferTransaction = transaction => {
-  let result = {
-    recipientAddress: readBase32(transaction.recipientAddress),
-    mosaics: transaction.mosaics.map(mosaic)
-  }
-  if (transaction.message !== undefined) {
-    result.message = {
-      type: transaction.message.type,
-      payload: shared.readHex(transaction.message.payload)
+// Codec to parse MongoDB transactions.
+const transactionCodec = {
+  transfer: transaction => {
+    let result = {
+      recipientAddress: readBase32(transaction.recipientAddress),
+      mosaics: transaction.mosaics.map(mosaic)
     }
-  }
+    if (transaction.message !== undefined) {
+      result.message = {
+        type: transaction.message.type,
+        payload: shared.readHex(transaction.message.payload)
+      }
+    }
 
-  return result
-}
-
-const registerNamespaceTransaction = transaction => {
-  let result = {
-    namespaceType: transaction.registrationType,
-    namespaceId: shared.longToId(transaction.id),
-    name: shared.readAscii(transaction.name)
-  }
-
-  if (result.namespaceType === constants.namespaceRoot) {
-    result.duration = shared.longToString(transaction.duration)
-  } else if (transaction.namespaceType === constants.namespaceChild) {
-    result.parentId = shared.longToId(transaction.parentId)
-  } else {
-    throw new Error(`invalid namespace type, got ${result.namespaceType}`)
-  }
-
-  return result
-}
-
-const addressAliasTransaction = transaction => ({
-  namespaceId: shared.longToId(transaction.namespaceId),
-  address: readBase32(transaction.address),
-  aliasAction: transaction.aliasAction
-})
-
-const mosaicAliasTransaction = transaction => ({
-  namespaceId: shared.longToId(transaction.namespaceId),
-  mosaicId: shared.longToId(transaction.mosaicId),
-  aliasAction: transaction.aliasAction
-})
-
-const mosaicDefinitionTransaction = transaction => ({
-  mosaicId: shared.longToId(transaction.id),
-  duration: shared.longToString(transaction.duration),
-  nonce: transaction.nonce,
-  flags: transaction.flags,
-  divisibility: transaction.divisibility
-})
-
-const mosaicSupplyChangeTransaction = transaction => ({
-  mosaicId: shared.longToId(transaction.mosaicId),
-  delta: shared.longToString(transaction.delta),
-  action: transaction.action
-})
-
-const modifyMultisigTransaction = transaction => ({
-  minRemovalDelta: transaction.minRemovalDelta,
-  minApprovalDelta: transaction.minApprovalDelta,
-  publicKeyAdditions: transaction.publicKeyAdditions.map(shared.readHex),
-  publicKeyDeletions: transaction.publicKeyDeletions.map(shared.readHex)
-})
-
-const aggregateTransaction = transaction => ({
-  transactionsHash: shared.readHex(transaction.transactionsHash),
-  cosignatures: transaction.cosignatures.map(cosignature => ({
-    signerPublicKey: shared.readHex(cosignature.signerPublicKey),
-    signature: shared.readHex(cosignature.signature)
-  }))
-})
-
-const aggregateCompleteTransaction = transaction => aggregateTransaction(transaction)
-
-const aggregateBondedTransaction = transaction => aggregateTransaction(transaction)
-
-const lockTransaction = transaction => ({
-  mosaic: {
-    mosaicId: shared.longToId(transaction.mosaicId),
-    amount: shared.longToString(transaction.amount)
+    return result
   },
-  duration: shared.longToString(transaction.duration),
-  hash: shared.readHex(transaction.hash)
-})
 
-const secretLockTransaction = transaction => ({
-  mosaic: {
-    mosaicId: shared.longToId(transaction.mosaicId),
-    amount: shared.longToString(transaction.amount)
+  registerNamespace: transaction => {
+    let result = {
+      namespaceType: transaction.registrationType,
+      namespaceId: shared.longToId(transaction.id),
+      name: shared.readAscii(transaction.name)
+    }
+
+    if (result.namespaceType === constants.namespaceType.root) {
+      result.duration = shared.longToString(transaction.duration)
+    } else if (transaction.namespaceType === constants.namespaceType.child) {
+      result.parentId = shared.longToId(transaction.parentId)
+    } else {
+      throw new Error(`invalid namespace type, got ${result.namespaceType}`)
+    }
+
+    return result
   },
-  duration: shared.longToString(transaction.duration),
-  secret: shared.readHex(transaction.secret),
-  hashAlgorithm: transaction.hashAlgorithm,
-  recipientAddress: readBase32(transaction.recipientAddress)
-})
 
-const secretProofTransaction = transaction => ({
-  secret: shared.readHex(transaction.secret),
-  hashAlgorithm: transaction.hashAlgorithm,
-  recipientAddress: readBase32(transaction.recipientAddress),
-  proof: shared.readHex(transaction.proof)
-})
+  addressAlias: transaction => ({
+    namespaceId: shared.longToId(transaction.namespaceId),
+    address: readBase32(transaction.address),
+    aliasAction: transaction.aliasAction
+  }),
 
-const accountRestrictionAddressTransaction = transaction => ({
-  restrictionFlags: transaction.restrictionFlags,
-  restrictionAdditions: transaction.restrictionAdditions.map(readBase32),
-  restrictionDeletions: transaction.restrictionDeletions.map(readBase32)
-})
+  mosaicAlias: transaction => ({
+    namespaceId: shared.longToId(transaction.namespaceId),
+    mosaicId: shared.longToId(transaction.mosaicId),
+    aliasAction: transaction.aliasAction
+  }),
 
-const accountRestrictionMosaicTransaction = transaction => ({
-  restrictionFlags: transaction.restrictionFlags,
-  restrictionAdditions: transaction.restrictionAdditions.map(data => shared.uint64ToId(shared.readUint64(data.buffer))),
-  restrictionDeletions: transaction.restrictionDeletions.map(data => shared.uint64ToId(shared.readUint64(data.buffer)))
-})
+  mosaicDefinition: transaction => ({
+    mosaicId: shared.longToId(transaction.id),
+    duration: shared.longToString(transaction.duration),
+    nonce: transaction.nonce,
+    flags: transaction.flags,
+    divisibility: transaction.divisibility
+  }),
 
-const accountRestrictionOperationTransaction = transaction => ({
-  restrictionFlags: transaction.restrictionFlags,
-  restrictionAdditions: transaction.restrictionAdditions.map(data => shared.readUint16(data.buffer)),
-  restrictionDeletions: transaction.restrictionDeletions.map(data => shared.readUint16(data.buffer))
-})
+  mosaicSupplyChange: transaction => ({
+    mosaicId: shared.longToId(transaction.mosaicId),
+    delta: shared.longToString(transaction.delta),
+    action: transaction.action
+  }),
 
-const linkAccountTransaction = transaction => ({
-  remotePublicKey: shared.readHex(transaction.remotePublicKey),
-  linkAction: transaction.linkAction
-})
+  modifyMultisigAccount: transaction => ({
+    minRemovalDelta: transaction.minRemovalDelta,
+    minApprovalDelta: transaction.minApprovalDelta,
+    publicKeyAdditions: transaction.publicKeyAdditions.map(shared.readHex),
+    publicKeyDeletions: transaction.publicKeyDeletions.map(shared.readHex)
+  }),
 
-const mosaicAddressRestrictionTransaction = transaction => ({
-  mosaicId: shared.longToId(transaction.mosaicId),
-  restrictionKey: shared.longToString(transaction.restrictionKey),
-  targetAddress: readBase32(transaction.targetAddress),
-  previousRestrictionValue: shared.longToString(transaction.previousRestrictionValue),
-  newRestrictionValue: shared.longToString(transaction.newRestrictionValue)
-})
+  aggregate: transaction => ({
+    transactionsHash: shared.readHex(transaction.transactionsHash),
+    cosignatures: transaction.cosignatures.map(cosignature => ({
+      signerPublicKey: shared.readHex(cosignature.signerPublicKey),
+      signature: shared.readHex(cosignature.signature)
+    }))
+  }),
 
-const mosaicGlobalRestrictionTransaction = transaction => ({
-  mosaicId: shared.longToId(transaction.mosaicId),
-  referenceMosaicId: shared.longToId(transaction.referenceMosaicId),
-  restrictionKey: shared.longToString(transaction.restrictionKey),
-  previousRestrictionValue: shared.longToString(transaction.previousRestrictionValue),
-  previousRestrictionType: transaction.previousRestrictionType,
-  newRestrictionValue: shared.longToString(transaction.newRestrictionValue),
-  newRestrictionType: transaction.newRestrictionType
-})
+  aggregateComplete: transaction => {
+    return transactionCodec.aggregate(transaction)
+  },
 
-const accountMetadataTransaction = transaction => {
-  let result = {
-    targetPublicKey: shared.readHex(transaction.targetPublicKey),
-    scopedMetadataKey: shared.longToString(transaction.scopedMetadataKey),
-    valueSizeDelta: transaction.valueSizeDelta,
-    valueSize: transaction.valueSize,
+  aggregateBonded: transaction => {
+    return transactionCodec.aggregate(transaction)
+  },
+
+  lock: transaction => ({
+    mosaic: {
+      mosaicId: shared.longToId(transaction.mosaicId),
+      amount: shared.longToString(transaction.amount)
+    },
+    duration: shared.longToString(transaction.duration),
+    hash: shared.readHex(transaction.hash)
+  }),
+
+  secretLock: transaction => ({
+    mosaic: {
+      mosaicId: shared.longToId(transaction.mosaicId),
+      amount: shared.longToString(transaction.amount)
+    },
+    duration: shared.longToString(transaction.duration),
+    secret: shared.readHex(transaction.secret),
+    hashAlgorithm: transaction.hashAlgorithm,
+    recipientAddress: readBase32(transaction.recipientAddress)
+  }),
+
+  secretProof: transaction => ({
+    secret: shared.readHex(transaction.secret),
+    hashAlgorithm: transaction.hashAlgorithm,
+    recipientAddress: readBase32(transaction.recipientAddress),
+    proof: shared.readHex(transaction.proof)
+  }),
+
+  accountRestrictionAddress: transaction => ({
+    restrictionFlags: transaction.restrictionFlags,
+    restrictionAdditions: transaction.restrictionAdditions.map(readBase32),
+    restrictionDeletions: transaction.restrictionDeletions.map(readBase32)
+  }),
+
+  accountRestrictionMosaic: transaction => ({
+    restrictionFlags: transaction.restrictionFlags,
+    restrictionAdditions: transaction.restrictionAdditions.map(data => shared.uint64ToId(shared.readUint64(data.buffer))),
+    restrictionDeletions: transaction.restrictionDeletions.map(data => shared.uint64ToId(shared.readUint64(data.buffer)))
+  }),
+
+  accountRestrictionOperation: transaction => ({
+    restrictionFlags: transaction.restrictionFlags,
+    restrictionAdditions: transaction.restrictionAdditions.map(data => shared.readUint16(data.buffer)),
+    restrictionDeletions: transaction.restrictionDeletions.map(data => shared.readUint16(data.buffer))
+  }),
+
+  linkAccount: transaction => ({
+    remotePublicKey: shared.readHex(transaction.remotePublicKey),
+    linkAction: transaction.linkAction
+  }),
+
+  mosaicAddressRestriction: transaction => ({
+    mosaicId: shared.longToId(transaction.mosaicId),
+    restrictionKey: shared.longToString(transaction.restrictionKey),
+    targetAddress: readBase32(transaction.targetAddress),
+    previousRestrictionValue: shared.longToString(transaction.previousRestrictionValue),
+    newRestrictionValue: shared.longToString(transaction.newRestrictionValue)
+  }),
+
+  mosaicGlobalRestriction: transaction => ({
+    mosaicId: shared.longToId(transaction.mosaicId),
+    referenceMosaicId: shared.longToId(transaction.referenceMosaicId),
+    restrictionKey: shared.longToString(transaction.restrictionKey),
+    previousRestrictionValue: shared.longToString(transaction.previousRestrictionValue),
+    previousRestrictionType: transaction.previousRestrictionType,
+    newRestrictionValue: shared.longToString(transaction.newRestrictionValue),
+    newRestrictionType: transaction.newRestrictionType
+  }),
+
+  accountMetadata: transaction => {
+    let result = {
+      targetPublicKey: shared.readHex(transaction.targetPublicKey),
+      scopedMetadataKey: shared.longToString(transaction.scopedMetadataKey),
+      valueSizeDelta: transaction.valueSizeDelta,
+      valueSize: transaction.valueSize
+    }
+    if (transaction.value !== undefined) {
+      result.value = shared.readHex(transaction.value)
+    }
+
+    return result
+  },
+
+  mosaicMetadata: transaction => {
+    let result = {
+      targetPublicKey: shared.readHex(transaction.targetPublicKey),
+      scopedMetadataKey: shared.longToString(transaction.scopedMetadataKey),
+      targetMosaicId: shared.longToId(transaction.targetMosaicId),
+      valueSizeDelta: transaction.valueSizeDelta,
+      valueSize: transaction.valueSize
+    }
+    if (transaction.value !== undefined) {
+      result.value = shared.readHex(transaction.value)
+    }
+
+    return result
+  },
+
+  namespaceMetadata: transaction => {
+    let result = {
+      targetPublicKey: shared.readHex(transaction.targetPublicKey),
+      scopedMetadataKey: shared.longToString(transaction.scopedMetadataKey),
+      targetNamespaceId: shared.longToId(transaction.targetNamespaceId),
+      valueSizeDelta: transaction.valueSizeDelta,
+      valueSize: transaction.valueSize
+    }
+    if (transaction.value !== undefined) {
+      result.value = shared.readHex(transaction.value)
+    }
+
+    return result
   }
-  if (transaction.value !== undefined) {
-    result.value = shared.readHex(transaction.value)
-  }
-
-  return result
-}
-
-const mosaicMetadataTransaction = transaction => {
-  let result = {
-    targetPublicKey: shared.readHex(transaction.targetPublicKey),
-    scopedMetadataKey: shared.longToString(transaction.scopedMetadataKey),
-    targetMosaicId: shared.longToId(transaction.targetMosaicId),
-    valueSizeDelta: transaction.valueSizeDelta,
-    valueSize: transaction.valueSize,
-  }
-  if (transaction.value !== undefined) {
-    result.value = shared.readHex(transaction.value)
-  }
-
-  return result
-}
-
-const namespaceMetadataTransaction = transaction => {
-  let result = {
-    targetPublicKey: shared.readHex(transaction.targetPublicKey),
-    scopedMetadataKey: shared.longToString(transaction.scopedMetadataKey),
-    targetNamespaceId: shared.longToId(transaction.targetNamespaceId),
-    valueSizeDelta: transaction.valueSizeDelta,
-    valueSize: transaction.valueSize,
-  }
-  if (transaction.value !== undefined) {
-    result.value = shared.readHex(transaction.value)
-  }
-
-  return result
 }
 
 /**
@@ -440,7 +447,7 @@ const codec = {
       amount: shared.longToString(item.lock.amount),
       endHeight: shared.longToString(item.lock.endHeight),
       status: item.lock.status,
-      hash: shared.readHex(item.lock.hash),
+      hash: shared.readHex(item.lock.hash)
     }
   }),
 
@@ -541,10 +548,6 @@ const codec = {
   }),
 
   namespaces: item => {
-    const aliasNone = 0
-    const aliasMosaic = 1
-    const aliasAddress = 2
-
     let result = {
       meta: {
         ...item.meta,
@@ -574,11 +577,11 @@ const codec = {
 
     // Add the alias.
     let aliasType = item.namespace.alias.type
-    if (aliasType === aliasNone) {
+    if (aliasType === constants.aliasType.none) {
       // No-op
-    } else if (aliasType === aliasMosaic) {
+    } else if (aliasType === constants.aliasType.mosaic) {
       result.namespace.alias.mosaicId = shared.longToId(item.namespace.alias.mosaicId)
-    } else if (aliasType === aliasAddress) {
+    } else if (aliasType === constants.aliasType.address) {
       result.namespace.alias.address = readBase32(item.namespace.alias.address)
     } else {
       throw new Error(`invalid AliasType, got ${aliasType}`)
@@ -627,55 +630,18 @@ const codec = {
   }),
 
   transactions: item => {
+    // Parse the shared transaction data.
     let embedded = isEmbedded(item)
     let meta = transactionMeta(item.meta, embedded)
     meta.id = objectIdToHex(item._id)
     let transaction = transactionBase(item.transaction, embedded)
-    if (transaction.type === constants.transactionTransfer) {
-      Object.assign(transaction, transferTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionRegisterNamespace) {
-      Object.assign(transaction, registerNamespaceTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionAddressAlias) {
-      Object.assign(transaction, addressAliasTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionMosaicAlias) {
-      Object.assign(transaction, mosaicAliasTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionMosaicDefinition) {
-      Object.assign(transaction, mosaicDefinitionTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionMosaicSupplyChange) {
-      Object.assign(transaction, mosaicSupplyChangeTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionModifyMultisigAccount) {
-      Object.assign(transaction, modifyMultisigTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionAggregateComplete) {
-      Object.assign(transaction, aggregateCompleteTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionAggregateBonded) {
-      Object.assign(transaction, aggregateBondedTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionLock) {
-      Object.assign(transaction, lockTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionSecretLock) {
-      Object.assign(transaction, secretLockTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionSecretProof) {
-      Object.assign(transaction, secretProofTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionAccountRestrictionAddress) {
-      Object.assign(transaction, accountRestrictionAddressTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionAccountRestrictionMosaic) {
-      Object.assign(transaction, accountRestrictionMosaicTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionAccountRestrictionOperation) {
-      Object.assign(transaction, accountRestrictionOperationTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionLinkAccount) {
-      Object.assign(transaction, linkAccountTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionMosaicAddressRestriction) {
-      Object.assign(transaction, mosaicAddressRestrictionTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionMosaicGlobalRestriction) {
-      Object.assign(transaction, mosaicGlobalRestrictionTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionAccountMetadataTransaction) {
-      Object.assign(transaction, accountMetadataTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionMosaicMetadataTransaction) {
-      Object.assign(transaction, mosaicMetadataTransaction(item.transaction))
-    } else if (transaction.type === constants.transactionNamespaceMetadataTransaction) {
-      Object.assign(transaction, namespaceMetadataTransaction(item.transaction))
-    } else {
+
+    // Parse the transaction-specific data.
+    let method = constants.transactionType.inv[transaction.type]
+    if (method === undefined) {
       throw new Error(`invalid transaction type, got ${transaction.type}`)
     }
+    Object.assign(transaction, transactionCodec[method](item.transaction))
 
     return {
       meta,
