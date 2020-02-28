@@ -30,7 +30,8 @@
     "mongodb": "^3.5.3",
     "npm": "^6.13.7",
     "rocksdb": "^4.1.0",
-    "yargs": "^15.1.0"
+    "yargs": "^15.1.0",
+    "zeromq": "^5.2.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",

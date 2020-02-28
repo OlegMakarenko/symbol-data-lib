@@ -21,5 +21,6 @@ describe('util', () => {
   require('./crypto'),
   require('./level'),
   require('./shared'),
-  require('./socket')
+  require('./socket'),
+  require('./zmq')
 })

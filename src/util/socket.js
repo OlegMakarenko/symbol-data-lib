@@ -141,7 +141,7 @@ export default class Socket {
   close() {
     assert(this.isOpen, 'socket must be open')
     return new Promise(resolve => {
-        this.connection.end(() => {
+      this.connection.end(() => {
         this.connection = undefined
         resolve()
       })
