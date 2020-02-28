@@ -16,10 +16,10 @@
  *
  */
 
-import zmq from 'zeromq'
 import constants from './codec/constants'
 import zmqCodec from './codec/zmq'
 import base32 from './util/base32'
+import zmq from './util/zmq'
 
 /**
  *  Get subscriber connection to ZeroMQ socket.
@@ -27,18 +27,18 @@ import base32 from './util/base32'
  *  @param options {Object}       - Options to specify connection parameters.
  *    @field host {String}        - Host to connect to.
  *    @field port {Number}        - Port to connect to.
+ *    @field interval {Number}    - Time in milliseconds to query for new messages.
  *    @field verbose {Boolean}    - Display debug information.
  */
 const connect = async options => {
-  let socket = zmq.socket('sub')
-  socket.connect(`tcp://${options.host}:${options.port}`)
+  let subscriber = await zmq.Subscriber.connect(options.host, options.port, options.interval)
   if (options.verbose) {
     console.info('Connected to a ZeroMQ publisher at:')
     console.info(`    host      = ${options.host}`)
     console.info(`    port      = ${options.port}`)
   }
 
-  return socket
+  return subscriber
 }
 
 /**
@@ -47,24 +47,24 @@ const connect = async options => {
  *  For block subscriptions, the addresses will be ignored and are not required.
  *  For transaction subscriptions, addresses must be provided.
  *
- *  @param socket {Object}        - ZeroMQ connected socket.
+ *  @param subscriber {Object}    - ZeroMQ subscriber.
  *  @param subscription {Object}  - Subscription options.
  *    @param channel {String}     - Name of the subscription channel.
  *    @param addresses {Array}    - Optional array of addresses to subscribe to that channel.
  */
-const subscribe = async (socket, subscription) => {
+const subscribe = async (subscriber, subscription) => {
   let marker = constants.zmq[subscription.channel]
   if (marker === undefined) {
     throw new Error(`invalid channel name, got ${subscription.channel}`)
   } else if (marker.length === 8) {
     // Block subscription
-    socket.subscribe(marker)
+    await subscriber.subscribe(marker)
   } else {
     // Transaction subscription, subscribe to all provided addresses.
-    for (let addresss of subscription.addresses) {
-      let encoded = base32.decode(Buffer.from('addresss', 'ascii'))
-      let topic = Buffer.concat([marker, topic], 26)
-      socket.subscribe(topic)
+    for (let address of subscription.addresses) {
+      let encoded = base32.decode(Buffer.from(address, 'ascii'))
+      let topic = Buffer.concat([marker, encoded], 26)
+      await subscriber.subscribe(topic)
     }
   }
 }
@@ -83,23 +83,24 @@ const subscribe = async (socket, subscription) => {
  *
  *
  */
-const dump = async options => {
-  // TODO(ahuszagh) Might actually want a helper class...
-
+async function* dump(options) {
   // Connect as a ZeroMQ subscribe socket.
-  let socket = await connect(options)
+  let subscriber = await connect(options)
   try {
     // Subscribe to the channels
     for (let subscription of options.subscriptions) {
-      await subscribe(socket, subscription)
+      await subscribe(subscriber, subscription)
     }
 
-    // Iteratively convert
-    // TODO(ahuszagh) Need to be able to convert the sock.on() to
-    // an asynchronous iterator.
+    // Iteratively iterate over all messages, until we handle some sort of error.
+    for await (let {topic, message} of subscriber) {
+      let result = zmqCodec.topic(topic)
+      Object.assign(result, zmqCodec[result.channel](message))
+      yield result
+    }
   } finally {
     // Close the socket.
-    socket.close()
+    await subscriber.close()
   }
 }
 

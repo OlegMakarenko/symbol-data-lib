@@ -16,7 +16,7 @@
  *
  */
 
-import zeromq from 'zeromq'
+import nodeZmq from 'zeromq'
 import expect from 'expect.js'
 import zmq from '../../src/util/zmq'
 
@@ -24,22 +24,22 @@ describe('zmq', () => {
   it('should properly handle a simple publisher', async () => {
     // Config options (use an ephemeral port)
     let port = 52487
-    let timeout = 10
+    let interval = 10
     let topic1 = Buffer.from('topic1', 'ascii')
     let topic2 = Buffer.from('topic2', 'ascii')
     let msg1 = Buffer.from('msg1', 'ascii')
     let msg2 = Buffer.from('msg2', 'ascii')
 
     // Create the publisher.
-    let publisher = zeromq.socket('pub')
+    let publisher = nodeZmq.socket('pub')
     publisher.bindSync(`tcp://*:${port}`)
-    let interval = setInterval(() => {
+    let id = setInterval(() => {
       publisher.send([topic1, msg1])
       publisher.send([topic2, msg2])
-    }, timeout)
+    }, interval)
 
     // Create the subscriber.
-    let subscriber = await zmq.Subscriber.connect('localhost', port, timeout)
+    let subscriber = await zmq.Subscriber.connect('localhost', port, interval)
 
     // Subscribe to topic1 and validate that's all we get.
     await subscriber.subscribe(topic1)
@@ -67,7 +67,7 @@ describe('zmq', () => {
     }
 
     // Close our connections.
-    clearInterval(interval)
+    clearInterval(id)
     publisher.close()
     await subscriber.close()
   })

@@ -45,11 +45,11 @@ class DataError extends Error {
 }
 
 /**
- *  Socket class.
+ *  Client class.
  *
  *  Wraps the event-driven NodeJS net API into an asynchronous, call-based API.
  */
-export default class Socket {
+class Client {
   constructor(connection) {
     this.connection = connection
   }
@@ -67,7 +67,7 @@ export default class Socket {
       client.on('connect', () => {
         client.removeListener('close', rejectOnClose)
         client.removeListener('error', rejectOnError)
-        resolve(new Socket(client))
+        resolve(new Client(client))
       })
     })
   }
@@ -161,4 +161,8 @@ export default class Socket {
   get isClosed() {
     return this.connection === undefined
   }
+}
+
+export default {
+  Client
 }

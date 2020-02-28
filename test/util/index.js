@@ -20,7 +20,7 @@ describe('util', () => {
   require('./base32'),
   require('./crypto'),
   require('./level'),
+  require('./net'),
   require('./shared'),
-  require('./socket'),
   require('./zmq')
 })

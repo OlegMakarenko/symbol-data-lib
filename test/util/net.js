@@ -16,43 +16,43 @@
  *
  */
 
-import net from 'net'
+import nodeNet from 'net'
 import expect from 'expect.js'
-import Socket from '../../src/util/socket'
+import net from '../../src/util/net'
 
 describe('socket', () => {
   it('should properly handle an echo server', async () => {
     // Config options (use an ephemeral port)
     let port = 52487
 
-    // Create the server
-    let server = net.createServer(connection => {
+    // Create the server.
+    let server = nodeNet.createServer(connection => {
       connection.pipe(connection)
     })
     server.listen(port)
 
-    // Create the socket.
-    let socket = await Socket.connect(port)
-    expect(socket.isOpen).to.equal(true)
-    expect(socket.isClosed).to.equal(false)
+    // Create the client.
+    let client = await net.Client.connect(port)
+    expect(client.isOpen).to.equal(true)
+    expect(client.isClosed).to.equal(false)
 
     // Test sending and receiving data.
     // All the data requires a size prefix.
     let payload = Buffer.from('0F00000068656C6C6F20776F726C64', 'hex')
-    await socket.send(payload)
-    let data = await socket.receive()
+    await client.send(payload)
+    let data = await client.receive()
     expect(data).to.eql(payload)
 
     // Check the address works
-    let address = socket.address()
+    let address = client.address()
     expect(address.address).to.be.a('string')
     expect(address.family).to.be.a('string')
     expect(address.port).to.be.a('number')
 
     // Close our connections.
-    await socket.close()
+    await client.close()
     server.close()
-    expect(socket.isOpen).to.equal(false)
-    expect(socket.isClosed).to.equal(true)
+    expect(client.isOpen).to.equal(false)
+    expect(client.isClosed).to.equal(true)
   })
 })

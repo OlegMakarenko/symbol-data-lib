@@ -23,7 +23,7 @@
 import constants from './codec/constants'
 import tcpCodec from './codec/tcp'
 import crypto from './util/crypto'
-import Socket from './util/socket'
+import net from './util/net'
 
 /**
  *  Get connection to TCP socket.
@@ -32,16 +32,16 @@ import Socket from './util/socket'
  *    @field verbose {Boolean}    - Display debug information.
  */
 const connect = async options => {
-  let socket = await Socket.connect(options)
+  let client = await net.Client.connect(options)
   if (options.verbose) {
-    let address = socket.connection.address()
+    let address = client.connection.address()
     console.info('Connected to a TCP server at:')
     console.info(`    address   = ${address.address}`)
     console.info(`    family    = ${address.family}`)
     console.info(`    port      = ${address.port}`)
   }
 
-  return socket
+  return client
 }
 
 /**
@@ -49,7 +49,7 @@ const connect = async options => {
  */
 const serverChallenge = async options => {
   // Read and validate the packet.
-  let packet = tcpCodec.header.deserialize(await options.socket.receive())
+  let packet = tcpCodec.header.deserialize(await options.client.receive())
   if (packet.type !== constants.packetType.serverChallenge) {
     throw new Error('invalid server challenge request packet')
   } else if (packet.payload.length !== constants.packet.challengeSize) {
@@ -77,7 +77,7 @@ const serverChallenge = async options => {
   let response = tcpCodec.header.serialize({type, payload})
 
   // Send the response and return the new challenge data.
-  await options.socket.send(response)
+  await options.client.send(response)
 
   return challenge
 }
@@ -87,7 +87,7 @@ const serverChallenge = async options => {
  */
 const clientChallenge = async options => {
   // Read and validate the signature packet.
-  let packet = tcpCodec.header.deserialize(await options.socket.receive())
+  let packet = tcpCodec.header.deserialize(await options.client.receive())
   if (packet.type !== constants.packetType.clientChallenge) {
     throw new Error('invalid client challenge response packet')
   } else if (packet.payload.length !== constants.packet.signatureSize) {
@@ -150,8 +150,8 @@ const authorize = async options => {
  */
 const dump = async options => {
   // Connect and authorize to our node via the TCP API.
-  let socket = await connect(options)
-  await authorize({...options, socket})
+  let client = await connect(options)
+  await authorize({...options, client})
 
   // Run the desired requests.
   let data = []
@@ -167,10 +167,10 @@ const dump = async options => {
       // Send the request data.
       let payload = codec.request.serialize(item.params)
       let request = tcpCodec.header.serialize({type, payload})
-      await socket.send(request)
+      await client.send(request)
 
       // Receive and process the response data.
-      let packet = tcpCodec.header.deserialize(await socket.receive())
+      let packet = tcpCodec.header.deserialize(await client.receive())
       if (packet.type !== type) {
         throw new Error(`invalid response type, got packet of type ${packet.type} for request ${item.type}`)
       }
@@ -181,8 +181,8 @@ const dump = async options => {
       })
     }
  } finally {
-    // Close the socket and return the data.
-    await socket.close()
+    // Close the client and return the data.
+    await client.close()
   }
 
   return data

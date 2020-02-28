@@ -19,8 +19,8 @@
 import assert from 'assert'
 import zmq from 'zeromq'
 
-// Default timeout for message requests.
-const DEFAULT_TIMEOUT = 1000
+// Default interval for message requests.
+const DEFAULT_INTERVAL = 1000
 
 /**
  *  Handle an error thrown from the ZMQ library.
@@ -47,11 +47,11 @@ const handleError = (error, closed, resolve, reject) => {
  *  asynchronously to be similar to the socket wrapper.
  */
 class Subscriber {
-  constructor(socket, timeout=DEFAULT_TIMEOUT) {
+  constructor(socket, interval=DEFAULT_INTERVAL) {
     this.socket = socket
     this.messages = []
     this.error = null
-    this.timeout = timeout
+    this.interval = interval
     this.socket.on('message', (topic, message) => {
       this.messages.push({topic, message})
     })
@@ -63,12 +63,12 @@ class Subscriber {
   /**
    *  Connect to host.
    */
-  static connect(host, port, timeout=DEFAULT_TIMEOUT) {
+  static connect(host, port, interval=DEFAULT_INTERVAL) {
     let socket = zmq.socket('sub')
     socket.connect(`tcp://${host}:${port}`)
 
     return new Promise(resolve => {
-      resolve(new Subscriber(socket, timeout))
+      resolve(new Subscriber(socket, interval))
     })
   }
 
@@ -107,7 +107,7 @@ class Subscriber {
         resolve({value: this.messages.shift(), done: false})
         return true
       } else if (this.error !== null) {
-        handleError(error, this.isClosed, resolve, reject)
+        handleError(this.error, this.isClosed, resolve, reject)
         return true
       } else if (this.isClosed) {
         // Socket has been closed, resolve with a stop iteration.
@@ -139,7 +139,7 @@ class Subscriber {
               if (this._next(resolve, reject)) {
                 clearInterval(interval)
               }
-            }, this.timeout)
+            }, this.interval)
           }
         })
       }
