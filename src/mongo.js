@@ -21,6 +21,7 @@
  */
 
 import MongoDb from 'mongodb'
+import defaults from './defaults'
 import mongoCodec from './codec/mongo'
 import name from './util/name'
 
@@ -47,13 +48,15 @@ const COLLECTION_LOOKUP = new Set([
  *    @field verbose {Boolean}    - Display debug information.
  */
 const connect = async options => {
-  let client = await MongoDb.MongoClient.connect(options.database, {
+  let database = defaults.database(options)
+  let verbose = defaults.verbose(options)
+  let client = await MongoDb.MongoClient.connect(database, {
     promoteLongs: false,
     useNewUrlParser: true,
     useUnifiedTopology: true
   })
-  if (options.verbose) {
-    console.info(`Connected to mongo at ${options.database}`)
+  if (verbose) {
+    console.info(`Connected to mongo at ${database}`)
   }
   return client
 }
@@ -78,10 +81,11 @@ const isValidCollection = collection => {
  *  Dump single MongoDB collection to JSON.
  */
 const dumpOne = async options => {
+  let limit = defaults.limit(options)
   let codec = mongoCodec[options.collection]
   return options.db.collection(options.collection)
     .find()
-    .limit(options.limit)
+    .limit(limit)
     .sort({ _id: -1 })
     .map(codec)
     .toArray()
@@ -102,10 +106,10 @@ const dumpMany = async (options, collections) => {
  *  Dump MongoDB data to JSON.
  *
  *  @param options {Object}       - Options to specify dump parameters.
- *    @field database {String}    - Database connection path.
- *    @field collection {String}  - Collection name.
- *    @field limit {Number}       - Maximum number of items to dump.
- *    @field verbose {Boolean}    - Display debug information.
+ *    @field collection {String}  - Collection name (required).
+ *    @field database {String}    - Database connection path (default 'mongodb://db:27017/catapult').
+ *    @field limit {Number}       - Maximum number of items to dump (default 0).
+ *    @field verbose {Boolean}    - Display debug information (default false).
  */
 const dump = async options => {
   let collections = name.parse(options.collection, COLLECTIONS)

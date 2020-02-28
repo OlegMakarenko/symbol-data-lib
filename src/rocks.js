@@ -21,6 +21,7 @@
  */
 
 import path from 'path'
+import defaults from './defaults'
 import rocksCodec from './codec/rocks'
 import Level from './util/level'
 import name from './util/name'
@@ -58,17 +59,21 @@ const isValidCollection = collection => {
  *  Dump single RocksDB collection to JSON.
  */
 const dumpOne = async options => {
+  // Config
+  let dataDir = defaults.dataDir(options)
+  let directory = path.join(dataDir, 'statedb', options.collection)
+  let limit = defaults.limit(options) || Number.MAX_SAFE_INTEGER
+  let verbose = defaults.verbose(options)
+
   // Create a new rocksdb, read-only handle.
-  let directory = path.join(options.dataDir, 'statedb', options.collection)
   let level = new Level(directory)
-  if (options.verbose) {
+  if (verbose) {
     console.info(`Connected to rocks at ${directory}`)
   }
 
   let result = {}
   try {
     // Iterate up to limit values, and assign to result.
-    let limit = options.limit || Number.MAX_SAFE_INTEGER
     let codec = rocksCodec[options.collection]
     let iterator = level.iterator()
     do {
@@ -117,10 +122,10 @@ const dumpMany = async (options, collections) => {
  *  Dump RocksDB data to JSON.
  *
  *  @param options {Object}       - Options to specify dump parameters.
- *    @field dataDir {String}     - Path to the catapult data directory.
- *    @field collection {String}  - Collection name(s).
- *    @field limit {Number}       - Maximum number of items to dump.
- *    @field verbose {Boolean}    - Display debug information.
+ *    @field collection {String}  - Collection name(s) (required).
+ *    @field dataDir {String}     - Path to the catapult data directory (default '/data').
+ *    @field limit {Number}       - Maximum number of items to dump (default 0).
+ *    @field verbose {Boolean}    - Display debug information (default false).
  */
 const dump = async options => {
   let collections = name.parse(options.collection, COLLECTIONS)

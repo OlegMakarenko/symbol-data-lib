@@ -20,7 +20,8 @@
 import '@babel/polyfill'
 import yargs from 'yargs'
 import { logError, printJson } from './util'
-import symbolData from '../src'
+import symbol from '../src'
+import defaults from '../src/defaults'
 
 // ARGUMENTS
 // ---------
@@ -38,27 +39,31 @@ const options = yargs
   // Parameters.
   .option('config-dir', {
     alias: 'd',
+    type: 'string',
     describe: 'Directory for the configuration files.',
-    default: '/userconfig/resources'
+    default: defaults.configDir()
   })
   .option('collection', {
     alias: 'c',
+    type: 'string',
     describe: (
       'Name of collection(s) to dump.\n'
       + 'Multiple collections can be provided with comma separators.\n'
       + 'Valid collections names:\n- all\n- '
-      + symbolData.config.COLLECTIONS.join('\n- ')
+      + symbol.config.COLLECTIONS.join('\n- ')
     )
   })
   .option('output', {
     alias: 'o',
+    type: 'string',
     describe: 'Write to output file rather than stdout.'
   })
   // Help and verbose.
   .option('verbose', {
     alias: 'v',
     type: 'boolean',
-    description: 'Run with verbose logging'
+    description: 'Run with verbose logging',
+    default: defaults.verbose()
   })
   // Validation.
   .demandOption('collection', 'Please provide a collection name to dump.')
@@ -68,17 +73,17 @@ const options = yargs
 // Display verbose information.
 if (options.verbose) {
   console.info('Running catapult-config-dump with: ')
-  console.info(`    config-dir   = ${options.configDir}`)
   console.info(`    collection   = ${options.collection}`)
+  console.info(`    config-dir   = ${options.configDir}`)
   console.info(`    output       = ${options.output ? options.output : 'stdout'}`)
 }
 
 // Validate the collection name is supported.
-if (!symbolData.config.isValidCollection(options.collection)) {
+if (!symbol.config.isValidCollection(options.collection)) {
   throw new Error(`collection name ${options.collection} is not yet supported`)
 }
 
 // Dump the RocksDB data to JSON.
-symbolData.config.dump(options)
+symbol.config.dump(options)
   .then(result => printJson(result, options.output))
   .catch(error => logError(error))

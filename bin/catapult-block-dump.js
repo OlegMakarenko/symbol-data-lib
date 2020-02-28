@@ -20,7 +20,8 @@
 import '@babel/polyfill'
 import yargs from 'yargs'
 import { logError, printJson } from './util'
-import symbolData from '../src'
+import symbol from '../src'
+import defaults from '../src/defaults'
 
 // ARGUMENTS
 // ---------
@@ -38,23 +39,27 @@ const options = yargs
   // Parameters.
   .option('data-dir', {
     alias: 'd',
+    type: 'string',
     describe: 'Data directory for the spool store.',
-    default: '/data'
+    default: defaults.dataDir()
   })
   .option('limit', {
     alias: 'l',
+    type: 'number',
     describe: 'Maximum number of items from collection to dump.',
-    default: 0
+    default: defaults.limit()
   })
   .option('output', {
     alias: 'o',
+    type: 'string',
     describe: 'Write to output file rather than stdout.'
   })
   // Help and verbose.
   .option('verbose', {
     alias: 'v',
     type: 'boolean',
-    description: 'Run with verbose logging'
+    description: 'Run with verbose logging',
+    default: defaults.verbose()
   })
   // Parse arguments.
   .parse()
@@ -68,6 +73,6 @@ if (options.verbose) {
 }
 
 // Dump the block data to JSON.
-symbolData.block.dump(options)
+symbol.block.dump(options)
   .then(result => printJson(result, options.output))
   .catch(error => logError(error))

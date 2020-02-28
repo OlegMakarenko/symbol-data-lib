@@ -18,6 +18,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import defaults from './defaults'
 import auditCodec from './codec/audit'
 import name from './util/name'
 
@@ -78,8 +79,9 @@ const isValidCollection = collection => {
  */
 const dumpOne = async options => {
   // Config
-  let directory = path.join(options.dataDir, 'audit', COLLECTION_DIRECTORIES[options.collection])
-  let limit = options.limit || Number.MAX_SAFE_INTEGER
+  let dataDir = defaults.dataDir(options)
+  let directory = path.join(dataDir, 'audit', COLLECTION_DIRECTORIES[options.collection])
+  let limit = defaults.limit(options) || Number.MAX_SAFE_INTEGER
   let codec = auditCodec[options.collection]
 
   // Iterate over the directories in reverse order, to parse the largest values
@@ -124,10 +126,10 @@ const dumpMany = async (options, collections) => {
  *  Dump config data to JSON.
  *
  *  @param options {Object}       - Options to specify dump parameters.
- *    @field dataDir {String}     - Path to the catapult data directory.
- *    @field collection {String}  - Collection name(s).
- *    @field limit {Number}       - Maximum number of files to dump.
- *    @field verbose {Boolean}    - Display debug information.
+ *    @field collection {String}  - Collection name(s) (required).
+ *    @field dataDir {String}     - Path to the catapult data directory (default '/data').
+ *    @field limit {Number}       - Maximum number of files to dump (default 0).
+ *    @field verbose {Boolean}    - Display debug information (default false).
  */
 const dump = async options => {
   let collections = name.parse(options.collection, COLLECTIONS)

@@ -20,7 +20,8 @@
 import '@babel/polyfill'
 import yargs from 'yargs'
 import { logError, printJson } from './util'
-import symbolData from '../src'
+import symbol from '../src'
+import defaults from '../src/defaults'
 
 // ARGUMENTS
 // ---------
@@ -38,32 +39,37 @@ const options = yargs
   // Parameters.
   .option('data-dir', {
     alias: 'd',
+    type: 'string',
     describe: 'Data directory for the audit store.',
-    default: '/data'
+    default: defaults.dataDir()
   })
   .option('collection', {
     alias: 'c',
+    type: 'string',
     describe: (
       'Name of collection(s) to dump.\n'
       + 'Multiple collections can be provided with comma separators.\n'
       + 'Valid collections names:\n- all\n- '
-      + symbolData.audit.COLLECTIONS.join('\n- ')
+      + symbol.audit.COLLECTIONS.join('\n- ')
     )
   })
   .option('limit', {
     alias: 'l',
+    type: 'number',
     describe: 'Maximum number of items from collection to dump.',
-    default: 0
+    default: defaults.limit()
   })
   .option('output', {
     alias: 'o',
+    type: 'string',
     describe: 'Write to output file rather than stdout.'
   })
   // Help and verbose.
   .option('verbose', {
     alias: 'v',
     type: 'boolean',
-    description: 'Run with verbose logging'
+    description: 'Run with verbose logging',
+    default: defaults.verbose()
   })
   // Validation.
   .demandOption('collection', 'Please provide a collection name to dump.')
@@ -73,18 +79,18 @@ const options = yargs
 // Display verbose information.
 if (options.verbose) {
   console.info('Running catapult-audit-dump with: ')
-  console.info(`    data-dir     = ${options.dataDir}`)
   console.info(`    collection   = ${options.collection}`)
+  console.info(`    data-dir     = ${options.dataDir}`)
   console.info(`    limit        = ${options.limit}`)
   console.info(`    output       = ${options.output ? options.output : 'stdout'}`)
 }
 
 // Validate the collection name is supported.
-if (!symbolData.audit.isValidCollection(options.collection)) {
+if (!symbol.audit.isValidCollection(options.collection)) {
   throw new Error(`collection name ${options.collection} is not yet supported`)
 }
 
 // Dump the audit data to JSON.
-symbolData.audit.dump(options)
+symbol.audit.dump(options)
   .then(result => printJson(result, options.output))
   .catch(error => logError(error))

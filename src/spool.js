@@ -22,6 +22,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import defaults from './defaults'
 import spoolCodec from './codec/spool'
 import name from './util/name'
 
@@ -55,8 +56,9 @@ const isValidCollection = collection => {
  */
 const dumpOne = async options => {
   // Config
-  let directory = path.join(options.dataDir, 'spool', options.collection)
-  let limit = options.limit || Number.MAX_SAFE_INTEGER
+  let dataDir = defaults.dataDir(options)
+  let directory = path.join(dataDir, 'spool', options.collection)
+  let limit = defaults.limit(options) || Number.MAX_SAFE_INTEGER
   let codec = spoolCodec[options.collection]
 
   // Iterate over the directories in reverse order, to parse the largest values

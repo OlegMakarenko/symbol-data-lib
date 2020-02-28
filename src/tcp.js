@@ -150,6 +150,7 @@ const authorize = async options => {
  */
 const dump = async options => {
   // Connect and authorize to our node via the TCP API.
+  // TODO(ahuszagh) Need to manually specify defaults here...
   let client = await connect(options)
   await authorize({...options, client})
 

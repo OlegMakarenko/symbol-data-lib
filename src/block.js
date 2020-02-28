@@ -22,6 +22,7 @@
 
 import fs from 'fs'
 import path from 'path'
+import defaults from './defaults'
 import blockCodec from './codec/block'
 
 // Determine if a string contains only numbers.
@@ -47,16 +48,20 @@ const blockDirectories = directory => {
  *    @field verbose {Boolean}    - Display debug information.
  */
 const dump = async options => {
-  let limit = options.limit || Number.MAX_SAFE_INTEGER
+  // Config
+  let dataDir = defaults.dataDir(options)
+  let limit = defaults.limit(options) || Number.MAX_SAFE_INTEGER
+
+  // Process all files in the block directories.
   let result = {}
-  let directories = blockDirectories(options.dataDir)
+  let directories = blockDirectories(dataDir)
   for (let directory of directories) {
     result[directory] = {}
-    let files = fs.readdirSync(path.join(options.dataDir, directory))
+    let files = fs.readdirSync(path.join(dataDir, directory))
       .sort()
       .reverse()
     for (let file of files) {
-      result[directory][file] = blockCodec.file(path.join(options.dataDir, directory, file))
+      result[directory][file] = blockCodec.file(path.join(dataDir, directory, file))
       --limit
 
       // Exhausted our limit, return early.

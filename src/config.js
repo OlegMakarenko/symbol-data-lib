@@ -21,6 +21,7 @@
  */
 
 import path from 'path'
+import defaults from './defaults'
 import configCodec from './codec/config'
 import name from './util/name'
 
@@ -69,8 +70,9 @@ const isValidCollection = collection => {
  *  Dump single config collection to JSON.
  */
 const dumpOne = async options => {
+  let configDir = defaults.configDir(options)
   let basename = COLLECTION_FILES[options.collection]
-  return configCodec.file(path.join(options.configDir, basename))
+  return configCodec.file(path.join(configDir, basename))
 }
 
 /**
@@ -88,9 +90,9 @@ const dumpMany = async (options, collections) => {
  *  Dump config data to JSON.
  *
  *  @param options {Object}       - Options to specify dump parameters.
- *    @field configDir {String}   - Path to the catapult config directory.
- *    @field collection {String}  - Collection name(s).
- *    @field verbose {Boolean}    - Display debug information.
+ *    @field collection {String}  - Collection name(s) (required).
+ *    @field configDir {String}   - Path to the catapult config directory (default '/userconfig/resources').
+ *    @field verbose {Boolean}    - Display debug information (default false).
  */
 const dump = async options => {
   let collections = name.parse(options.collection, COLLECTIONS)

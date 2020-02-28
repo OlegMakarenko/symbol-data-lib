@@ -78,6 +78,9 @@ const subscribe = async (subscriber, subscription) => {
  *  until SIGINT signal is sent, which will terminate the file.
  *
  *  @param options {Object}             - Options to specify dump parameters.
+ *    @field host {String}        - Host to connect to.
+ *    @field port {Number}        - Port to connect to.
+ *    @field interval {Number}    - Time in milliseconds to query for new messages.
  *    @field subscriptions {Array}      - Array of channel subscriptions.
  *    @field verbose {Boolean}          - Display debug information.
  *

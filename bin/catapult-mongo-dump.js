@@ -20,7 +20,8 @@
 import '@babel/polyfill'
 import yargs from 'yargs'
 import { logError, printJson } from './util'
-import symbolData from '../src'
+import sumbol from '../src'
+import defaults from '../src/defaults'
 
 // ARGUMENTS
 // ---------
@@ -38,32 +39,37 @@ const options = yargs
   // Parameters.
   .option('database', {
     alias: 'd',
+    type: 'string',
     describe: 'Path to Mongo database connection.',
-    default: 'mongodb://db:27017/catapult'
+    default: defaults.database()
   })
   .option('collection', {
     alias: 'c',
+    type: 'string',
     describe: (
       'Name of collection(s) to dump.\n'
       + 'Multiple collections can be provided with comma separators.\n'
       + 'Valid collections names:\n- all\n- '
-      + symbolData.mongo.COLLECTIONS.join('\n- ')
+      + sumbol.mongo.COLLECTIONS.join('\n- ')
     )
   })
   .option('limit', {
     alias: 'l',
+    type: 'number',
     describe: 'Maximum number of items from collection to dump.',
-    default: 0
+    default: defaults.limit()
   })
   .option('output', {
     alias: 'o',
+    type: 'string',
     describe: 'Write to output file rather than stdout.'
   })
   // Help and verbose.
   .option('verbose', {
     alias: 'v',
     type: 'boolean',
-    description: 'Run with verbose logging'
+    description: 'Run with verbose logging',
+    default: defaults.verbose()
   })
   // Validation.
   .demandOption('collection', 'Please provide a collection name to dump.')
@@ -80,11 +86,11 @@ if (options.verbose) {
 }
 
 // Validate the collection name is supported.
-if (!symbolData.mongo.isValidCollection(options.collection)) {
+if (!sumbol.mongo.isValidCollection(options.collection)) {
   throw new Error(`collection name ${options.collection} is not yet supported`)
 }
 
 // Dump the MongoDB data to JSON.
-symbolData.mongo.dump(options)
+sumbol.mongo.dump(options)
   .then(result => printJson(result, options.output))
   .catch(error => logError(error))
