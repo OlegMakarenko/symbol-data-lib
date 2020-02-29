@@ -29,9 +29,9 @@ import constants from './constants'
 // READERS
 
 class SpoolReader extends catbuffer.Reader {
-  static solitary(data, fn) {
+  static solitary(data, fn, ...args) {
     let reader = new SpoolReader(data)
-    return reader.solitary(fn)
+    return reader.solitary(fn, ...args)
   }
 
   transactionHash() {

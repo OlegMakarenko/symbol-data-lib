@@ -27,9 +27,9 @@ import shared from '../util/shared'
 // READERS
 
 class ZmqReader extends catbuffer.Reader {
-  static solitary(data, fn) {
+  static solitary(data, fn, ...args) {
     let reader = new ZmqReader(data)
-    return reader.solitary(fn)
+    return reader.solitary(fn, ...args)
   }
 
   transactionStatus() {
@@ -110,7 +110,7 @@ export default {
   },
 
   // Parse a block message.
-  block: data => ZmqReader.solitary(data, 'block'),
+  block: data => ZmqReader.solitary(data, 'block', true),
 
   // Parse a drop blocks message.
   dropBlocks: data => ({

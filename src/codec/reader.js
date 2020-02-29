@@ -47,15 +47,15 @@ export default class Reader {
 
   callback(fn) {
     if (typeof fn === 'string') {
-      return () => this[fn]()
+      return (...args) => this[fn](...args)
     } else {
       return fn
     }
   }
 
-  solitary(fn) {
+  solitary(fn, ...args) {
     let callback = this.callback(fn)
-    let value = callback.call(this)
+    let value = callback.call(this, ...args)
     this.validateEmpty()
     return value
   }

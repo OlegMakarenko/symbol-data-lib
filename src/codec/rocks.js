@@ -57,9 +57,9 @@ const rootNamespace = (root, namespaceId) => ({
 // READERS
 
 class RocksReader extends Reader {
-  static solitary(data, fn) {
+  static solitary(data, fn, ...args) {
     let reader = new RocksReader(data)
-    return reader.solitary(fn)
+    return reader.solitary(fn, ...args)
   }
 
   // STATE VERSION

@@ -66,15 +66,15 @@ export default class Writer {
 
   callback(fn) {
     if (typeof fn === 'string') {
-      return value => this[fn](value)
+      return (value, ...args) => this[fn](value, ...args)
     } else {
       return fn
     }
   }
 
-  solitary(value, fn) {
+  solitary(value, fn, ...args) {
     let callback = this.callback(fn)
-    callback.call(this, value)
+    callback.call(this, value, ...args)
     return this.data
   }
 

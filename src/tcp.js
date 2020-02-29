@@ -20,6 +20,7 @@
  *  Codec to transform TCP models to JSON.
  */
 
+import defaults from './defaults'
 import constants from './codec/constants'
 import tcpCodec from './codec/tcp'
 import crypto from './util/crypto'
@@ -32,8 +33,14 @@ import net from './util/net'
  *    @field verbose {Boolean}    - Display debug information.
  */
 const connect = async options => {
-  let client = await net.Client.connect(options)
-  if (options.verbose) {
+  // Config
+  let host = defaults.host(options)
+  let port = defaults.tcpPort(options)
+  let verbose = defaults.verbose(options)
+
+  // Connection
+  let client = await net.Client.connect({...options, host, port})
+  if (verbose) {
     let address = client.connection.address()
     console.info('Connected to a TCP server at:')
     console.info(`    address   = ${address.address}`)
@@ -48,6 +55,9 @@ const connect = async options => {
  *  Handle the server challenge when connecting to a node.
  */
 const serverChallenge = async options => {
+  // Config
+  let hashAlgorithm = defaults.hashAlgorithm(options)
+
   // Read and validate the packet.
   let packet = tcpCodec.header.deserialize(await options.client.receive())
   if (packet.type !== constants.packetType.serverChallenge) {
@@ -57,7 +67,7 @@ const serverChallenge = async options => {
   }
 
   // Get our client signing key.
-  let hash512 = crypto[options.hashAlgorithm]['512']
+  let hash512 = crypto[hashAlgorithm]['512']
   let privateKey = Buffer.from(options.clientPrivateKey, 'hex')
   let signingKey = new crypto.SigningKey(privateKey, hash512)
   let verifyingKey = signingKey.verifyingKey
@@ -86,6 +96,9 @@ const serverChallenge = async options => {
  *  Handle the client challenge when connecting to a node.
  */
 const clientChallenge = async options => {
+  // Config
+  let hashAlgorithm = defaults.hashAlgorithm(options)
+
   // Read and validate the signature packet.
   let packet = tcpCodec.header.deserialize(await options.client.receive())
   if (packet.type !== constants.packetType.clientChallenge) {
@@ -95,7 +108,7 @@ const clientChallenge = async options => {
   }
 
   // Get our node verifying key.
-  let hash512 = crypto[options.hashAlgorithm]['512']
+  let hash512 = crypto[hashAlgorithm]['512']
   let publicKey = Buffer.from(options.nodePublicKey, 'hex')
   let verifyingKey = new crypto.VerifyingKey(publicKey, hash512)
 
@@ -122,11 +135,11 @@ const authorize = async options => {
  *  are enumerated [`here``]. Common fields include `port` and `host`.
  *
  *  @param options {Object}             - Options to specify dump parameters.
- *    @field hashAlgorithm {String}     - Hashing algorithm. Can be `keccak` or `sha3`.
  *    @field clientPrivateKey {String}  - Hex-encoded private key for the client.
  *    @field nodePublicKey {String}     - Hex-encoded public key for the node.
  *    @field requests {Array}           - Array of requests to make to the TCP API.
- *    @field verbose {Boolean}          - Display debug information.
+ *    @field hashAlgorithm {String}     - Hashing algorithm (default 'kaccak').
+ *    @field verbose {Boolean}          - Display debug information (default false).
  *
  *  # Requests
  *
@@ -150,7 +163,6 @@ const authorize = async options => {
  */
 const dump = async options => {
   // Connect and authorize to our node via the TCP API.
-  // TODO(ahuszagh) Need to manually specify defaults here...
   let client = await connect(options)
   await authorize({...options, client})
 

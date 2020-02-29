@@ -16,6 +16,7 @@
  *
  */
 
+import defaults from './defaults'
 import constants from './codec/constants'
 import zmqCodec from './codec/zmq'
 import base32 from './util/base32'
@@ -31,7 +32,11 @@ import zmq from './util/zmq'
  *    @field verbose {Boolean}    - Display debug information.
  */
 const connect = async options => {
-  let subscriber = await zmq.Subscriber.connect(options.host, options.port, options.interval)
+  let host = defaults.host(options)
+  let port = defaults.zmqPort(options)
+  let interval = defaults.interval(options)
+
+  let subscriber = await zmq.Subscriber.connect(host, port, interval)
   if (options.verbose) {
     console.info('Connected to a ZeroMQ publisher at:')
     console.info(`    host      = ${options.host}`)

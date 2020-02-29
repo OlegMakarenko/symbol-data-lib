@@ -28,9 +28,9 @@ import shared from '../util/shared'
 // READERS
 
 class TcpReader extends catbuffer.Reader {
-  static solitary(data, fn) {
+  static solitary(data, fn, ...args) {
     let reader = new TcpReader(data)
-    return reader.solitary(fn)
+    return reader.solitary(fn, ...args)
   }
 
   challenge() {
@@ -178,9 +178,9 @@ class TcpReader extends catbuffer.Reader {
 // WRITERS
 
 class TcpWriter extends catbuffer.Writer {
-  static solitary(value, fn) {
+  static solitary(value, fn, ...args) {
     let writer = new TcpWriter()
-    return writer.solitary(value, fn)
+    return writer.solitary(value, fn, ...args)
   }
 
   challenge(challenge) {

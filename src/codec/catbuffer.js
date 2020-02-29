@@ -37,10 +37,10 @@ const align = (size, alignment) => {
 // READERS
 
 class Reader extends BaseReader {
-  // Size-prefix for an entity
-  sizePrefix() {
+  // Size-prefix for an entity.
+  sizePrefix(ignoreSize=false) {
     let size = this.uint32()
-    if (this._data.length < size - 4) {
+    if (!ignoreSize && this._data.length < size - 4) {
       throw new Error('invalid sized-prefixed entity: data is too short')
     }
     return size
@@ -75,7 +75,7 @@ class Reader extends BaseReader {
 
   // Verifiable entity with a signature and signer key.
   // Used for transactions and blocks.
-  verifiableEntity() {
+  verifiableEntity(ignoreSize=false) {
     // Model:
     //  struct VerifiableEntity {
     //    uint32_t size;
@@ -87,7 +87,7 @@ class Reader extends BaseReader {
     //    NetworkIdentifier network;
     //    EntityType type;
     //  }
-    this.sizePrefix()
+    this.sizePrefix(ignoreSize)
     let {signature} = this.entityVerification()
     let {key, version, network, type} = this.entityBody()
 
@@ -102,8 +102,8 @@ class Reader extends BaseReader {
 
   // Size-prefixed entity.
   // Used for embedded transactions.
-  embeddedEntity() {
-    this.sizePrefix()
+  embeddedEntity(ignoreSize=false) {
+    this.sizePrefix(ignoreSize)
     // Skip reserved value.
     this.uint32()
 
@@ -111,11 +111,11 @@ class Reader extends BaseReader {
   }
 
   // General entity
-  entity(embedded) {
+  entity(embedded=false, ignoreSize=false) {
     if (embedded) {
-      return this.embeddedEntity()
+      return this.embeddedEntity(ignoreSize)
     } else {
-      return this.verifiableEntity()
+      return this.verifiableEntity(ignoreSize)
     }
   }
 
@@ -152,7 +152,7 @@ class Reader extends BaseReader {
     return cosignatures
   }
 
-  baseTransaction(embedded) {
+  baseTransaction(embedded=false) {
     let transaction = {}
     if (!embedded) {
       transaction.maxFee = this.uint64String()
@@ -162,7 +162,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  transfer(embedded) {
+  transfer(embedded=false) {
     // Parse the fixed data.
     let transaction = this.baseTransaction(embedded)
     transaction.recipientAddress = this.address()
@@ -183,7 +183,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  registerNamespace(embedded) {
+  registerNamespace(embedded=false) {
     // Parse the fixed data.
     let transaction = this.baseTransaction(embedded)
     let union = this.uint64()
@@ -205,7 +205,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  addressAlias(embedded) {
+  addressAlias(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.namespaceId = this.id()
     transaction.address = this.address()
@@ -215,7 +215,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicAlias(embedded) {
+  mosaicAlias(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.namespaceId = this.id()
     transaction.mosaicId = this.id()
@@ -225,7 +225,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicDefinition(embedded) {
+  mosaicDefinition(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.duration = this.uint64String()
@@ -237,7 +237,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicSupplyChange(embedded) {
+  mosaicSupplyChange(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.delta = this.uint64String()
@@ -247,7 +247,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  modifyMultisigAccount(embedded) {
+  modifyMultisigAccount(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.minRemovalDelta = this.int8()
     transaction.minApprovalDelta = this.int8()
@@ -270,7 +270,7 @@ class Reader extends BaseReader {
   }
 
   // Both aggregate transactions have the same layout.
-  aggregate(embedded) {
+  aggregate(embedded=false) {
     assert(!embedded, 'aggregate transaction cannot be embedded')
 
     let transaction = this.baseTransaction()
@@ -295,15 +295,15 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  aggregateComplete(embedded) {
+  aggregateComplete(embedded=false) {
     return this.aggregate(embedded)
   }
 
-  aggregateBonded(embedded) {
+  aggregateBonded(embedded=false) {
     return this.aggregate(embedded)
   }
 
-  lock(embedded) {
+  lock(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaic = this.mosaic()
     transaction.duration = this.uint64String()
@@ -313,7 +313,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  secretLock(embedded) {
+  secretLock(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.secret = this.hash256()
     transaction.mosaic = this.mosaic()
@@ -325,7 +325,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  secretProof(embedded) {
+  secretProof(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.secret = this.hash256()
     let proofSize = this.uint16()
@@ -337,7 +337,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  accountRestrictionTransaction(restriction, embedded) {
+  accountRestrictionTransaction(restriction, embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.restrictionFlags = this.uint16()
     let additionsCount = this.uint8()
@@ -358,19 +358,19 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  accountRestrictionAddress(embedded) {
+  accountRestrictionAddress(embedded=false) {
     return this.accountRestrictionTransaction('address', embedded)
   }
 
-  accountRestrictionMosaic(embedded) {
+  accountRestrictionMosaic(embedded=false) {
     return this.accountRestrictionTransaction('id', embedded)
   }
 
-  accountRestrictionOperation(embedded) {
+  accountRestrictionOperation(embedded=false) {
     return this.accountRestrictionTransaction('entityType', embedded)
   }
 
-  linkAccount(embedded) {
+  linkAccount(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.remotePublicKey = this.key()
     transaction.linkAction = this.uint8()
@@ -379,7 +379,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicAddressRestriction(embedded) {
+  mosaicAddressRestriction(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.restrictionKey = this.uint64String()
@@ -391,7 +391,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicGlobalRestriction(embedded) {
+  mosaicGlobalRestriction(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.mosaicId = this.id()
     transaction.referenceMosaicId = this.id()
@@ -405,7 +405,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  accountMetadata(embedded) {
+  accountMetadata(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
     transaction.scopedMetadataKey = this.uint64String()
@@ -417,7 +417,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  mosaicMetadata(embedded) {
+  mosaicMetadata(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
     transaction.scopedMetadataKey = this.uint64String()
@@ -430,7 +430,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  namespaceMetadata(embedded) {
+  namespaceMetadata(embedded=false) {
     let transaction = this.baseTransaction(embedded)
     transaction.targetPublicKey = this.key()
     transaction.scopedMetadataKey = this.uint64String()
@@ -443,7 +443,7 @@ class Reader extends BaseReader {
     return transaction
   }
 
-  transactionHeader(type, embedded) {
+  transactionHeader(type, embedded=false) {
     let method = constants.transactionType.inv[type]
     if (method === undefined) {
       throw new Error(`invalid transaction type, got ${type}`)
@@ -451,7 +451,7 @@ class Reader extends BaseReader {
     return this[method](embedded)
   }
 
-  transaction(embedded) {
+  transaction(embedded=false, ignoreSize=false) {
     // First, get our entity data so we can parse the verifiable entity and block.
     let size = shared.readUint32(this._data.slice(0, 4))
     let alignedSize = align(size, 8)
@@ -460,7 +460,7 @@ class Reader extends BaseReader {
 
     // Create a reader for the transaction entity.
     let entityReader = new Reader(entityData)
-    let entity = entityReader.entity(embedded)
+    let entity = entityReader.entity(embedded, ignoreSize)
     let transaction = entityReader.transactionHeader(entity.type, embedded)
 
     return {
@@ -469,12 +469,12 @@ class Reader extends BaseReader {
     }
   }
 
-  transactions(embedded) {
+  transactions(embedded=false, ignoreSize=false) {
     // Read transaction data while we still have remaining data.
     // It will either completely parse or throw an error.
     let transactions = []
     while (this._data.length !== 0) {
-      transactions.push(this.transaction(embedded))
+      transactions.push(this.transaction(embedded, ignoreSize))
     }
 
     return transactions
@@ -506,7 +506,7 @@ class Reader extends BaseReader {
     }
   }
 
-  block() {
+  block(ignoreSize=false) {
     // First, get our entity data so we can parse the verifiable entity and block.
     let size = shared.readUint32(this._data.slice(0, 4))
     let entityData = this._data.slice(0, size)
@@ -514,11 +514,11 @@ class Reader extends BaseReader {
 
     // Create a dependent reader.
     let entityReader = new Reader(entityData)
-    let entity = entityReader.verifiableEntity()
+    let entity = entityReader.verifiableEntity(ignoreSize)
     let block = entityReader.blockHeader()
     if (entityReader.data.length !== 0) {
       // Add the embedded transactions.
-      block.transactions = entityReader.transactions()
+      block.transactions = entityReader.transactions(false, ignoreSize)
     }
     entityReader.validateEmpty()
 
@@ -528,12 +528,12 @@ class Reader extends BaseReader {
     }
   }
 
-  blocks() {
+  blocks(ignoreSize=false) {
     // Read transaction data while we still have remaining data.
     // It will either completely parse or throw an error.
     let blocks = []
     while (this._data.length !== 0) {
-      blocks.push(this.block())
+      blocks.push(this.block(ignoreSize))
     }
 
     return blocks

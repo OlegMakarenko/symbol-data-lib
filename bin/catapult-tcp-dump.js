@@ -20,7 +20,8 @@
 import '@babel/polyfill'
 import yargs from 'yargs'
 import { logError, printJson, readJson } from './util'
-import symbolData from '../src'
+import symbol from '../src'
+import defaults from '../src/defaults'
 
 // ARGUMENTS
 // ---------
@@ -38,40 +39,48 @@ const options = yargs
   // Parameters.
   .option('host', {
     alias: 'h',
+    type: 'string',
     describe: 'Host for the TCP API.',
-    default: 'localhost'
+    default: defaults.host()
   })
   .option('port', {
     alias: 'p',
+    type: 'number',
     describe: 'Port for the TCP API.',
-    default: 7900
+    default: defaults.tcpPort()
   })
   .options('hash-algorithm', {
     alias: 'a',
+    type: 'string',
     describe: 'Hash algorithm for key derivation.',
-    default: 'keccak'
+    default: defaults.hashAlgorithm()
   })
   .options('client-private-key', {
     alias: 'c',
+    type: 'string',
     describe: 'Hex-encoded private key for the client.'
   })
   .options('node-public-key', {
     alias: 'n',
+    type: 'string',
     describe: 'Hex-encoded public key for the node.'
   })
   .options('requests', {
     alias: 'r',
+    type: 'string',
     describe: 'Requests to make to TCP API, as JSON, or as a path to a JSON file.'
   })
   .option('output', {
     alias: 'o',
+    type: 'string',
     describe: 'Write to output file rather than stdout.'
   })
   // Help and verbose.
   .option('verbose', {
     alias: 'v',
     type: 'boolean',
-    description: 'Run with verbose logging'
+    description: 'Run with verbose logging',
+    default: defaults.verbose()
   })
   // Validation.
   .demandOption('requests', 'Please provide TCP requests.')
@@ -95,6 +104,6 @@ if (options.verbose) {
 }
 
 // Dump the tcp data to JSON.
-symbolData.tcp.dump(options)
+symbol.tcp.dump(options)
   .then(result => printJson(result, options.output))
   .catch(error => logError(error))

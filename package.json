@@ -11,7 +11,8 @@
     "catapult-mongo-dump": "dist/bin/catapult-mongo-dump.js",
     "catapult-rocks-dump": "dist/bin/catapult-rocks-dump.js",
     "catapult-spool-dump": "dist/bin/catapult-spool-dump.js",
-    "catapult-tcp-dump": "dist/bin/catapult-tcp-dump.js"
+    "catapult-tcp-dump": "dist/bin/catapult-tcp-dump.js",
+    "catapult-zmq-dump": "dist/bin/catapult-zmq-dump.js"
   },
   "scripts": {
     "build": "babel src -d dist/src && babel bin -d dist/bin",

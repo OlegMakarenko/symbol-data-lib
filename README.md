@@ -28,6 +28,7 @@ symbol-data-lib supports the following catapult data stores:
 - Audit
 - Configuration Files
 - TCP
+- ZeroMQ
 
 # Features
 
@@ -404,6 +405,48 @@ Connected to a TCP server at:
         }
     }
 ]
+
+# Create a listener to the ZeroMQ API.
+# To exit the listener, press Ctrl+C (SIGINT).
+catapult-zmq-dump --subscriptions '[{"channel": "block"}]' --verbose
+Running catapult-zmq-dump with: 
+    host                = localhost
+    port                = 7902
+    subscriptions       = [
+    {
+        "channel": "block"
+    },
+    {
+        "channel": "dropBlocks"
+    }
+]
+    output              = stdout
+Connected to a ZeroMQ publisher at:
+    host      = localhost
+    port      = 7902
+[
+    {
+        "channel": "block",
+        "entity": {
+            "signature": "9D48B09620828841235D6B4D15C2EA986B2F887BFF9C4CA2B67E0588754D68CC15197606798FB8C8F3AFC8E59B2DC73E3B4C42DA05508DAE17801DAC0EC1A904",
+            "key": "4BADBBB46F335534C8F2DA93CDCEA7C74452188D6A8E322720AF30A6FB42DABF",
+            "version": 1,
+            "network": 152,
+            "type": 33091
+        },
+        "block": {
+            "height": "132135",
+            "timestamp": "9569568524",
+            "difficulty": "10000000000000",
+            "previousBlockHash": "3331BA9043A0998AD5075144A4033C6EC14C36BA7EBCADFE511CE277B37FCAA8",
+            "transactionsHash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "receiptsHash": "089F01600FDCD862676CBBD554BA795E2706D4A5D0CE8CD64E7660D9CED01CE8",
+            "stateHash": "0388027BEAB42E7F8B4BCCB676959047361D6EC1E4E411D7551E0D30D24BA18F",
+            "beneficiaryPublicKey": "3D7FD669DB90879C3AF7EEA98EA8C24460E2F6C0AAF71111C61E5F303949004B",
+            "feeMultiplier": 0
+        }
+    }
+]
 ```
 
 ## Javascript API
@@ -662,6 +705,16 @@ Docker compose does not by default expose port 7900 and 7902, so we must expose 
     ports:
     - "7900:7900"
 
+  api-broker:
+    ports:
+    - "7902:7902"
+```
+
+**Configuring ZMQ**
+
+Similarly, docker compose does not by default expose port 7902, so we must expose this in the `api-broker` image:
+
+```yaml
   api-broker:
     ports:
     - "7902:7902"
