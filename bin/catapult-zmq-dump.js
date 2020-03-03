@@ -17,7 +17,6 @@
  *
  */
 
-import '@babel/polyfill'
 import fs from 'fs'
 import yargs from 'yargs'
 import { logError, readJson } from './util'

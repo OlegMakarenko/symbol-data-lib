@@ -17,7 +17,6 @@
  *
  */
 
-import '@babel/polyfill'
 import yargs from 'yargs'
 import { logError, printJson } from './util'
 import sumbol from '../src'
