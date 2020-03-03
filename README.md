@@ -1,7 +1,7 @@
 symbol-data-lib
 ===============
 
-Library and command-line scripts to facilitate debugging and accessing NEM Node data directly from stores. 
+Library and command-line scripts to facilitate debugging and accessing NEM Node data directly from stores.
 
 **Table Of Contents**
 
@@ -60,7 +60,7 @@ Next, you can run the data scripts globally:
 ```bash
 # Dump the mosaics collection from MongoDB.
 $ catapult-mongo-dump --collection mosaics --limit 1 --verbose
-Running catapult-mongo-dump with: 
+Running catapult-mongo-dump with:
     database     = mongodb://db:27017/catapult
     collection   = mosaics
     limit        = 1
@@ -85,7 +85,7 @@ Connected to mongo at mongodb://db:27017/catapult
 
 # Dump the accounts collection from RocksDB.
 $ catapult-rocks-dump --collection AccountStateCache --limit 1 --verbose
-Running catapult-rocks-dump with: 
+Running catapult-rocks-dump with:
     data-dir     = /data
     collection   = AccountStateCache
     limit        = 1
@@ -168,7 +168,7 @@ Connected to rocks at /data/statedb/AccountStateCache
 
 # Dump the time-sync configuration file.
 $ catapult-config-dump --collection time-sync --verbose
-Running catapult-config-dump with: 
+Running catapult-config-dump with:
     config-dir   = /userconfig/resources
     collection   = time-sync
     output       = stdout
@@ -178,7 +178,7 @@ Running catapult-config-dump with:
 
 # Dump the block audit data.
 $ catapult-audit-dump --collection block --limit 1 --verbose
-Running catapult-audit-dump with: 
+Running catapult-audit-dump with:
     data-dir     = /data
     collection   = block
     limit        = 1
@@ -216,7 +216,7 @@ Running catapult-audit-dump with:
 
 # Dump the block change spool data.
 $ catapult-spool-dump --collection block_change --limit 1 --verbose
-Running catapult-spool-dump with: 
+Running catapult-spool-dump with:
     data-dir     = /data
     collection   = block_change
     limit        = 1
@@ -284,7 +284,7 @@ Running catapult-spool-dump with:
 
 # Dump the block data.
 $ catapult-block-dump --limit 2 --verbose
-Running catapult-block-dump with: 
+Running catapult-block-dump with:
     data-dir     = /data
     collection   = block_change
     limit        = 2
@@ -358,7 +358,7 @@ $ catapult-tcp-dump --client-private-key $CLIENT_KEY \
     --node-public-key $NODE_KEY \
     --requests '[{"type": "pullBlock", "params": {"height": "2"}}]' \
     --verbose
-Running catapult-tcp-dump with: 
+Running catapult-tcp-dump with:
     host                = localhost
     port                = 7900
     hash-algorithm      = keccak
@@ -409,7 +409,7 @@ Connected to a TCP server at:
 # Create a listener to the ZeroMQ API.
 # To exit the listener, press Ctrl+C (SIGINT).
 catapult-zmq-dump --subscriptions '[{"channel": "block"}]' --verbose
-Running catapult-zmq-dump with: 
+Running catapult-zmq-dump with:
     host                = localhost
     port                = 7902
     subscriptions       = [
@@ -456,7 +456,7 @@ For each store, there are 2 API levels: a high-level API similar to the scriptin
 The following uses the high-level API to dump the audit block data, almost identically to `catapult-audit-dump`:
 
 ```javascript
-import symbolData = 'symbol-data-lib'
+import symbolData from 'symbol-data-lib'
 
 symbolData.audit.dump({
     dataDir: '/data',
@@ -472,7 +472,7 @@ symbolData.audit.dump({
 If we want finer-tuned control, we can use the low-level codec API. The low-level API primarily parses data fro
 
 ```javascript
-import symbolData = 'symbol-data-lib'
+import symbolData from 'symbol-data-lib'
 
 // Use the audit codec.
 let codec = symbolData.codec.audit
@@ -512,7 +512,7 @@ blocks = codec.block.directory(directory)
 Since each component is independent, integrating components can simplify a workflow as well as provide enhanced data. For example, the node public key must be provided to the TCP API, which can be extracted from the configuration files. An example of integrating configuration data to facilitate dumping the remaining data is as follows:
 
 ```javascript
-import symbolData = 'symbol-data-lib'
+import symbolData from 'symbol-data-lib'
 
 const HASH_ALGORITHM = 'keccak'
 const CLIENT_PRIVATE_KEY = '3BC0820D9B9552C0805A28C9E4314961C9AC415D580F13D330BE88F82FE5770D'
