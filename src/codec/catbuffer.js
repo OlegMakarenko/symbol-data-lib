@@ -509,6 +509,12 @@ class Reader extends BaseReader {
   block(ignoreSize=false) {
     // First, get our entity data so we can parse the verifiable entity and block.
     let size = shared.readUint32(this._data.slice(0, 4))
+    if (ignoreSize) {
+      // Only have a block header published, but the entity size does not reflect
+      // this. The block header size will always be 304 bytes.
+      //  https://github.com/nemtech/catapult-server/issues/62
+      size = constants.entitySize.blockHeader
+    }
     let entityData = this._data.slice(0, size)
     this._data = this._data.slice(size)
 

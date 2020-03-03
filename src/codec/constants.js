@@ -257,6 +257,11 @@ const config = bimap({
   'peersP2p': 'peers-p2p.json'
 })
 
+// Hard-coded entity sizes.
+const entitySize = {
+  blockHeader: 304
+}
+
 export default {
   facilityCode,
   transactionType,
@@ -272,5 +277,6 @@ export default {
   packet,
   packetType,
   zmq,
-  config
+  config,
+  entitySize
 }
